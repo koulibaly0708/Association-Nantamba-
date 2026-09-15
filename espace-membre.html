@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-<title>Adhésion — Association Nantamba (AN)</title>
+<title>Espace membre — Association Nantamba (AN)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -202,7 +202,8 @@
     <button class="nav-toggle" onclick="document.querySelector('nav.menu').classList.toggle('open')">☰</button>
     <nav class="menu">
       <a href="index.html">Accueil</a>
-      <a href="espace-membre.html">Espaces réservés</a>
+      <a href="espace-membre.html">Espace membre</a>
+      <a href="espace-admin.html">Espace Administrateur</a>
     </nav>
   </div>
 </header>
@@ -211,32 +212,27 @@
   <a class="back-link" href="index.html">&larr; Retour au site</a>
 </div>
 
-<!-- ============ ADHESION ============ -->
-<section id="adhesion" class="section">
+<!-- ============ ESPACE MEMBRE ============ -->
+<section id="membre" class="section">
   <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">Adhésion</div>
-      <h2>Devenir membre de l'Association Nantamba</h2>
-      <p>Rejoignez l'association et participez à ses actions pour le développement de la communauté.</p>
-    </div>
     <div class="space-block">
       <div class="space-text">
-        <h2 style="font-size:20px;">Pourquoi adhérer ?</h2>
-        <p>En devenant membre, vous participez aux décisions de l'association et à ses réalisations sur le terrain.</p>
+        <div class="eyebrow">Espace membre</div>
+        <h2>Un accès réservé aux membres</h2>
+        <p>Cet espace permettra aux membres de l'association de se connecter pour accéder à leurs informations.</p>
         <ul>
-          <li>Prendre part aux activités et projets</li>
-          <li>Accéder à l'espace membre</li>
-          <li>Contribuer aux décisions de l'association</li>
+          <li>Suivi de la cotisation</li>
+          <li>Documents et comptes-rendus de l'association</li>
+          <li>Actualités réservées aux membres</li>
         </ul>
       </div>
       <div class="login-card">
-        <h3>Formulaire d'adhésion</h3>
-        <p class="sub">Remplissez ce formulaire pour demander à devenir membre.</p>
-        <div class="field"><label>Nom complet</label><input type="text" id="joinName" placeholder="Votre nom complet"></div>
-        <div class="field"><label>Adresse e-mail</label><input type="email" id="joinEmail" placeholder="vous@exemple.com"></div>
-        <div class="field"><label>Téléphone</label><input type="text" id="joinPhone" placeholder="Votre numéro de téléphone"></div>
-        <button class="btn btn-primary" onclick="submitJoin()">Envoyer ma demande d'adhésion</button>
-        <div class="login-note" id="joinNote">Demande envoyée — nous reviendrons vers vous rapidement.</div>
+        <h3>Connexion membre</h3>
+        <p class="sub">Réservé aux membres de l'Association Nantamba.</p>
+        <div class="field"><label>Adresse e-mail</label><input type="email" id="memberEmail" placeholder="vous@exemple.com"></div>
+        <div class="field"><label>Mot de passe</label><input type="password" id="memberPass" placeholder="••••••••"></div>
+        <button class="btn btn-primary" onclick="demoLogin('memberEmail','memberPass','memberNote')">Se connecter</button>
+        <div class="login-note" id="memberNote">Connexion réussie — contenu à venir.</div>
       </div>
     </div>
   </div>
@@ -247,11 +243,11 @@
 </footer>
 
 <script>
-  function submitJoin(){
-    var n = document.getElementById('joinName').value.trim();
-    var e = document.getElementById('joinEmail').value.trim();
-    var note = document.getElementById('joinNote');
-    if(n && e){ note.style.display = 'block'; } else { note.style.display = 'none'; }
+  function demoLogin(userId, passId, noteId){
+    var u = document.getElementById(userId).value.trim();
+    var p = document.getElementById(passId).value.trim();
+    var note = document.getElementById(noteId);
+    if(u && p){ note.style.display = 'block'; } else { note.style.display = 'none'; }
   }
 </script>
 </body>
