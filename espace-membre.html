@@ -314,6 +314,7 @@
           <div class="tag">Actualités</div>
           <h3>Annonces réservées</h3>
           <p>Retrouvez ici les annonces publiées par les administrateurs pour les membres.</p>
+          <div id="memberAnnounceList"></div>
         </div>
         <div class="member-card">
           <div class="tag">Profil</div>
@@ -337,46 +338,102 @@
     <h3 id="accessModalTitle">Espace membre</h3>
     <p class="modal-sub">Accès réservé.</p>
     <span class="modal-tab">Se connecter</span>
-    <div class="modal-error" id="accessModalError">Identifiants incorrects. Veuillez réessayer.</div>
-    <div class="field"><input type="text" id="accessCode" placeholder="Code d'accès"></div>
-    <div class="field"><input type="password" id="accessPass" placeholder="Mot de passe (6 caractères min.)"></div>
-    <a href="#" class="forgot-link" onclick="return false;">Mot de passe oublié ?</a>
+    <div class="modal-error" id="accessModalError">Code d'accès invalide. Veuillez réessayer.</div>
+    <div class="field"><input type="text" id="accessCode" placeholder="Code d'accès (ex : AN-KOSO57)"></div>
     <button class="btn btn-primary" onclick="submitAccessLogin()">Se connecter</button>
   </div>
 </div>
 
-<script>
-  /* ============ CONNEXION VIA MODALE ============ */
-  function openAccessModal(space){
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
+    authDomain: "association-nantamba.firebaseapp.com",
+    databaseURL: "https://association-nantamba-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "association-nantamba",
+    storageBucket: "association-nantamba.firebasestorage.app",
+    messagingSenderId: "819829729208",
+    appId: "1:819829729208:web:18bef83acef4597a3cd14d",
+    measurementId: "G-WDEBQ9JKVJ"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  var announcementsCache = {};
+  onValue(ref(db, 'announcements'), function(snap){
+    announcementsCache = snap.val() || {};
+    renderMemberAnnouncements();
+  });
+
+  function renderMemberAnnouncements(){
+    var wrap = document.getElementById('memberAnnounceList');
+    if(!wrap) return;
+    var list = Object.values(announcementsCache).sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+    if(list.length === 0){
+      wrap.innerHTML = '<p style="font-size:13.5px;color:var(--ink-soft);">Aucune annonce publiée pour le moment.</p>';
+      return;
+    }
+    wrap.innerHTML = list.map(function(a){
+      return '<div style="border-top:1px solid var(--line);padding-top:10px;margin-top:10px;">' +
+        '<div style="font-weight:600;font-size:14px;">'+escapeHtml(a.title)+'</div>' +
+        '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">'+escapeHtml(a.date||'')+'</div>' +
+        '<div style="font-size:13.5px;">'+escapeHtml(a.message)+'</div></div>';
+    }).join('');
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ============ CONNEXION VIA MODALE (code d'accès vérifié sur Firebase) ============ */
+  window.openAccessModal = function openAccessModal(space){
     document.getElementById('accessModalTitle').textContent = 'Espace membre';
     document.getElementById('accessModalError').style.display = 'none';
     document.getElementById('accessCode').value = '';
-    document.getElementById('accessPass').value = '';
     document.getElementById('accessOverlay').classList.add('open');
     document.body.classList.add('modal-open');
   }
-  function closeAccessModal(){
+  window.closeAccessModal = function closeAccessModal(){
     document.getElementById('accessOverlay').classList.remove('open');
     document.body.classList.remove('modal-open');
   }
-  function submitAccessLogin(){
-    var code = document.getElementById('accessCode').value.trim();
-    var pass = document.getElementById('accessPass').value.trim();
+  window.submitAccessLogin = function submitAccessLogin(){
+    var code = document.getElementById('accessCode').value.trim().toUpperCase();
     var err = document.getElementById('accessModalError');
-    if(code && pass.length >= 6){
-      err.style.display = 'none';
-      closeAccessModal();
-      showMemberSpace();
-    } else {
+    var btn = document.querySelector('#accessOverlay .btn-primary');
+    if(!code){ err.style.display = 'block'; return; }
+    if(btn){ btn.disabled = true; }
+    get(ref(db, 'accessCodes')).then(function(snap){
+      var codes = snap.val() || {};
+      var match = Object.values(codes).find(function(c){
+        return (c.code || '').toUpperCase() === code && c.status !== 'Révoqué';
+      });
+      if(btn){ btn.disabled = false; }
+      if(match){
+        err.style.display = 'none';
+        try{ sessionStorage.setItem('an_member_code', code); }catch(e){}
+        closeAccessModal();
+        showMemberSpace();
+      } else {
+        err.style.display = 'block';
+      }
+    }).catch(function(e){
+      if(btn){ btn.disabled = false; }
+      err.textContent = 'Erreur de connexion, réessayez.';
       err.style.display = 'block';
-    }
+      console.error(e);
+    });
   }
   function showMemberSpace(){
     document.getElementById('memberAccessCard').style.display = 'none';
     document.getElementById('memberDashboard').style.display = 'block';
     document.getElementById('memberDashboard').scrollIntoView({behavior:'smooth', block:'start'});
   }
-  function memberLogout(){
+  window.memberLogout = function memberLogout(){
+    try{ sessionStorage.removeItem('an_member_code'); }catch(e){}
     document.getElementById('memberDashboard').style.display = 'none';
     document.getElementById('memberAccessCard').style.display = 'block';
   }

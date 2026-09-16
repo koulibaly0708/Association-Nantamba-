@@ -406,7 +406,7 @@
           <h3>Création de code d'accès</h3>
           <p class="sub">Générez un code d'accès à transmettre à un membre.</p>
           <div class="inline-form">
-            <div class="field"><label>Nom complet du membre</label><input type="text" id="codeFor" placeholder="Ex : Koulibaly Solo"></div>
+            <div class="field"><label>Prénom Nom du membre</label><input type="text" id="codeFor" placeholder="Ex : Solo Koulibaly"></div>
             <button class="btn btn-primary" onclick="generateCode()">Générer un code</button>
           </div>
           <div class="table-wrap">
@@ -454,11 +454,41 @@
   </div>
 </div>
 
-<script>
-  /* ============ CONNEXION VIA MODALE ============ */
-  var currentAccessSpace = 'admin';
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-  function openAccessModal(space){
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
+    authDomain: "association-nantamba.firebaseapp.com",
+    databaseURL: "https://association-nantamba-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "association-nantamba",
+    storageBucket: "association-nantamba.firebasestorage.app",
+    messagingSenderId: "819829729208",
+    appId: "1:819829729208:web:18bef83acef4597a3cd14d",
+    measurementId: "G-WDEBQ9JKVJ"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  /* Caches locales alimentées en temps réel par Firebase (clé Firebase -> objet) */
+  var membersCache = {};
+  var requestsCache = {};
+  var codesCache = {};
+  var announcementsCache = {};
+
+  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); });
+  onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
+  onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
+  onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
+
+  /* ============ CONNEXION VIA FIREBASE AUTHENTICATION ============ */
+  var currentAccessSpace = 'admin';
+  var authChecked = false;
+
+  window.openAccessModal = function openAccessModal(space){
     currentAccessSpace = space;
     document.getElementById('accessModalTitle').textContent = 'Espace Administrateur';
     document.getElementById('accessModalError').style.display = 'none';
@@ -467,54 +497,60 @@
     document.getElementById('accessOverlay').classList.add('open');
     document.body.classList.add('modal-open');
   }
-  function closeAccessModal(){
+  window.closeAccessModal = function closeAccessModal(){
     document.getElementById('accessOverlay').classList.remove('open');
     document.body.classList.remove('modal-open');
   }
-  function submitAccessLogin(){
+  window.submitAccessLogin = function submitAccessLogin(){
     var email = document.getElementById('accessEmail').value.trim();
     var pass = document.getElementById('accessPass').value.trim();
     var err = document.getElementById('accessModalError');
-    if(email && pass.length >= 6){
-      err.style.display = 'none';
-      closeAccessModal();
-      showAdminSpace();
-    } else {
+    var btn = document.querySelector('#accessOverlay .btn-primary');
+    if(!email || pass.length < 6){
+      err.textContent = 'Identifiants incorrects. Veuillez réessayer.';
       err.style.display = 'block';
+      return;
     }
+    if(btn){ btn.disabled = true; }
+    signInWithEmailAndPassword(auth, email, pass).then(function(){
+      if(btn){ btn.disabled = false; }
+      err.style.display = 'none';
+    }).catch(function(e){
+      if(btn){ btn.disabled = false; }
+      err.textContent = 'Identifiants incorrects. Veuillez réessayer.';
+      err.style.display = 'block';
+      console.error(e);
+    });
   }
-  function showAdminSpace(){
+  function showAdminSpace(scroll){
+    closeAccessModal();
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
     renderMembers(); renderRequests(); renderCodes(); renderAnnouncements();
-    document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'});
+    if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
-  function adminLogout(){
-    document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('adminAccessCard').style.display = 'block';
+  window.adminLogout = function adminLogout(){
+    signOut(auth);
   }
 
-  /* Affiche automatiquement la fenêtre de connexion à l'arrivée sur la page */
-  window.addEventListener('DOMContentLoaded', function(){
-    openAccessModal('admin');
+  /* Réagit à l'état de connexion réel (persiste entre les visites tant que non déconnecté) */
+  onAuthStateChanged(auth, function(user){
+    if(user){
+      showAdminSpace(authChecked);
+    } else {
+      document.getElementById('adminDashboard').style.display = 'none';
+      document.getElementById('adminAccessCard').style.display = 'block';
+      openAccessModal('admin');
+    }
+    authChecked = true;
   });
 
   /* ============ ONGLETS ============ */
-  function switchTab(id){
+  window.switchTab = function switchTab(id){
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === id); });
     document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id === id); });
   }
 
-  /* ============ STOCKAGE (démo, local au navigateur) ============ */
-  function loadData(key, fallback){
-    try{
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch(e){ return fallback; }
-  }
-  function saveData(key, value){
-    try{ localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
-  }
   function todayStr(){
     var d = new Date();
     return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
@@ -522,18 +558,15 @@
 
   /* ============ ONGLET 1 : MEMBRES ============ */
   function renderMembers(){
-    var members = loadData('an_members', [
-      {name:'Awa Diarra', email:'awa.diarra@example.com', phone:'+223 70 00 00 01', status:'Actif', since:'12/01/2025'},
-      {name:'Moussa Traoré', email:'moussa.traore@example.com', phone:'+223 70 00 00 02', status:'Actif', since:'03/03/2025'}
-    ]);
-    saveData('an_members', members);
     var body = document.getElementById('membersBody');
+    var keys = Object.keys(membersCache);
     body.innerHTML = '';
-    if(members.length === 0){
+    if(keys.length === 0){
       body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre pour le moment.</td></tr>';
       return;
     }
-    members.forEach(function(m, i){
+    keys.forEach(function(key){
+      var m = membersCache[key];
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>'+escapeHtml(m.name)+'</td>' +
@@ -541,91 +574,73 @@
         '<td>'+escapeHtml(m.phone||'—')+'</td>' +
         '<td><span class="badge badge-actif">'+escapeHtml(m.status||'Actif')+'</span></td>' +
         '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
-        '<td><button class="row-btn delete" onclick="removeMember('+i+')">Retirer</button></td>';
+        '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>';
       body.appendChild(tr);
     });
   }
-  function addMember(){
+  window.addMember = function addMember(){
     var name = document.getElementById('memName').value.trim();
     var email = document.getElementById('memEmail').value.trim();
     var phone = document.getElementById('memPhone').value.trim();
     if(!name || !email) return;
-    var members = loadData('an_members', []);
-    members.push({name:name, email:email, phone:phone, status:'Actif', since:todayStr()});
-    saveData('an_members', members);
+    var newRef = push(ref(db, 'members'));
+    set(newRef, {name:name, email:email, phone:phone, status:'Actif', since:todayStr()});
     document.getElementById('memName').value = '';
     document.getElementById('memEmail').value = '';
     document.getElementById('memPhone').value = '';
-    renderMembers();
   }
-  function removeMember(i){
-    var members = loadData('an_members', []);
-    members.splice(i, 1);
-    saveData('an_members', members);
-    renderMembers();
+  window.removeMember = function removeMember(key){
+    remove(ref(db, 'members/' + key));
   }
 
   /* ============ ONGLET 2 : DEMANDES D'ADHÉSION ============ */
   function renderRequests(){
-    var requests = loadData('an_join_requests', [
-      {name:'Fatoumata Coulibaly', email:'fatoumata.c@example.com', phone:'+223 70 00 00 03', date:todayStr(), status:'attente'}
-    ]);
-    saveData('an_join_requests', requests);
     var body = document.getElementById('requestsBody');
     body.innerHTML = '';
-    var pending = requests.filter(function(r){ return r.status !== 'traitée'; });
-    if(pending.length === 0){
+    var keys = Object.keys(requestsCache).filter(function(k){ return requestsCache[k].status !== 'traitée'; });
+    if(keys.length === 0){
       body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucune demande en attente.</td></tr>';
       return;
     }
-    requests.forEach(function(r, i){
-      if(r.status === 'traitée') return;
+    keys.forEach(function(key){
+      var r = requestsCache[key];
       var badge = r.status === 'refuse' ? '<span class="badge badge-refuse">Refusée</span>' : '<span class="badge badge-attente">En attente</span>';
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>'+escapeHtml(r.name)+'</td>' +
-        '<td>'+escapeHtml(r.email)+'</td>' +
+        '<td>'+escapeHtml(r.email||r.activity||'—')+'</td>' +
         '<td>'+escapeHtml(r.phone||'—')+'</td>' +
         '<td>'+escapeHtml(r.date||'—')+'</td>' +
         '<td>'+badge+'</td>' +
         '<td><div class="row-actions">' +
-          '<button class="row-btn accept" onclick="acceptRequest('+i+')">Accepter</button>' +
-          '<button class="row-btn refuse" onclick="refuseRequest('+i+')">Refuser</button>' +
+          '<button class="row-btn accept" onclick="acceptRequest(\''+key+'\')">Accepter</button>' +
+          '<button class="row-btn refuse" onclick="refuseRequest(\''+key+'\')">Refuser</button>' +
         '</div></td>';
       body.appendChild(tr);
     });
   }
-  function acceptRequest(i){
-    var requests = loadData('an_join_requests', []);
-    var r = requests[i];
+  window.acceptRequest = function acceptRequest(key){
+    var r = requestsCache[key];
     if(!r) return;
-    var members = loadData('an_members', []);
-    members.push({name:r.name, email:r.email, phone:r.phone, status:'Actif', since:todayStr()});
-    saveData('an_members', members);
-    requests[i].status = 'traitée';
-    saveData('an_join_requests', requests);
-    renderRequests(); renderMembers();
+    var newRef = push(ref(db, 'members'));
+    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', status:'Actif', since:todayStr()});
+    update(ref(db, 'joinRequests/' + key), {status:'traitée'});
   }
-  function refuseRequest(i){
-    var requests = loadData('an_join_requests', []);
-    if(!requests[i]) return;
-    requests[i].status = 'traitée';
-    saveData('an_join_requests', requests);
-    renderRequests();
+  window.refuseRequest = function refuseRequest(key){
+    if(!requestsCache[key]) return;
+    update(ref(db, 'joinRequests/' + key), {status:'traitée'});
   }
 
   /* ============ ONGLET 3 : CODES D'ACCÈS ============ */
-  function generateCode(){
+  window.generateCode = function generateCode(){
     var forWhom = document.getElementById('codeFor').value.trim();
     var code = buildAccessCode(forWhom);
-    var codes = loadData('an_access_codes', []);
-    codes.unshift({code:code, forWhom:forWhom || '—', date:todayStr(), status:'Actif'});
-    saveData('an_access_codes', codes);
+    var newRef = push(ref(db, 'accessCodes'));
+    set(newRef, {code:code, forWhom:forWhom || '—', date:todayStr(), status:'Actif'});
     document.getElementById('codeFor').value = '';
-    renderCodes();
   }
-  /* Format : AN-[2 lettres du nom][2 lettres du prénom][2 chiffres aléatoires]
-     Ex. "Koulibaly Solo" -> AN-KOSO57 */
+  /* Saisie au format Prénom Nom. Format du code : AN-[2 lettres du nom][2 lettres du prénom][2 chiffres aléatoires]
+     Ex. "Solo Koulibaly" -> AN-KOSO57 */
   function buildAccessCode(fullName){
     var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     var clean = (fullName || '')
@@ -634,7 +649,9 @@
     var parts = clean.split(/\s+/).filter(Boolean);
     var letters = '';
     if(parts.length >= 2){
-      letters = parts[0].substring(0,2) + parts[1].substring(0,2);
+      var prenom = parts[0];
+      var nom = parts[1];
+      letters = nom.substring(0,2) + prenom.substring(0,2);
     } else if(parts.length === 1){
       letters = parts[0].substring(0,4);
     }
@@ -645,14 +662,15 @@
     return 'AN-' + letters + digits;
   }
   function renderCodes(){
-    var codes = loadData('an_access_codes', []);
     var body = document.getElementById('codesBody');
     body.innerHTML = '';
-    if(codes.length === 0){
+    var keys = Object.keys(codesCache).sort(function(a,b){ return (codesCache[b].ts||0) - (codesCache[a].ts||0); });
+    if(keys.length === 0){
       body.innerHTML = '<tr class="empty-row"><td colspan="5">Aucun code généré pour le moment.</td></tr>';
       return;
     }
-    codes.forEach(function(c, i){
+    keys.forEach(function(key){
+      var c = codesCache[key];
       var badge = c.status === 'Révoqué' ? '<span class="badge badge-refuse">Révoqué</span>' : '<span class="badge badge-actif">Actif</span>';
       var tr = document.createElement('tr');
       tr.innerHTML =
@@ -662,43 +680,39 @@
         '<td>'+badge+'</td>' +
         '<td><div class="row-actions">' +
           '<button class="row-btn copy" onclick="copyCode(\''+c.code+'\')">Copier</button>' +
-          (c.status !== 'Révoqué' ? '<button class="row-btn delete" onclick="revokeCode('+i+')">Révoquer</button>' : '') +
+          (c.status !== 'Révoqué' ? '<button class="row-btn delete" onclick="revokeCode(\''+key+'\')">Révoquer</button>' : '') +
         '</div></td>';
       body.appendChild(tr);
     });
   }
-  function copyCode(code){
+  window.copyCode = function copyCode(code){
     if(navigator.clipboard){ navigator.clipboard.writeText(code); }
   }
-  function revokeCode(i){
-    var codes = loadData('an_access_codes', []);
-    if(!codes[i]) return;
-    codes[i].status = 'Révoqué';
-    saveData('an_access_codes', codes);
-    renderCodes();
+  window.revokeCode = function revokeCode(key){
+    if(!codesCache[key]) return;
+    update(ref(db, 'accessCodes/' + key), {status:'Révoqué'});
   }
 
   /* ============ ONGLET 4 : ANNONCES ============ */
-  function publishAnnouncement(){
+  window.publishAnnouncement = function publishAnnouncement(){
     var title = document.getElementById('annTitle').value.trim();
     var msg = document.getElementById('annMsg').value.trim();
     if(!title || !msg) return;
-    var list = loadData('an_announcements', []);
-    list.unshift({title:title, message:msg, date:todayStr()});
-    saveData('an_announcements', list);
+    var newRef = push(ref(db, 'announcements'));
+    set(newRef, {title:title, message:msg, date:todayStr(), ts:Date.now()});
     document.getElementById('annTitle').value = '';
     document.getElementById('annMsg').value = '';
-    renderAnnouncements();
   }
   function renderAnnouncements(){
-    var list = loadData('an_announcements', []);
     var wrap = document.getElementById('announceList');
+    var keys = Object.keys(announcementsCache).sort(function(a,b){ return (announcementsCache[b].ts||0) - (announcementsCache[a].ts||0); });
     wrap.innerHTML = '';
-    if(list.length === 0){
+    if(keys.length === 0){
       wrap.innerHTML = '<p class="sub" style="margin:0;">Aucune annonce publiée pour le moment.</p>';
       return;
     }
-    list.forEach(function(a){
+    keys.forEach(function(key){
+      var a = announcementsCache[key];
       var item = document.createElement('div');
       item.className = 'announce-item';
       item.innerHTML =

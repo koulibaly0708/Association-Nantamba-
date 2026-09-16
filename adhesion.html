@@ -257,14 +257,60 @@
   <div class="wrap">Association Nantamba (AN) — L'union pour le développement</div>
 </footer>
 
-<script>
-  function submitJoin(){
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
+    authDomain: "association-nantamba.firebaseapp.com",
+    databaseURL: "https://association-nantamba-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "association-nantamba",
+    storageBucket: "association-nantamba.firebasestorage.app",
+    messagingSenderId: "819829729208",
+    appId: "1:819829729208:web:18bef83acef4597a3cd14d",
+    measurementId: "G-WDEBQ9JKVJ"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  function todayStr(){
+    var d = new Date();
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  }
+
+  window.submitJoin = function submitJoin(){
     var n = document.getElementById('joinName').value.trim();
     var a = document.getElementById('joinActivity').value.trim();
+    var p = document.getElementById('joinPhone').value.trim();
     var v = document.getElementById('joinCity').value.trim();
     var agree = document.getElementById('joinAgree').checked;
     var note = document.getElementById('joinNote');
-    if(n && a && v && agree){ note.style.display = 'block'; } else { note.style.display = 'none'; }
+    if(n && a && v && agree){
+      var newReqRef = push(ref(db, 'joinRequests'));
+      set(newReqRef, {
+        name: n,
+        email: '',
+        phone: p,
+        activity: a,
+        city: v,
+        date: todayStr(),
+        status: 'attente'
+      }).then(function(){
+        note.style.display = 'block';
+        document.getElementById('joinName').value = '';
+        document.getElementById('joinActivity').value = '';
+        document.getElementById('joinPhone').value = '';
+        document.getElementById('joinCity').value = '';
+        document.getElementById('joinAgree').checked = false;
+      }).catch(function(e){
+        note.textContent = "Erreur d'envoi, réessayez.";
+        note.style.display = 'block';
+        console.error(e);
+      });
+    } else {
+      note.style.display = 'none';
+    }
   }
 </script>
 </body>
