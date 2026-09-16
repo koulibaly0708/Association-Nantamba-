@@ -406,7 +406,7 @@
           <h3>Création de code d'accès</h3>
           <p class="sub">Générez un code d'accès à transmettre à un membre.</p>
           <div class="inline-form">
-            <div class="field"><label>Attribué à (Nom Prénom)</label><input type="text" id="codeFor" placeholder="Ex : Koulibaly Solo"></div>
+            <div class="field"><label>Nom complet du membre</label><input type="text" id="codeFor" placeholder="Ex : Koulibaly Solo"></div>
             <button class="btn btn-primary" onclick="generateCode()">Générer un code</button>
           </div>
           <div class="table-wrap">
@@ -624,8 +624,8 @@
     document.getElementById('codeFor').value = '';
     renderCodes();
   }
-  /* Format : AN-[2 lettres du nom][2 lettres du prénom][1 chiffre aléatoire]
-     Ex. "Koulibaly Solo" -> AN-KOSO5 */
+  /* Format : AN-[2 lettres du nom][2 lettres du prénom][2 chiffres aléatoires]
+     Ex. "Koulibaly Solo" -> AN-KOSO57 */
   function buildAccessCode(fullName){
     var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     var clean = (fullName || '')
@@ -641,8 +641,8 @@
     while(letters.length < 4){
       letters += alphabet.charAt(Math.floor(Math.random()*alphabet.length));
     }
-    var digit = Math.floor(Math.random()*10);
-    return 'AN-' + letters + digit;
+    var digits = String(Math.floor(Math.random()*100)).padStart(2, '0');
+    return 'AN-' + letters + digits;
   }
   function renderCodes(){
     var codes = loadData('an_access_codes', []);
