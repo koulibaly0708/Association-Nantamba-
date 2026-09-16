@@ -189,6 +189,79 @@
     display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600;
     color:var(--blue-deep); margin-bottom:6px;
   }
+
+  /* ============ DASHBOARD ADMIN ============ */
+  .admin-dashboard{ display:none; margin-top:48px; }
+  .dash-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  .dash-head h2{ font-size:22px; font-weight:600; color:var(--blue-deep); }
+  .logout-link{ font-size:13px; font-weight:600; color:var(--ink-soft); }
+  .logout-link:hover{ color:var(--blue-deep); }
+
+  .tabs-nav{ display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:28px; }
+  .tab-btn{
+    padding:11px 18px; font-size:13.5px; font-weight:600; color:var(--ink-soft);
+    border-bottom:2.5px solid transparent; margin-bottom:-1px; transition:color .15s ease, border-color .15s ease;
+  }
+  .tab-btn:hover{ color:var(--blue-deep); }
+  .tab-btn.active{ color:var(--blue-deep); border-bottom-color:var(--blue-deep); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .panel-card{
+    background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:26px 24px; box-shadow:0 10px 26px rgba(27,90,133,.06);
+  }
+  .panel-card h3{ font-size:16px; font-weight:600; color:var(--blue-deep); margin-bottom:4px; }
+  .panel-card p.sub{ font-size:13px; color:var(--ink-soft); margin-bottom:18px; }
+
+  .inline-form{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
+  .inline-form .field{ flex:1; min-width:150px; margin-bottom:0; }
+  .inline-form .btn{ height:41px; white-space:nowrap; }
+
+  .data-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .data-table th{
+    text-align:left; padding:10px 12px; font-size:11.5px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; color:var(--ink-soft); border-bottom:1.5px solid var(--line);
+  }
+  .data-table td{ padding:12px; border-bottom:1px solid var(--line); color:var(--ink); vertical-align:middle; }
+  .data-table tr:last-child td{ border-bottom:none; }
+  .table-wrap{ overflow-x:auto; }
+  .empty-row td{ text-align:center; color:var(--ink-soft); padding:26px 12px; font-style:italic; }
+
+  .badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
+  .badge-actif{ background:#EAF3EC; color:#256B3B; }
+  .badge-attente{ background:#FCF1E1; color:#9A6414; }
+  .badge-refuse{ background:#FCEAEA; color:#B23A3A; }
+
+  .row-btn{ font-size:12.5px; font-weight:600; padding:6px 10px; border-radius:6px; }
+  .row-btn.accept{ background:#EAF3EC; color:#256B3B; }
+  .row-btn.refuse{ background:#FCEAEA; color:#B23A3A; }
+  .row-btn.delete{ background:#FCEAEA; color:#B23A3A; }
+  .row-btn.copy{ background:#EAF1F8; color:var(--blue-deep); }
+  .row-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+
+  .code-display{
+    font-family:monospace; font-size:14px; font-weight:600; letter-spacing:.04em;
+    background:var(--sand); padding:4px 10px; border-radius:6px; color:var(--blue-deep);
+  }
+
+  .announce-list{ display:flex; flex-direction:column; gap:14px; margin-top:22px; }
+  .announce-item{ padding:16px 18px; border:1px solid var(--line); border-radius:10px; background:var(--sand); }
+  .announce-item .a-title{ font-weight:600; color:var(--ink); margin-bottom:4px; font-size:14.5px; }
+  .announce-item .a-date{ font-size:12px; color:var(--ink-soft); margin-bottom:8px; }
+  .announce-item .a-msg{ font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+
+  .panel-card textarea{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:8px; font-size:14.5px;
+    min-height:100px; resize:vertical; margin-bottom:14px;
+  }
+  .panel-card textarea:focus{ outline:none; border-color:var(--blue); }
+
+  @media (max-width:600px){
+    .data-table{ font-size:12.5px; }
+    .data-table th, .data-table td{ padding:9px 8px; }
+  }
 </style>
 </head>
 <body>
@@ -232,9 +305,89 @@
         <div class="field"><label>Identifiant</label><input type="text" id="adminUser" placeholder="Identifiant administrateur"></div>
         <div class="field"><label>Mot de passe</label><input type="password" id="adminPass" placeholder="••••••••"></div>
         <button class="btn btn-primary" onclick="demoLogin('adminUser','adminPass','adminNote')">Se connecter</button>
-        <div class="login-note" id="adminNote">Connexion réussie — contenu à venir.</div>
+        <div class="login-note" id="adminNote">Connexion réussie.</div>
       </div>
     </div>
+
+    <!-- ============ TABLEAU DE BORD ADMIN (onglets) ============ -->
+    <div class="admin-dashboard" id="adminDashboard">
+      <div class="dash-head">
+        <h2>Tableau de bord</h2>
+        <a href="#" class="logout-link" onclick="adminLogout(); return false;">Se déconnecter</a>
+      </div>
+
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="tab-membres" onclick="switchTab('tab-membres')">Liste des membres</button>
+        <button class="tab-btn" data-tab="tab-adhesion" onclick="switchTab('tab-adhesion')">Demandes d'adhésion</button>
+        <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
+        <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
+      </div>
+
+      <!-- Onglet 1 : Liste des membres -->
+      <div class="tab-panel active" id="tab-membres">
+        <div class="panel-card">
+          <h3>Liste des membres</h3>
+          <p class="sub">Membres actifs de l'Association Nantamba.</p>
+          <div class="inline-form">
+            <div class="field"><label>Nom complet</label><input type="text" id="memName" placeholder="Nom du membre"></div>
+            <div class="field"><label>E-mail</label><input type="email" id="memEmail" placeholder="vous@exemple.com"></div>
+            <div class="field"><label>Téléphone</label><input type="text" id="memPhone" placeholder="Téléphone"></div>
+            <button class="btn btn-primary" onclick="addMember()">+ Ajouter</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Statut</th><th>Depuis</th><th></th></tr></thead>
+              <tbody id="membersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet 2 : Demande d'adhésion -->
+      <div class="tab-panel" id="tab-adhesion">
+        <div class="panel-card">
+          <h3>Demandes d'adhésion</h3>
+          <p class="sub">Demandes envoyées depuis le formulaire d'adhésion du site.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+              <tbody id="requestsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet 3 : Création de code d'accès -->
+      <div class="tab-panel" id="tab-codes">
+        <div class="panel-card">
+          <h3>Création de code d'accès</h3>
+          <p class="sub">Générez un code d'accès à transmettre à un membre.</p>
+          <div class="inline-form">
+            <div class="field"><label>Attribué à (optionnel)</label><input type="text" id="codeFor" placeholder="Nom du membre"></div>
+            <button class="btn btn-primary" onclick="generateCode()">Générer un code</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Code</th><th>Attribué à</th><th>Créé le</th><th>Statut</th><th></th></tr></thead>
+              <tbody id="codesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet 4 : Annonce aux membres -->
+      <div class="tab-panel" id="tab-annonces">
+        <div class="panel-card">
+          <h3>Annonce aux membres</h3>
+          <p class="sub">Publiez un message visible par tous les membres.</p>
+          <div class="field"><label>Titre</label><input type="text" id="annTitle" placeholder="Titre de l'annonce"></div>
+          <textarea id="annMsg" placeholder="Votre message aux membres..."></textarea>
+          <button class="btn btn-primary" onclick="publishAnnouncement()">Publier l'annonce</button>
+          <div class="announce-list" id="announceList"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -243,11 +396,224 @@
 </footer>
 
 <script>
+  /* ============ CONNEXION ============ */
   function demoLogin(userId, passId, noteId){
     var u = document.getElementById(userId).value.trim();
     var p = document.getElementById(passId).value.trim();
     var note = document.getElementById(noteId);
-    if(u && p){ note.style.display = 'block'; } else { note.style.display = 'none'; }
+    if(u && p){
+      note.style.display = 'block';
+      document.getElementById('adminDashboard').style.display = 'block';
+      renderMembers(); renderRequests(); renderCodes(); renderAnnouncements();
+      document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      note.style.display = 'none';
+    }
+  }
+  function adminLogout(){
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('adminNote').style.display = 'none';
+    document.getElementById('adminUser').value = '';
+    document.getElementById('adminPass').value = '';
+  }
+
+  /* ============ ONGLETS ============ */
+  function switchTab(id){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === id); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id === id); });
+  }
+
+  /* ============ STOCKAGE (démo, local au navigateur) ============ */
+  function loadData(key, fallback){
+    try{
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch(e){ return fallback; }
+  }
+  function saveData(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
+  }
+  function todayStr(){
+    var d = new Date();
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  }
+
+  /* ============ ONGLET 1 : MEMBRES ============ */
+  function renderMembers(){
+    var members = loadData('an_members', [
+      {name:'Awa Diarra', email:'awa.diarra@example.com', phone:'+223 70 00 00 01', status:'Actif', since:'12/01/2025'},
+      {name:'Moussa Traoré', email:'moussa.traore@example.com', phone:'+223 70 00 00 02', status:'Actif', since:'03/03/2025'}
+    ]);
+    saveData('an_members', members);
+    var body = document.getElementById('membersBody');
+    body.innerHTML = '';
+    if(members.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre pour le moment.</td></tr>';
+      return;
+    }
+    members.forEach(function(m, i){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+escapeHtml(m.name)+'</td>' +
+        '<td>'+escapeHtml(m.email)+'</td>' +
+        '<td>'+escapeHtml(m.phone||'—')+'</td>' +
+        '<td><span class="badge badge-actif">'+escapeHtml(m.status||'Actif')+'</span></td>' +
+        '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
+        '<td><button class="row-btn delete" onclick="removeMember('+i+')">Retirer</button></td>';
+      body.appendChild(tr);
+    });
+  }
+  function addMember(){
+    var name = document.getElementById('memName').value.trim();
+    var email = document.getElementById('memEmail').value.trim();
+    var phone = document.getElementById('memPhone').value.trim();
+    if(!name || !email) return;
+    var members = loadData('an_members', []);
+    members.push({name:name, email:email, phone:phone, status:'Actif', since:todayStr()});
+    saveData('an_members', members);
+    document.getElementById('memName').value = '';
+    document.getElementById('memEmail').value = '';
+    document.getElementById('memPhone').value = '';
+    renderMembers();
+  }
+  function removeMember(i){
+    var members = loadData('an_members', []);
+    members.splice(i, 1);
+    saveData('an_members', members);
+    renderMembers();
+  }
+
+  /* ============ ONGLET 2 : DEMANDES D'ADHÉSION ============ */
+  function renderRequests(){
+    var requests = loadData('an_join_requests', [
+      {name:'Fatoumata Coulibaly', email:'fatoumata.c@example.com', phone:'+223 70 00 00 03', date:todayStr(), status:'attente'}
+    ]);
+    saveData('an_join_requests', requests);
+    var body = document.getElementById('requestsBody');
+    body.innerHTML = '';
+    var pending = requests.filter(function(r){ return r.status !== 'traitée'; });
+    if(pending.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucune demande en attente.</td></tr>';
+      return;
+    }
+    requests.forEach(function(r, i){
+      if(r.status === 'traitée') return;
+      var badge = r.status === 'refuse' ? '<span class="badge badge-refuse">Refusée</span>' : '<span class="badge badge-attente">En attente</span>';
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+escapeHtml(r.name)+'</td>' +
+        '<td>'+escapeHtml(r.email)+'</td>' +
+        '<td>'+escapeHtml(r.phone||'—')+'</td>' +
+        '<td>'+escapeHtml(r.date||'—')+'</td>' +
+        '<td>'+badge+'</td>' +
+        '<td><div class="row-actions">' +
+          '<button class="row-btn accept" onclick="acceptRequest('+i+')">Accepter</button>' +
+          '<button class="row-btn refuse" onclick="refuseRequest('+i+')">Refuser</button>' +
+        '</div></td>';
+      body.appendChild(tr);
+    });
+  }
+  function acceptRequest(i){
+    var requests = loadData('an_join_requests', []);
+    var r = requests[i];
+    if(!r) return;
+    var members = loadData('an_members', []);
+    members.push({name:r.name, email:r.email, phone:r.phone, status:'Actif', since:todayStr()});
+    saveData('an_members', members);
+    requests[i].status = 'traitée';
+    saveData('an_join_requests', requests);
+    renderRequests(); renderMembers();
+  }
+  function refuseRequest(i){
+    var requests = loadData('an_join_requests', []);
+    if(!requests[i]) return;
+    requests[i].status = 'traitée';
+    saveData('an_join_requests', requests);
+    renderRequests();
+  }
+
+  /* ============ ONGLET 3 : CODES D'ACCÈS ============ */
+  function generateCode(){
+    var forWhom = document.getElementById('codeFor').value.trim();
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code = 'AN-';
+    for(var i=0;i<6;i++){ code += chars.charAt(Math.floor(Math.random()*chars.length)); }
+    var codes = loadData('an_access_codes', []);
+    codes.unshift({code:code, forWhom:forWhom || '—', date:todayStr(), status:'Actif'});
+    saveData('an_access_codes', codes);
+    document.getElementById('codeFor').value = '';
+    renderCodes();
+  }
+  function renderCodes(){
+    var codes = loadData('an_access_codes', []);
+    var body = document.getElementById('codesBody');
+    body.innerHTML = '';
+    if(codes.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">Aucun code généré pour le moment.</td></tr>';
+      return;
+    }
+    codes.forEach(function(c, i){
+      var badge = c.status === 'Révoqué' ? '<span class="badge badge-refuse">Révoqué</span>' : '<span class="badge badge-actif">Actif</span>';
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="code-display">'+escapeHtml(c.code)+'</span></td>' +
+        '<td>'+escapeHtml(c.forWhom)+'</td>' +
+        '<td>'+escapeHtml(c.date)+'</td>' +
+        '<td>'+badge+'</td>' +
+        '<td><div class="row-actions">' +
+          '<button class="row-btn copy" onclick="copyCode(\''+c.code+'\')">Copier</button>' +
+          (c.status !== 'Révoqué' ? '<button class="row-btn delete" onclick="revokeCode('+i+')">Révoquer</button>' : '') +
+        '</div></td>';
+      body.appendChild(tr);
+    });
+  }
+  function copyCode(code){
+    if(navigator.clipboard){ navigator.clipboard.writeText(code); }
+  }
+  function revokeCode(i){
+    var codes = loadData('an_access_codes', []);
+    if(!codes[i]) return;
+    codes[i].status = 'Révoqué';
+    saveData('an_access_codes', codes);
+    renderCodes();
+  }
+
+  /* ============ ONGLET 4 : ANNONCES ============ */
+  function publishAnnouncement(){
+    var title = document.getElementById('annTitle').value.trim();
+    var msg = document.getElementById('annMsg').value.trim();
+    if(!title || !msg) return;
+    var list = loadData('an_announcements', []);
+    list.unshift({title:title, message:msg, date:todayStr()});
+    saveData('an_announcements', list);
+    document.getElementById('annTitle').value = '';
+    document.getElementById('annMsg').value = '';
+    renderAnnouncements();
+  }
+  function renderAnnouncements(){
+    var list = loadData('an_announcements', []);
+    var wrap = document.getElementById('announceList');
+    wrap.innerHTML = '';
+    if(list.length === 0){
+      wrap.innerHTML = '<p class="sub" style="margin:0;">Aucune annonce publiée pour le moment.</p>';
+      return;
+    }
+    list.forEach(function(a){
+      var item = document.createElement('div');
+      item.className = 'announce-item';
+      item.innerHTML =
+        '<div class="a-title">'+escapeHtml(a.title)+'</div>' +
+        '<div class="a-date">'+escapeHtml(a.date)+'</div>' +
+        '<div class="a-msg">'+escapeHtml(a.message)+'</div>';
+      wrap.appendChild(item);
+    });
+  }
+
+  /* ============ UTILITAIRE ============ */
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
   }
 </script>
 </body>

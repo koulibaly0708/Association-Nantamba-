@@ -228,13 +228,24 @@
           <li>Accéder à l'espace membre</li>
           <li>Contribuer aux décisions de l'association</li>
         </ul>
+        <h2 style="font-size:20px; margin-top:28px;">Conditions d'adhésion</h2>
+        <ul>
+          <li>Accepter le statut et règlement intérieur de l'association Nantamba</li>
+          <li>Être guinéen ou sympathisant de la Guinée</li>
+          <li>Payer son droit d'adhésion</li>
+        </ul>
       </div>
       <div class="login-card">
         <h3>Formulaire d'adhésion</h3>
         <p class="sub">Remplissez ce formulaire pour demander à devenir membre.</p>
         <div class="field"><label>Nom complet</label><input type="text" id="joinName" placeholder="Votre nom complet"></div>
-        <div class="field"><label>Adresse e-mail</label><input type="email" id="joinEmail" placeholder="vous@exemple.com"></div>
+        <div class="field"><label>Activité</label><input type="text" id="joinActivity" placeholder="Votre activité (profession, métier...)"></div>
         <div class="field"><label>Téléphone</label><input type="text" id="joinPhone" placeholder="Votre numéro de téléphone"></div>
+        <div class="field"><label>Ville</label><input type="text" id="joinCity" placeholder="Votre ville"></div>
+        <div class="field" style="display:flex; align-items:flex-start; gap:8px;">
+          <input type="checkbox" id="joinAgree" style="margin-top:3px; width:auto;">
+          <label for="joinAgree" style="font-size:13px; font-weight:400; color:var(--ink-soft); margin-bottom:0;">J'accepte le statut et règlement intérieur de l'association Nantamba.</label>
+        </div>
         <button class="btn btn-primary" onclick="submitJoin()">Envoyer ma demande d'adhésion</button>
         <div class="login-note" id="joinNote">Demande envoyée — nous reviendrons vers vous rapidement.</div>
       </div>
@@ -249,9 +260,11 @@
 <script>
   function submitJoin(){
     var n = document.getElementById('joinName').value.trim();
-    var e = document.getElementById('joinEmail').value.trim();
+    var a = document.getElementById('joinActivity').value.trim();
+    var v = document.getElementById('joinCity').value.trim();
+    var agree = document.getElementById('joinAgree').checked;
     var note = document.getElementById('joinNote');
-    if(n && e){ note.style.display = 'block'; } else { note.style.display = 'none'; }
+    if(n && a && v && agree){ note.style.display = 'block'; } else { note.style.display = 'none'; }
   }
 </script>
 </body>
