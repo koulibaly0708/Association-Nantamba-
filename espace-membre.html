@@ -457,9 +457,9 @@
     var reste = montant - paye;
     statutEl.textContent = 'Statut : ' + cStatut;
     detailEl.innerHTML =
-      'Montant de la cotisation : ' + formatMontant(montant) + ' FCFA<br>' +
-      'Payé : ' + formatMontant(paye) + ' FCFA<br>' +
-      'Reste à payer : ' + formatMontant(reste) + ' FCFA<br>' +
+      'Montant de la cotisation : ' + formatMontant(montant) + ' GNF<br>' +
+      'Payé : ' + formatMontant(paye) + ' GNF<br>' +
+      'Reste à payer : ' + formatMontant(reste) + ' GNF<br>' +
       (m.cotisationEcheance
         ? ('Prochaine échéance : ' + escapeHtml(m.cotisationEcheance) + '.')
         : 'Aucune échéance renseignée pour le moment.');
@@ -504,9 +504,9 @@
       ['Nom et prenom', currentReceiptData.name],
       ['Code d\'acces', currentMemberCode || '-'],
       ['Telephone', currentReceiptData.phone],
-      ['Montant cotisation', formatMontant(currentReceiptData.montant) + ' FCFA'],
-      ['Paye', formatMontant(currentReceiptData.paye) + ' FCFA'],
-      ['Reste a payer', formatMontant(currentReceiptData.reste) + ' FCFA'],
+      ['Montant cotisation', formatMontant(currentReceiptData.montant) + ' GNF'],
+      ['Paye', formatMontant(currentReceiptData.paye) + ' GNF'],
+      ['Reste a payer', formatMontant(currentReceiptData.reste) + ' GNF'],
       ['Echeance', currentReceiptData.echeance],
       ['Date', todayStr()]
     ];
