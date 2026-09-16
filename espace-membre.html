@@ -189,10 +189,70 @@
     display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600;
     color:var(--blue-deep); margin-bottom:6px;
   }
+
+  /* ============ MODALE DE CONNEXION A L'ESPACE ============ */
+  body.modal-open{ overflow:hidden; }
+  .page-blur{ transition:filter .2s ease; }
+  body.modal-open .page-blur{ filter:blur(5px); pointer-events:none; user-select:none; }
+
+  .access-overlay{
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(27,36,48,.45);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .access-overlay.open{ display:flex; }
+  .access-modal{
+    position:relative; width:100%; max-width:430px;
+    background:var(--sand); border-radius:16px; padding:34px 30px 30px;
+    box-shadow:0 24px 60px rgba(27,36,48,.28);
+    max-height:90vh; overflow-y:auto;
+  }
+  .access-modal .modal-close{
+    position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%;
+    background:var(--white); border:1px solid var(--line); font-size:16px; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .access-modal .modal-close:hover{ color:var(--blue-deep); border-color:var(--blue); }
+  .access-modal h3{ font-size:26px; font-weight:600; color:var(--blue-deep); margin-bottom:10px; padding-right:30px; }
+  .access-modal p.modal-sub{ font-size:14.5px; color:var(--ink-soft); margin-bottom:22px; }
+  .access-modal .modal-tab{
+    font-weight:600; font-size:15px; color:var(--blue-deep); padding-bottom:10px;
+    border-bottom:2.5px solid var(--blue); display:inline-block; margin-bottom:22px;
+  }
+  .access-modal .field{ margin-bottom:14px; }
+  .access-modal .field input{
+    width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:9px;
+    font-size:15px; color:var(--ink); background:var(--white);
+  }
+  .access-modal .field input:focus{ outline:none; border-color:var(--blue); }
+  .access-modal .forgot-link{
+    display:inline-block; font-size:13.5px; font-weight:600; color:var(--blue-deep);
+    text-decoration:underline; margin-bottom:20px;
+  }
+  .access-modal .btn-primary{ width:100%; padding:13px 24px; font-size:15px; }
+  .access-modal .modal-error{
+    display:none; margin-bottom:14px; font-size:13px; background:#FCEAEA; color:#B23A3A;
+    padding:10px 12px; border-radius:7px;
+  }
+
+  /* ============ TABLEAU DE BORD MEMBRE ============ */
+  .member-dashboard{ display:none; margin-top:48px; }
+  .member-dash-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  .member-dash-head h2{ font-size:22px; font-weight:600; color:var(--blue-deep); }
+  .member-cards{ display:grid; grid-template-columns:repeat(2,1fr); gap:20px; }
+  .member-card{
+    background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:24px 22px; box-shadow:0 10px 26px rgba(27,90,133,.06);
+  }
+  .member-card .tag{ font-size:12.5px; font-weight:600; color:var(--green); margin-bottom:8px; }
+  .member-card h3{ font-size:16px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .member-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+  @media (max-width:600px){ .member-cards{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 
+<div class="page-blur">
 <header class="site">
   <div class="nav-inner">
     <div class="brand">
@@ -226,13 +286,40 @@
           <li>Actualités réservées aux membres</li>
         </ul>
       </div>
-      <div class="login-card">
-        <h3>Connexion membre</h3>
-        <p class="sub">Réservé aux membres de l'Association Nantamba.</p>
-        <div class="field"><label>Code d'accès unique</label><input type="text" id="memberCode" placeholder="Votre code d'accès"></div>
-        <div class="field"><label>Mot de passe</label><input type="password" id="memberPass" placeholder="••••••••"></div>
-        <button class="btn btn-primary" onclick="demoLogin('memberCode','memberPass','memberNote')">Se connecter</button>
-        <div class="login-note" id="memberNote">Connexion réussie — contenu à venir.</div>
+      <div class="login-card" id="memberAccessCard">
+        <h3>Accès réservé</h3>
+        <p class="sub">La connexion à l'espace membre se fait via la fenêtre de connexion sécurisée.</p>
+        <button class="btn btn-primary" onclick="openAccessModal('membre')">Se connecter</button>
+      </div>
+    </div>
+
+    <!-- ============ TABLEAU DE BORD MEMBRE ============ -->
+    <div class="member-dashboard" id="memberDashboard">
+      <div class="member-dash-head">
+        <h2>Bienvenue dans votre espace</h2>
+        <a href="#" class="logout-link" onclick="memberLogout(); return false;">Se déconnecter</a>
+      </div>
+      <div class="member-cards">
+        <div class="member-card">
+          <div class="tag">Cotisation</div>
+          <h3>Statut : à jour</h3>
+          <p>Le suivi détaillé de votre cotisation sera bientôt disponible ici.</p>
+        </div>
+        <div class="member-card">
+          <div class="tag">Documents</div>
+          <h3>Comptes-rendus</h3>
+          <p>Les documents et comptes-rendus de l'association seront publiés dans cet espace.</p>
+        </div>
+        <div class="member-card">
+          <div class="tag">Actualités</div>
+          <h3>Annonces réservées</h3>
+          <p>Retrouvez ici les annonces publiées par les administrateurs pour les membres.</p>
+        </div>
+        <div class="member-card">
+          <div class="tag">Profil</div>
+          <h3>Mes informations</h3>
+          <p>La gestion de votre profil membre sera prochainement disponible.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -241,14 +328,64 @@
 <footer>
   <div class="wrap">Association Nantamba (AN) — L'union pour le développement</div>
 </footer>
+</div><!-- /.page-blur -->
+
+<!-- ============ MODALE DE CONNEXION A L'ESPACE ============ -->
+<div class="access-overlay" id="accessOverlay">
+  <div class="access-modal">
+    <button class="modal-close" onclick="closeAccessModal()">✕</button>
+    <h3 id="accessModalTitle">Espace membre</h3>
+    <p class="modal-sub">Accès réservé.</p>
+    <span class="modal-tab">Se connecter</span>
+    <div class="modal-error" id="accessModalError">Identifiants incorrects. Veuillez réessayer.</div>
+    <div class="field"><input type="text" id="accessCode" placeholder="Code d'accès"></div>
+    <div class="field"><input type="password" id="accessPass" placeholder="Mot de passe (6 caractères min.)"></div>
+    <a href="#" class="forgot-link" onclick="return false;">Mot de passe oublié ?</a>
+    <button class="btn btn-primary" onclick="submitAccessLogin()">Se connecter</button>
+  </div>
+</div>
 
 <script>
-  function demoLogin(userId, passId, noteId){
-    var u = document.getElementById(userId).value.trim();
-    var p = document.getElementById(passId).value.trim();
-    var note = document.getElementById(noteId);
-    if(u && p){ note.style.display = 'block'; } else { note.style.display = 'none'; }
+  /* ============ CONNEXION VIA MODALE ============ */
+  function openAccessModal(space){
+    document.getElementById('accessModalTitle').textContent = 'Espace membre';
+    document.getElementById('accessModalError').style.display = 'none';
+    document.getElementById('accessCode').value = '';
+    document.getElementById('accessPass').value = '';
+    document.getElementById('accessOverlay').classList.add('open');
+    document.body.classList.add('modal-open');
   }
+  function closeAccessModal(){
+    document.getElementById('accessOverlay').classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
+  function submitAccessLogin(){
+    var code = document.getElementById('accessCode').value.trim();
+    var pass = document.getElementById('accessPass').value.trim();
+    var err = document.getElementById('accessModalError');
+    if(code && pass.length >= 6){
+      err.style.display = 'none';
+      closeAccessModal();
+      showMemberSpace();
+    } else {
+      err.style.display = 'block';
+    }
+  }
+  function showMemberSpace(){
+    document.getElementById('memberAccessCard').style.display = 'none';
+    document.getElementById('memberDashboard').style.display = 'block';
+    document.getElementById('memberDashboard').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function memberLogout(){
+    document.getElementById('memberDashboard').style.display = 'none';
+    document.getElementById('memberAccessCard').style.display = 'block';
+  }
+
+  /* Affiche automatiquement la fenêtre de connexion à l'arrivée sur la page */
+  window.addEventListener('DOMContentLoaded', function(){
+    openAccessModal('membre');
+  });
 </script>
+
 </body>
 </html>

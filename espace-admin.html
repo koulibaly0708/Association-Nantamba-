@@ -262,10 +262,56 @@
     .data-table{ font-size:12.5px; }
     .data-table th, .data-table td{ padding:9px 8px; }
   }
+
+  /* ============ MODALE DE CONNEXION A L'ESPACE ============ */
+  body.modal-open{ overflow:hidden; }
+  .page-blur{ transition:filter .2s ease; }
+  body.modal-open .page-blur{ filter:blur(5px); pointer-events:none; user-select:none; }
+
+  .access-overlay{
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(27,36,48,.45);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .access-overlay.open{ display:flex; }
+  .access-modal{
+    position:relative; width:100%; max-width:430px;
+    background:var(--sand); border-radius:16px; padding:34px 30px 30px;
+    box-shadow:0 24px 60px rgba(27,36,48,.28);
+    max-height:90vh; overflow-y:auto;
+  }
+  .access-modal .modal-close{
+    position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%;
+    background:var(--white); border:1px solid var(--line); font-size:16px; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .access-modal .modal-close:hover{ color:var(--blue-deep); border-color:var(--blue); }
+  .access-modal h3{ font-size:26px; font-weight:600; color:var(--blue-deep); margin-bottom:10px; padding-right:30px; }
+  .access-modal p.modal-sub{ font-size:14.5px; color:var(--ink-soft); margin-bottom:22px; }
+  .access-modal .modal-tab{
+    font-weight:600; font-size:15px; color:var(--blue-deep); padding-bottom:10px;
+    border-bottom:2.5px solid var(--blue); display:inline-block; margin-bottom:22px;
+  }
+  .access-modal .field{ margin-bottom:14px; }
+  .access-modal .field input{
+    width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:9px;
+    font-size:15px; color:var(--ink); background:var(--white);
+  }
+  .access-modal .field input:focus{ outline:none; border-color:var(--blue); }
+  .access-modal .forgot-link{
+    display:inline-block; font-size:13.5px; font-weight:600; color:var(--blue-deep);
+    text-decoration:underline; margin-bottom:20px;
+  }
+  .access-modal .btn-primary{ width:100%; padding:13px 24px; font-size:15px; }
+  .access-modal .modal-error{
+    display:none; margin-bottom:14px; font-size:13px; background:#FCEAEA; color:#B23A3A;
+    padding:10px 12px; border-radius:7px;
+  }
 </style>
 </head>
 <body>
 
+<div class="page-blur">
 <header class="site">
   <div class="nav-inner">
     <div class="brand">
@@ -299,13 +345,10 @@
           <li>Suivi des messages reçus</li>
         </ul>
       </div>
-      <div class="login-card">
-        <h3>Connexion administrateur</h3>
-        <p class="sub">Réservé aux administrateurs de l'Association Nantamba.</p>
-        <div class="field"><label>Identifiant</label><input type="text" id="adminUser" placeholder="Identifiant administrateur"></div>
-        <div class="field"><label>Mot de passe</label><input type="password" id="adminPass" placeholder="••••••••"></div>
-        <button class="btn btn-primary" onclick="demoLogin('adminUser','adminPass','adminNote')">Se connecter</button>
-        <div class="login-note" id="adminNote">Connexion réussie.</div>
+      <div class="login-card" id="adminAccessCard">
+        <h3>Accès réservé</h3>
+        <p class="sub">La connexion à l'espace administrateur se fait via la fenêtre de connexion sécurisée.</p>
+        <button class="btn btn-primary" onclick="openAccessModal('admin')">Se connecter</button>
       </div>
     </div>
 
@@ -363,7 +406,7 @@
           <h3>Création de code d'accès</h3>
           <p class="sub">Générez un code d'accès à transmettre à un membre.</p>
           <div class="inline-form">
-            <div class="field"><label>Attribué à (optionnel)</label><input type="text" id="codeFor" placeholder="Nom du membre"></div>
+            <div class="field"><label>Attribué à (Nom Prénom)</label><input type="text" id="codeFor" placeholder="Ex : Koulibaly Solo"></div>
             <button class="btn btn-primary" onclick="generateCode()">Générer un code</button>
           </div>
           <div class="table-wrap">
@@ -394,28 +437,67 @@
 <footer>
   <div class="wrap">Association Nantamba (AN) — L'union pour le développement</div>
 </footer>
+</div><!-- /.page-blur -->
+
+<!-- ============ MODALE DE CONNEXION A L'ESPACE ============ -->
+<div class="access-overlay" id="accessOverlay">
+  <div class="access-modal">
+    <button class="modal-close" onclick="closeAccessModal()">✕</button>
+    <h3 id="accessModalTitle">Espace Administrateur</h3>
+    <p class="modal-sub">Accès réservé.</p>
+    <span class="modal-tab">Se connecter</span>
+    <div class="modal-error" id="accessModalError">Identifiants incorrects. Veuillez réessayer.</div>
+    <div class="field"><input type="email" id="accessEmail" placeholder="Adresse e-mail"></div>
+    <div class="field"><input type="password" id="accessPass" placeholder="Mot de passe (6 caractères min.)"></div>
+    <a href="#" class="forgot-link" onclick="return false;">Mot de passe oublié ?</a>
+    <button class="btn btn-primary" onclick="submitAccessLogin()">Se connecter</button>
+  </div>
+</div>
 
 <script>
-  /* ============ CONNEXION ============ */
-  function demoLogin(userId, passId, noteId){
-    var u = document.getElementById(userId).value.trim();
-    var p = document.getElementById(passId).value.trim();
-    var note = document.getElementById(noteId);
-    if(u && p){
-      note.style.display = 'block';
-      document.getElementById('adminDashboard').style.display = 'block';
-      renderMembers(); renderRequests(); renderCodes(); renderAnnouncements();
-      document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'});
+  /* ============ CONNEXION VIA MODALE ============ */
+  var currentAccessSpace = 'admin';
+
+  function openAccessModal(space){
+    currentAccessSpace = space;
+    document.getElementById('accessModalTitle').textContent = 'Espace Administrateur';
+    document.getElementById('accessModalError').style.display = 'none';
+    document.getElementById('accessEmail').value = '';
+    document.getElementById('accessPass').value = '';
+    document.getElementById('accessOverlay').classList.add('open');
+    document.body.classList.add('modal-open');
+  }
+  function closeAccessModal(){
+    document.getElementById('accessOverlay').classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
+  function submitAccessLogin(){
+    var email = document.getElementById('accessEmail').value.trim();
+    var pass = document.getElementById('accessPass').value.trim();
+    var err = document.getElementById('accessModalError');
+    if(email && pass.length >= 6){
+      err.style.display = 'none';
+      closeAccessModal();
+      showAdminSpace();
     } else {
-      note.style.display = 'none';
+      err.style.display = 'block';
     }
+  }
+  function showAdminSpace(){
+    document.getElementById('adminAccessCard').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'block';
+    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements();
+    document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'});
   }
   function adminLogout(){
     document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('adminNote').style.display = 'none';
-    document.getElementById('adminUser').value = '';
-    document.getElementById('adminPass').value = '';
+    document.getElementById('adminAccessCard').style.display = 'block';
   }
+
+  /* Affiche automatiquement la fenêtre de connexion à l'arrivée sur la page */
+  window.addEventListener('DOMContentLoaded', function(){
+    openAccessModal('admin');
+  });
 
   /* ============ ONGLETS ============ */
   function switchTab(id){
@@ -535,14 +617,32 @@
   /* ============ ONGLET 3 : CODES D'ACCÈS ============ */
   function generateCode(){
     var forWhom = document.getElementById('codeFor').value.trim();
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    var code = 'AN-';
-    for(var i=0;i<6;i++){ code += chars.charAt(Math.floor(Math.random()*chars.length)); }
+    var code = buildAccessCode(forWhom);
     var codes = loadData('an_access_codes', []);
     codes.unshift({code:code, forWhom:forWhom || '—', date:todayStr(), status:'Actif'});
     saveData('an_access_codes', codes);
     document.getElementById('codeFor').value = '';
     renderCodes();
+  }
+  /* Format : AN-[2 lettres du nom][2 lettres du prénom][1 chiffre aléatoire]
+     Ex. "Koulibaly Solo" -> AN-KOSO5 */
+  function buildAccessCode(fullName){
+    var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    var clean = (fullName || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase().replace(/[^A-Z\s]/g, '');
+    var parts = clean.split(/\s+/).filter(Boolean);
+    var letters = '';
+    if(parts.length >= 2){
+      letters = parts[0].substring(0,2) + parts[1].substring(0,2);
+    } else if(parts.length === 1){
+      letters = parts[0].substring(0,4);
+    }
+    while(letters.length < 4){
+      letters += alphabet.charAt(Math.floor(Math.random()*alphabet.length));
+    }
+    var digit = Math.floor(Math.random()*10);
+    return 'AN-' + letters + digit;
   }
   function renderCodes(){
     var codes = loadData('an_access_codes', []);
