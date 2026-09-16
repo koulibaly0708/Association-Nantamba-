@@ -307,6 +307,46 @@
     display:none; margin-bottom:14px; font-size:13px; background:#FCEAEA; color:#B23A3A;
     padding:10px 12px; border-radius:7px;
   }
+
+  /* ============ NORMALISATION TYPOGRAPHIQUE (lisibilité) ============ */
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+
+  body{ font-family:'Roboto', sans-serif; font-size:17px; line-height:1.6; }
+  h1,h2,h3,.brand-name,.brand-name small{ font-family:'Roboto', sans-serif; }
+  input,textarea,button{ font-family:'Roboto', sans-serif; }
+
+  /* Titres : proportionnels au corps de texte (17px) */
+  .hero h1{ font-size:2rem; line-height:1.3; }
+  .section-head h2, .space-text h2{ font-size:1.75rem; line-height:1.35; }
+  .dash-head h2, .member-dash-head h2{ font-size:1.5rem; line-height:1.35; }
+  .ach-item h3, .value-item h3, .login-card h3, .member-card h3,
+  .panel-card h3, .news-item h3, .legal-modal h3, .access-modal h3{
+    font-size:1.375rem; line-height:1.4;
+  }
+  @media (max-width:880px){ .hero h1{ font-size:1.75rem; } }
+
+  /* Corps de texte : 16-18px, interligne 1.5-1.6, lignes limitées en longueur */
+  .hero p.lead{ font-size:18px; line-height:1.6; max-width:65ch; margin-left:auto; margin-right:auto; }
+  .section-head p{ font-size:17px; line-height:1.6; max-width:65ch; margin-left:auto; margin-right:auto; }
+  .apropos-grid p{ font-size:17px; line-height:1.6; max-width:68ch; }
+  .space-text p{ font-size:17px; line-height:1.6; max-width:68ch; }
+  .space-text li{ font-size:16px; line-height:1.6; }
+  .ach-item p, .news-item p, .value-item p, .member-card p, .announce-item .a-msg{ font-size:16px; line-height:1.6; }
+  .login-card p.sub, .panel-card p.sub, .access-modal p.modal-sub{ font-size:15px; line-height:1.55; }
+  .contact-info .item .val{ font-size:16px; line-height:1.6; }
+  .faq-q{ font-size:17px; }
+  .faq-a p{ font-size:16px; line-height:1.6; max-width:68ch; }
+  .legal-modal p, .legal-modal li{ font-size:16px; line-height:1.6; max-width:68ch; }
+
+  /* Formulaires et navigation, pour rester cohérent avec le nouveau corps de texte */
+  .field label{ font-size:14px; }
+  .field input, .access-modal input, .contact-form input, .contact-form textarea{ font-size:16px; }
+  .btn{ font-size:15.5px; }
+  nav.menu a{ font-size:16px; }
+  .data-table{ font-size:14.5px; }
+  footer{ font-size:14px; }
+  .footer-copy{ font-size:13px; }
+
 </style>
 </head>
 <body>
@@ -379,7 +419,7 @@
           </div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Statut</th><th>Depuis</th><th></th></tr></thead>
+              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Cotisation</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
               <tbody id="membersBody"></tbody>
             </table>
           </div>
@@ -406,7 +446,11 @@
           <h3>Création de code d'accès</h3>
           <p class="sub">Générez un code d'accès à transmettre à un membre.</p>
           <div class="inline-form">
-            <div class="field"><label>Prénom Nom du membre</label><input type="text" id="codeFor" placeholder="Ex : Solo Koulibaly"></div>
+            <div class="field"><label>Membre</label>
+              <select id="codeForMember" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:7px; font-size:16px; color:var(--ink);">
+                <option value="">— Sélectionner un membre —</option>
+              </select>
+            </div>
             <button class="btn btn-primary" onclick="generateCode()">Générer un code</button>
           </div>
           <div class="table-wrap">
@@ -557,26 +601,51 @@
   }
 
   /* ============ ONGLET 1 : MEMBRES ============ */
+  var COTISATION_OPTIONS = ['Non renseigné', 'À jour', 'En retard'];
   function renderMembers(){
     var body = document.getElementById('membersBody');
     var keys = Object.keys(membersCache);
     body.innerHTML = '';
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre pour le moment.</td></tr>';
-      return;
+      body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun membre pour le moment.</td></tr>';
+    } else {
+      keys.forEach(function(key){
+        var m = membersCache[key];
+        var statut = m.cotisationStatut || 'Non renseigné';
+        var tr = document.createElement('tr');
+        var selectHtml = '<select onchange="updateCotisationStatut(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;">' +
+          COTISATION_OPTIONS.map(function(opt){
+            return '<option value="'+opt+'"'+(opt===statut ? ' selected' : '')+'>'+opt+'</option>';
+          }).join('') + '</select>';
+        tr.innerHTML =
+          '<td>'+escapeHtml(m.name)+'</td>' +
+          '<td>'+escapeHtml(m.email)+'</td>' +
+          '<td>'+escapeHtml(m.phone||'—')+'</td>' +
+          '<td>'+selectHtml+'</td>' +
+          '<td><input type="date" value="'+escapeHtml(m.cotisationEcheance||'')+'" onchange="updateCotisationEcheance(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
+          '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>';
+        body.appendChild(tr);
+      });
     }
-    keys.forEach(function(key){
-      var m = membersCache[key];
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>'+escapeHtml(m.name)+'</td>' +
-        '<td>'+escapeHtml(m.email)+'</td>' +
-        '<td>'+escapeHtml(m.phone||'—')+'</td>' +
-        '<td><span class="badge badge-actif">'+escapeHtml(m.status||'Actif')+'</span></td>' +
-        '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
-        '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>';
-      body.appendChild(tr);
-    });
+    populateCodeMemberSelect();
+  }
+  window.updateCotisationStatut = function updateCotisationStatut(key, value){
+    update(ref(db, 'members/' + key), {cotisationStatut: value});
+  }
+  window.updateCotisationEcheance = function updateCotisationEcheance(key, value){
+    update(ref(db, 'members/' + key), {cotisationEcheance: value});
+  }
+  function populateCodeMemberSelect(){
+    var sel = document.getElementById('codeForMember');
+    if(!sel) return;
+    var current = sel.value;
+    var keys = Object.keys(membersCache);
+    sel.innerHTML = '<option value="">— Sélectionner un membre —</option>' +
+      keys.map(function(key){
+        return '<option value="'+key+'">'+escapeHtml(membersCache[key].name)+'</option>';
+      }).join('');
+    if(keys.indexOf(current) !== -1){ sel.value = current; }
   }
   window.addMember = function addMember(){
     var name = document.getElementById('memName').value.trim();
@@ -584,7 +653,7 @@
     var phone = document.getElementById('memPhone').value.trim();
     if(!name || !email) return;
     var newRef = push(ref(db, 'members'));
-    set(newRef, {name:name, email:email, phone:phone, status:'Actif', since:todayStr()});
+    set(newRef, {name:name, email:email, phone:phone, status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné'});
     document.getElementById('memName').value = '';
     document.getElementById('memEmail').value = '';
     document.getElementById('memPhone').value = '';
@@ -623,7 +692,7 @@
     var r = requestsCache[key];
     if(!r) return;
     var newRef = push(ref(db, 'members'));
-    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', status:'Actif', since:todayStr()});
+    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné'});
     update(ref(db, 'joinRequests/' + key), {status:'traitée'});
   }
   window.refuseRequest = function refuseRequest(key){
@@ -633,11 +702,14 @@
 
   /* ============ ONGLET 3 : CODES D'ACCÈS ============ */
   window.generateCode = function generateCode(){
-    var forWhom = document.getElementById('codeFor').value.trim();
+    var sel = document.getElementById('codeForMember');
+    var memberId = sel.value;
+    if(!memberId){ sel.focus(); return; }
+    var forWhom = membersCache[memberId] ? membersCache[memberId].name : '—';
     var code = buildAccessCode(forWhom);
     var newRef = push(ref(db, 'accessCodes'));
-    set(newRef, {code:code, forWhom:forWhom || '—', date:todayStr(), status:'Actif'});
-    document.getElementById('codeFor').value = '';
+    set(newRef, {code:code, forWhom:forWhom, memberId:memberId, date:todayStr(), status:'Actif', ts:Date.now()});
+    sel.value = '';
   }
   /* Saisie au format Prénom Nom. Format du code : AN-[2 lettres du nom][2 lettres du prénom][2 chiffres aléatoires]
      Ex. "Solo Koulibaly" -> AN-KOSO57 */
