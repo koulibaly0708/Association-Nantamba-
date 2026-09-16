@@ -433,6 +433,9 @@
         '<div style="font-size:13.5px;">'+escapeHtml(a.message)+'</div></div>';
     }).join('');
   }
+  function formatMontant(n){
+    return (Number(n) || 0).toLocaleString('fr-FR');
+  }
   function renderMemberProfile(m){
     var statutEl = document.getElementById('cotisationStatutTxt');
     var detailEl = document.getElementById('cotisationDetailTxt');
@@ -449,18 +452,31 @@
       return;
     }
     var cStatut = m.cotisationStatut || 'Non renseigné';
+    var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : 100000;
+    var paye = m.cotisationPaye || 0;
+    var reste = montant - paye;
     statutEl.textContent = 'Statut : ' + cStatut;
-    detailEl.textContent = m.cotisationEcheance
-      ? ('Prochaine échéance : ' + m.cotisationEcheance + '.')
-      : 'Aucune échéance renseignée pour le moment.';
+    detailEl.innerHTML =
+      'Montant de la cotisation : ' + formatMontant(montant) + ' FCFA<br>' +
+      'Payé : ' + formatMontant(paye) + ' FCFA<br>' +
+      'Reste à payer : ' + formatMontant(reste) + ' FCFA<br>' +
+      (m.cotisationEcheance
+        ? ('Prochaine échéance : ' + escapeHtml(m.cotisationEcheance) + '.')
+        : 'Aucune échéance renseignée pour le moment.');
     nameEl.textContent = m.name || 'Mes informations';
     profilDetailEl.innerHTML =
-      (m.email ? 'E-mail : ' + escapeHtml(m.email) + '<br>' : '') +
       (m.phone ? 'Téléphone : ' + escapeHtml(m.phone) + '<br>' : '') +
       'Membre depuis : ' + escapeHtml(m.since || '—');
 
     if(cStatut === 'À jour'){
-      currentReceiptData = { name: m.name || '—', phone: m.phone || '—' };
+      currentReceiptData = {
+        name: m.name || '—',
+        phone: m.phone || '—',
+        montant: montant,
+        paye: paye,
+        reste: reste,
+        echeance: m.cotisationEcheance || '—'
+      };
       receiptBtn.style.display = 'inline-flex';
     } else {
       currentReceiptData = null;
@@ -488,6 +504,10 @@
       ['Nom et prenom', currentReceiptData.name],
       ['Code d\'acces', currentMemberCode || '-'],
       ['Telephone', currentReceiptData.phone],
+      ['Montant cotisation', formatMontant(currentReceiptData.montant) + ' FCFA'],
+      ['Paye', formatMontant(currentReceiptData.paye) + ' FCFA'],
+      ['Reste a payer', formatMontant(currentReceiptData.reste) + ' FCFA'],
+      ['Echeance', currentReceiptData.echeance],
       ['Date', todayStr()]
     ];
     rows.forEach(function(r){

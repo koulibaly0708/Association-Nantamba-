@@ -418,9 +418,26 @@
             <button class="btn btn-primary" onclick="addMember()">+ Ajouter</button>
             <button class="btn btn-outline" onclick="exportMembersToExcel()">⬇ Exporter en Excel</button>
           </div>
+          <div class="inline-form" style="margin-top:-6px;">
+            <div class="field">
+              <label>Filtrer par année d'échéance</label>
+              <select id="filterYear" onchange="renderMembers()" style="padding:9px 10px; border:1.5px solid var(--line); border-radius:7px; font-size:14px;">
+                <option value="">Toutes les années</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Filtrer par cotisation</label>
+              <select id="filterStatut" onchange="renderMembers()" style="padding:9px 10px; border:1.5px solid var(--line); border-radius:7px; font-size:14px;">
+                <option value="">Tous les statuts</option>
+                <option value="En retard">En retard (retardataires)</option>
+                <option value="À jour">À jour</option>
+                <option value="Non renseigné">Non renseigné</option>
+              </select>
+            </div>
+          </div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>Téléphone</th><th>Cotisation</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
+              <thead><tr><th>Nom</th><th>Téléphone</th><th>Cotisation</th><th>Montant</th><th>Payé</th><th>Reste</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
               <tbody id="membersBody"></tbody>
             </table>
           </div>
@@ -604,16 +621,54 @@
 
   /* ============ ONGLET 1 : MEMBRES ============ */
   var COTISATION_OPTIONS = ['Non renseigné', 'À jour', 'En retard'];
+  var COTISATION_MONTANT_DEFAUT = 100000;
+
+  function getYearFromEcheance(m){
+    if(!m.cotisationEcheance) return null;
+    var parts = m.cotisationEcheance.split('-');
+    return parts[0] || null;
+  }
+  function populateYearFilter(){
+    var sel = document.getElementById('filterYear');
+    if(!sel) return;
+    var current = sel.value;
+    var years = {};
+    Object.keys(membersCache).forEach(function(key){
+      var y = getYearFromEcheance(membersCache[key]);
+      if(y) years[y] = true;
+    });
+    var yearList = Object.keys(years).sort(function(a,b){ return b - a; });
+    sel.innerHTML = '<option value="">Toutes les années</option>' +
+      yearList.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+    if(yearList.indexOf(current) !== -1){ sel.value = current; }
+  }
+  function getFilteredMemberKeys(){
+    var yearFilter = (document.getElementById('filterYear') || {}).value || '';
+    var statutFilter = (document.getElementById('filterStatut') || {}).value || '';
+    return Object.keys(membersCache).filter(function(key){
+      var m = membersCache[key];
+      if(yearFilter && getYearFromEcheance(m) !== yearFilter) return false;
+      if(statutFilter && (m.cotisationStatut || 'Non renseigné') !== statutFilter) return false;
+      return true;
+    });
+  }
+  function formatMontant(n){
+    return (Number(n) || 0).toLocaleString('fr-FR');
+  }
   function renderMembers(){
+    populateYearFilter();
     var body = document.getElementById('membersBody');
-    var keys = Object.keys(membersCache);
+    var keys = getFilteredMemberKeys();
     body.innerHTML = '';
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre pour le moment.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="9">Aucun membre ne correspond à ce filtre.</td></tr>';
     } else {
       keys.forEach(function(key){
         var m = membersCache[key];
         var statut = m.cotisationStatut || 'Non renseigné';
+        var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : COTISATION_MONTANT_DEFAUT;
+        var paye = m.cotisationPaye || 0;
+        var reste = montant - paye;
         var tr = document.createElement('tr');
         var selectHtml = '<select onchange="updateCotisationStatut(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;">' +
           COTISATION_OPTIONS.map(function(opt){
@@ -623,6 +678,9 @@
           '<td>'+escapeHtml(m.name)+'</td>' +
           '<td>'+escapeHtml(m.phone||'—')+'</td>' +
           '<td>'+selectHtml+'</td>' +
+          '<td><input type="number" min="0" step="1000" value="'+montant+'" onchange="updateCotisationMontant(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td><input type="number" min="0" step="1000" value="'+paye+'" onchange="updateCotisationPaye(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td style="font-weight:600; color:'+(reste>0 ? 'var(--gold)' : 'var(--green)')+';">'+formatMontant(reste)+'</td>' +
           '<td><input type="date" value="'+escapeHtml(m.cotisationEcheance||'')+'" onchange="updateCotisationEcheance(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
           '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>';
@@ -636,6 +694,12 @@
   }
   window.updateCotisationEcheance = function updateCotisationEcheance(key, value){
     update(ref(db, 'members/' + key), {cotisationEcheance: value});
+  }
+  window.updateCotisationMontant = function updateCotisationMontant(key, value){
+    update(ref(db, 'members/' + key), {cotisationMontant: Number(value) || 0});
+  }
+  window.updateCotisationPaye = function updateCotisationPaye(key, value){
+    update(ref(db, 'members/' + key), {cotisationPaye: Number(value) || 0});
   }
   function populateCodeMemberSelect(){
     var sel = document.getElementById('codeForMember');
@@ -655,7 +719,7 @@
     if(!name) return;
     var since = dateInput ? formatDateInput(dateInput) : todayStr();
     var newRef = push(ref(db, 'members'));
-    set(newRef, {name:name, phone:phone, status:'Actif', since:since, cotisationStatut:'Non renseigné'});
+    set(newRef, {name:name, phone:phone, status:'Actif', since:since, cotisationStatut:'Non renseigné', cotisationMontant:COTISATION_MONTANT_DEFAUT, cotisationPaye:0});
     document.getElementById('memName').value = '';
     document.getElementById('memDate').value = '';
     document.getElementById('memPhone').value = '';
@@ -670,18 +734,23 @@
     return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
   window.exportMembersToExcel = function exportMembersToExcel(){
-    var keys = Object.keys(membersCache);
+    var keys = getFilteredMemberKeys();
     var rows = keys.map(function(key){
       var m = membersCache[key];
+      var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : COTISATION_MONTANT_DEFAUT;
+      var paye = m.cotisationPaye || 0;
       return {
         'Nom': m.name || '',
         'Téléphone': m.phone || '',
         'Cotisation': m.cotisationStatut || 'Non renseigné',
+        'Montant': montant,
+        'Payé': paye,
+        'Reste': montant - paye,
         'Échéance': m.cotisationEcheance || '',
         "Date d'adhésion": m.since || ''
       };
     });
-    if(rows.length === 0){ rows.push({'Nom':'','Téléphone':'','Cotisation':'','Échéance':'',"Date d'adhésion":''}); }
+    if(rows.length === 0){ rows.push({'Nom':'','Téléphone':'','Cotisation':'','Montant':'','Payé':'','Reste':'','Échéance':'',"Date d'adhésion":''}); }
     var ws = XLSX.utils.json_to_sheet(rows);
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Membres');
@@ -718,7 +787,7 @@
     var r = requestsCache[key];
     if(!r) return;
     var newRef = push(ref(db, 'members'));
-    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné'});
+    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné', cotisationMontant:COTISATION_MONTANT_DEFAUT, cotisationPaye:0});
     update(ref(db, 'joinRequests/' + key), {status:'traitée'});
   }
   window.refuseRequest = function refuseRequest(key){
