@@ -413,13 +413,14 @@
           <p class="sub">Membres actifs de l'Association Nantamba.</p>
           <div class="inline-form">
             <div class="field"><label>Nom complet</label><input type="text" id="memName" placeholder="Nom du membre"></div>
-            <div class="field"><label>E-mail</label><input type="email" id="memEmail" placeholder="vous@exemple.com"></div>
+            <div class="field"><label>Date d'adhésion</label><input type="date" id="memDate"></div>
             <div class="field"><label>Téléphone</label><input type="text" id="memPhone" placeholder="Téléphone"></div>
             <button class="btn btn-primary" onclick="addMember()">+ Ajouter</button>
+            <button class="btn btn-outline" onclick="exportMembersToExcel()">⬇ Exporter en Excel</button>
           </div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Cotisation</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
+              <thead><tr><th>Nom</th><th>Téléphone</th><th>Cotisation</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
               <tbody id="membersBody"></tbody>
             </table>
           </div>
@@ -498,6 +499,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -607,7 +609,7 @@
     var keys = Object.keys(membersCache);
     body.innerHTML = '';
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun membre pour le moment.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre pour le moment.</td></tr>';
     } else {
       keys.forEach(function(key){
         var m = membersCache[key];
@@ -619,7 +621,6 @@
           }).join('') + '</select>';
         tr.innerHTML =
           '<td>'+escapeHtml(m.name)+'</td>' +
-          '<td>'+escapeHtml(m.email)+'</td>' +
           '<td>'+escapeHtml(m.phone||'—')+'</td>' +
           '<td>'+selectHtml+'</td>' +
           '<td><input type="date" value="'+escapeHtml(m.cotisationEcheance||'')+'" onchange="updateCotisationEcheance(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
@@ -649,17 +650,42 @@
   }
   window.addMember = function addMember(){
     var name = document.getElementById('memName').value.trim();
-    var email = document.getElementById('memEmail').value.trim();
+    var dateInput = document.getElementById('memDate').value;
     var phone = document.getElementById('memPhone').value.trim();
-    if(!name || !email) return;
+    if(!name) return;
+    var since = dateInput ? formatDateInput(dateInput) : todayStr();
     var newRef = push(ref(db, 'members'));
-    set(newRef, {name:name, email:email, phone:phone, status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné'});
+    set(newRef, {name:name, phone:phone, status:'Actif', since:since, cotisationStatut:'Non renseigné'});
     document.getElementById('memName').value = '';
-    document.getElementById('memEmail').value = '';
+    document.getElementById('memDate').value = '';
     document.getElementById('memPhone').value = '';
   }
   window.removeMember = function removeMember(key){
     remove(ref(db, 'members/' + key));
+  }
+  /* Convertit une date au format input (YYYY-MM-DD) vers DD/MM/YYYY, utilisée comme date d'adhésion */
+  function formatDateInput(value){
+    var parts = value.split('-');
+    if(parts.length !== 3) return value;
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+  window.exportMembersToExcel = function exportMembersToExcel(){
+    var keys = Object.keys(membersCache);
+    var rows = keys.map(function(key){
+      var m = membersCache[key];
+      return {
+        'Nom': m.name || '',
+        'Téléphone': m.phone || '',
+        'Cotisation': m.cotisationStatut || 'Non renseigné',
+        'Échéance': m.cotisationEcheance || '',
+        "Date d'adhésion": m.since || ''
+      };
+    });
+    if(rows.length === 0){ rows.push({'Nom':'','Téléphone':'','Cotisation':'','Échéance':'',"Date d'adhésion":''}); }
+    var ws = XLSX.utils.json_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Membres');
+    XLSX.writeFile(wb, 'membres-association-nantamba-' + todayStr().split('/').reverse().join('-') + '.xlsx');
   }
 
   /* ============ ONGLET 2 : DEMANDES D'ADHÉSION ============ */
