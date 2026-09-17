@@ -402,6 +402,7 @@
       <div class="tabs-nav">
         <button class="tab-btn active" data-tab="tab-membres" onclick="switchTab('tab-membres')">Suivi cotisation</button>
         <button class="tab-btn" data-tab="tab-adhesion" onclick="switchTab('tab-adhesion')">Demandes d'adhésion</button>
+        <button class="tab-btn" data-tab="tab-dons" onclick="switchTab('tab-dons')">Demandes de don</button>
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
         <button class="tab-btn" data-tab="tab-fonctions" onclick="switchTab('tab-fonctions')">Liste et fonction des membres</button>
@@ -454,6 +455,20 @@
             <table class="data-table">
               <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Date</th><th>Statut</th><th></th></tr></thead>
               <tbody id="requestsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet : Demandes de don -->
+      <div class="tab-panel" id="tab-dons">
+        <div class="panel-card">
+          <h3>Demandes de don</h3>
+          <p class="sub">Demandes envoyées depuis le bouton « Faire un don » du site.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Nom complet</th><th>Numéro</th><th>Montant</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+              <tbody id="donsBody"></tbody>
             </table>
           </div>
         </div>
@@ -570,11 +585,13 @@
   var requestsCache = {};
   var codesCache = {};
   var announcementsCache = {};
+  var donsCache = {};
 
   onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
+  onValue(ref(db, 'donationRequests'), function(snap){ donsCache = snap.val() || {}; renderDons(); });
 
   /* ============ CONNEXION VIA FIREBASE AUTHENTICATION ============ */
   var currentAccessSpace = 'admin';
@@ -618,7 +635,7 @@
     closeAccessModal();
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
-    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions();
+    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons();
     if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
   window.adminLogout = function adminLogout(){
@@ -901,6 +918,42 @@
   window.refuseRequest = function refuseRequest(key){
     if(!requestsCache[key]) return;
     update(ref(db, 'joinRequests/' + key), {status:'traitée'});
+  }
+
+  /* ============ ONGLET : DEMANDES DE DON ============ */
+  function renderDons(){
+    var body = document.getElementById('donsBody');
+    if(!body) return;
+    body.innerHTML = '';
+    var keys = Object.keys(donsCache).sort(function(a,b){ return (donsCache[b].ts||0) - (donsCache[a].ts||0); });
+    if(keys.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucune demande de don pour le moment.</td></tr>';
+      return;
+    }
+    keys.forEach(function(key){
+      var d = donsCache[key];
+      var badge = d.status === 'traité' ? '<span class="badge badge-accepte">Traité</span>' : '<span class="badge badge-attente">Nouveau</span>';
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+escapeHtml(d.name)+'</td>' +
+        '<td>'+escapeHtml(d.phone||'—')+'</td>' +
+        '<td>'+formatMontant(d.amount)+' GNF</td>' +
+        '<td>'+escapeHtml(d.date||'—')+'</td>' +
+        '<td>'+badge+'</td>' +
+        '<td><div class="row-actions">' +
+          (d.status === 'traité' ? '' : '<button class="row-btn accept" onclick="traiterDon(\''+key+'\')">Marquer traité</button>') +
+          '<button class="row-btn refuse" onclick="supprimerDon(\''+key+'\')">Supprimer</button>' +
+        '</div></td>';
+      body.appendChild(tr);
+    });
+  }
+  window.traiterDon = function traiterDon(key){
+    if(!donsCache[key]) return;
+    update(ref(db, 'donationRequests/' + key), {status:'traité'});
+  }
+  window.supprimerDon = function supprimerDon(key){
+    if(!donsCache[key]) return;
+    remove(ref(db, 'donationRequests/' + key));
   }
 
   /* ============ ONGLET 3 : CODES D'ACCÈS ============ */
