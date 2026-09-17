@@ -464,7 +464,7 @@
   function calcMandatsMembre(m){
     var prevu = Number(m.mandatPrevu) || 0;
     var jours = joursEcoulesDepuis(m.mandatDebut);
-    var execute = Math.min(Math.floor(jours / MANDAT_DUREE_JOURS), prevu);
+    var execute = Math.floor(jours / MANDAT_DUREE_JOURS);
     var restant = Math.max(prevu - execute, 0);
     return {prevu: prevu, execute: execute, restant: restant};
   }
