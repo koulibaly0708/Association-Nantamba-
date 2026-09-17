@@ -511,7 +511,7 @@
           <p class="sub">Mandat de 2 ans. Le nombre de mandats exécutés et restants est calculé automatiquement à partir de la date de début de mandat.</p>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>N°</th><th>Nom complet</th><th>Fonction</th><th>Mandats prévus</th><th>Début du mandat</th><th>Exécutés</th><th>Restants</th></tr></thead>
+              <thead><tr><th>N°</th><th>Nom complet</th><th>Fonction</th><th>Mandats prévus</th><th>Début du mandat</th><th>Mandats exécutés</th><th>Jours restants</th></tr></thead>
               <tbody id="bureauBody"></tbody>
             </table>
           </div>
@@ -768,8 +768,9 @@
     var prevu = Number(m.mandatPrevu) || 0;
     var jours = joursEcoulesDepuis(m.mandatDebut);
     var execute = Math.floor(jours / MANDAT_DUREE_JOURS);
-    var restant = Math.max(prevu - execute, 0);
-    return {prevu: prevu, execute: execute, restant: restant};
+    var joursTotalPrevus = prevu * MANDAT_DUREE_JOURS;
+    var joursRestants = Math.max(joursTotalPrevus - jours, 0);
+    return {prevu: prevu, execute: execute, joursRestants: joursRestants};
   }
   function renderFonctions(){
     var body = document.getElementById('fonctionsBody');
@@ -811,7 +812,7 @@
           '<td><input type="number" min="0" step="1" value="'+mandats.prevu+'" onchange="updateMandatPrevu(\''+key+'\', this.value)" style="width:70px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td><input type="date" value="'+escapeHtml(m.mandatDebut||'')+'" onchange="updateMandatDebut(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td style="font-weight:600;">'+mandats.execute+'</td>' +
-          '<td style="font-weight:600; color:'+(mandats.restant>0 ? 'var(--gold)' : 'var(--green)')+';">'+mandats.restant+'</td>';
+          '<td style="font-weight:600; color:'+(mandats.joursRestants>0 ? 'var(--gold)' : 'var(--green)')+';">'+mandats.joursRestants+' j</td>';
         bureauBody.appendChild(tr);
       });
     }

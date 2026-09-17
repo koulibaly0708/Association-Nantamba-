@@ -396,7 +396,7 @@
         <p class="sub">Mandat de 2 ans.</p>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>N°</th><th>Nom complet</th><th>Fonction</th><th>Mandats prévus</th><th>Exécutés</th><th>Restants</th></tr></thead>
+            <thead><tr><th>N°</th><th>Nom complet</th><th>Fonction</th><th>Mandats prévus</th><th>Mandats exécutés</th><th>Jours restants</th></tr></thead>
             <tbody id="bureauBodyMembre"></tbody>
           </table>
         </div>
@@ -465,8 +465,9 @@
     var prevu = Number(m.mandatPrevu) || 0;
     var jours = joursEcoulesDepuis(m.mandatDebut);
     var execute = Math.floor(jours / MANDAT_DUREE_JOURS);
-    var restant = Math.max(prevu - execute, 0);
-    return {prevu: prevu, execute: execute, restant: restant};
+    var joursTotalPrevus = prevu * MANDAT_DUREE_JOURS;
+    var joursRestants = Math.max(joursTotalPrevus - jours, 0);
+    return {prevu: prevu, execute: execute, joursRestants: joursRestants};
   }
   function renderFonctionsMembre(){
     var body = document.getElementById('fonctionsBodyMembre');
@@ -505,7 +506,7 @@
           '<td>'+escapeHtml(m.fonction||'—')+'</td>' +
           '<td>'+mandats.prevu+'</td>' +
           '<td>'+mandats.execute+'</td>' +
-          '<td>'+mandats.restant+'</td>';
+          '<td>'+mandats.joursRestants+' j</td>';
         bureauBody.appendChild(tr);
       });
     }
