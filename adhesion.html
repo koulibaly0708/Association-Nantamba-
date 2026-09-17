@@ -223,6 +223,43 @@
   /* Formulaires et navigation, pour rester cohérent avec le nouveau corps de texte */
   .field label{ font-size:14px; }
   .field input, .access-modal input, .contact-form input, .contact-form textarea{ font-size:16px; }
+
+  /* ============ PANNEAU PAIEMENT (après envoi du formulaire) ============ */
+  .payment-overlay{
+    display:none; position:fixed; inset:0; background:rgba(27,36,48,.6);
+    align-items:center; justify-content:center; z-index:200; padding:20px;
+  }
+  .payment-overlay.open{ display:flex; }
+  .payment-modal{
+    background:var(--white); border-radius:16px; max-width:440px; width:100%;
+    padding:32px 28px; position:relative; box-shadow:0 24px 60px rgba(0,0,0,.25);
+    max-height:90vh; overflow-y:auto;
+  }
+  .payment-modal .modal-close{
+    position:absolute; top:14px; right:16px; font-size:20px; color:var(--ink-soft); cursor:pointer;
+  }
+  .payment-modal h3{ font-size:19px; font-weight:600; color:var(--blue-deep); margin-bottom:10px; }
+  .payment-modal p{ font-size:14.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:14px; }
+  .payment-amount{
+    background:var(--sand); border:1.5px solid var(--line); border-radius:12px;
+    padding:16px 18px; text-align:center; margin-bottom:16px;
+  }
+  .payment-amount .amt{ font-size:26px; font-weight:700; color:var(--blue-deep); }
+  .payment-amount .via{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
+  .payment-number{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#EAF1F8; border-radius:10px; padding:12px 16px; margin-bottom:18px;
+  }
+  .payment-number .num{ font-family:monospace; font-size:17px; font-weight:700; color:var(--blue-deep); letter-spacing:.03em; }
+  .payment-number .copy-btn{ font-size:12.5px; font-weight:600; color:var(--blue-deep); background:var(--white); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+  .payment-steps{ margin:0 0 20px; padding-left:18px; }
+  .payment-steps li{ font-size:13.5px; color:var(--ink); line-height:1.7; list-style:decimal; }
+  .whatsapp-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:#25D366; color:var(--white); width:100%; padding:13px 20px;
+    border-radius:8px; font-weight:600; font-size:14.5px;
+  }
+  .whatsapp-btn:hover{ filter:brightness(0.95); }
   .btn{ font-size:15.5px; }
   nav.menu a{ font-size:16px; }
   .data-table{ font-size:14.5px; }
@@ -293,6 +330,32 @@
   </div>
 </section>
 
+<!-- ============ PANNEAU PAIEMENT APRÈS ENVOI DE LA DEMANDE ============ -->
+<div class="payment-overlay" id="paymentOverlay">
+  <div class="payment-modal">
+    <span class="modal-close" onclick="closePaymentPanel()">✕</span>
+    <h3>Demande envoyée !</h3>
+    <p>Dernière étape : réglez votre droit d'adhésion pour finaliser votre inscription et recevoir votre code d'accès membre.</p>
+    <div class="payment-amount">
+      <div class="amt">30 000 GNF</div>
+      <div class="via">à envoyer via Orange Money</div>
+    </div>
+    <div class="payment-number">
+      <span class="num">224 621 10 98 47</span>
+      <button class="copy-btn" onclick="copyPaymentNumber()">Copier</button>
+    </div>
+    <ol class="payment-steps">
+      <li>Envoyez 30 000 GNF au numéro ci-dessus via Orange Money.</li>
+      <li>Faites une capture d'écran de la confirmation de paiement.</li>
+      <li>Envoyez cette capture par WhatsApp au même numéro (bouton ci-dessous).</li>
+      <li>Votre adhésion sera validée et votre code d'accès vous sera transmis par WhatsApp.</li>
+    </ol>
+    <a class="whatsapp-btn" id="whatsappProofLink" href="#" target="_blank" rel="noopener">
+      Envoyer la preuve par WhatsApp
+    </a>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">Association Nantamba (AN) — L'union pour le développement</div>
 </footer>
@@ -338,6 +401,7 @@
         status: 'attente'
       }).then(function(){
         note.style.display = 'block';
+        openPaymentPanel(n);
         document.getElementById('joinName').value = '';
         document.getElementById('joinActivity').value = '';
         document.getElementById('joinPhone').value = '';
@@ -351,6 +415,20 @@
     } else {
       note.style.display = 'none';
     }
+  }
+
+  /* ============ PANNEAU PAIEMENT ============ */
+  var WHATSAPP_NUMBER = '224621109847'; // même numéro que l'Orange Money, sans espaces ni +
+  window.openPaymentPanel = function openPaymentPanel(name){
+    var msg = 'Bonjour, voici la preuve de paiement de mon adhésion à l\'Association Nantamba' + (name ? (' (' + name + ')') : '') + '.';
+    document.getElementById('whatsappProofLink').href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+    document.getElementById('paymentOverlay').classList.add('open');
+  }
+  window.closePaymentPanel = function closePaymentPanel(){
+    document.getElementById('paymentOverlay').classList.remove('open');
+  }
+  window.copyPaymentNumber = function copyPaymentNumber(){
+    if(navigator.clipboard){ navigator.clipboard.writeText('224621109847'); }
   }
 </script>
 </body>

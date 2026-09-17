@@ -400,17 +400,17 @@
       </div>
 
       <div class="tabs-nav">
-        <button class="tab-btn active" data-tab="tab-membres" onclick="switchTab('tab-membres')">Liste des membres</button>
+        <button class="tab-btn active" data-tab="tab-membres" onclick="switchTab('tab-membres')">Suivi cotisation</button>
         <button class="tab-btn" data-tab="tab-adhesion" onclick="switchTab('tab-adhesion')">Demandes d'adhésion</button>
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
-        <button class="tab-btn" data-tab="tab-fonctions" onclick="switchTab('tab-fonctions')">Fonction des membres</button>
+        <button class="tab-btn" data-tab="tab-fonctions" onclick="switchTab('tab-fonctions')">Liste et fonction des membres</button>
       </div>
 
-      <!-- Onglet 1 : Liste des membres -->
+      <!-- Onglet 1 : Suivi cotisation -->
       <div class="tab-panel active" id="tab-membres">
         <div class="panel-card">
-          <h3>Liste des membres</h3>
+          <h3>Suivi cotisation</h3>
           <p class="sub">Membres actifs de l'Association Nantamba.</p>
           <div class="inline-form">
             <div class="field"><label>Nom complet</label><input type="text" id="memName" placeholder="Nom du membre"></div>
@@ -493,11 +493,14 @@
         </div>
       </div>
 
-      <!-- Onglet 5 : Fonction des membres -->
+      <!-- Onglet 5 : Liste et fonction des membres -->
       <div class="tab-panel" id="tab-fonctions">
         <div class="panel-card" style="margin-bottom:22px;">
-          <h3>Fonction des membres</h3>
+          <h3>Liste et fonction des membres</h3>
           <p class="sub">Fonction et e-mail de chaque membre. Cochez "Bureau exécutif" pour l'inclure dans le suivi des mandats ci-dessous.</p>
+          <div class="inline-form" style="margin-bottom:14px;">
+            <button class="btn btn-outline" onclick="exportMembersToExcel()">⬇ Exporter en Excel</button>
+          </div>
           <div class="table-wrap">
             <table class="data-table">
               <thead><tr><th>N°</th><th>Nom complet</th><th>Téléphone</th><th>Fonction</th><th>E-mail</th><th>Bureau exécutif</th></tr></thead>
