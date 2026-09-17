@@ -404,6 +404,7 @@
         <button class="tab-btn" data-tab="tab-adhesion" onclick="switchTab('tab-adhesion')">Demandes d'adhésion</button>
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
+        <button class="tab-btn" data-tab="tab-fonctions" onclick="switchTab('tab-fonctions')">Fonction des membres</button>
       </div>
 
       <!-- Onglet 1 : Liste des membres -->
@@ -491,6 +492,31 @@
           <div class="announce-list" id="announceList"></div>
         </div>
       </div>
+
+      <!-- Onglet 5 : Fonction des membres -->
+      <div class="tab-panel" id="tab-fonctions">
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Fonction des membres</h3>
+          <p class="sub">Fonction et e-mail de chaque membre. Cochez "Bureau exécutif" pour l'inclure dans le suivi des mandats ci-dessous.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>N°</th><th>Nom complet</th><th>Téléphone</th><th>Fonction</th><th>E-mail</th><th>Bureau exécutif</th></tr></thead>
+              <tbody id="fonctionsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Bureau exécutif — Suivi des mandats</h3>
+          <p class="sub">Mandat de 2 ans. Le nombre de mandats exécutés et restants est calculé automatiquement à partir de la date de début de mandat.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>N°</th><th>Nom complet</th><th>Fonction</th><th>Mandats prévus</th><th>Début du mandat</th><th>Exécutés</th><th>Restants</th></tr></thead>
+              <tbody id="bureauBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -542,7 +568,7 @@
   var codesCache = {};
   var announcementsCache = {};
 
-  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); });
+  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
@@ -589,7 +615,7 @@
     closeAccessModal();
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
-    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements();
+    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions();
     if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
   window.adminLogout = function adminLogout(){
@@ -726,6 +752,84 @@
   }
   window.removeMember = function removeMember(key){
     remove(ref(db, 'members/' + key));
+  }
+
+  /* ============ ONGLET 5 : FONCTION DES MEMBRES ============ */
+  var MANDAT_DUREE_JOURS = 730; // 2 ans
+
+  function joursEcoulesDepuis(dateInputValue){
+    if(!dateInputValue) return 0;
+    var debut = new Date(dateInputValue + 'T00:00:00');
+    if(isNaN(debut.getTime())) return 0;
+    var diff = Date.now() - debut.getTime();
+    return diff > 0 ? Math.floor(diff / 86400000) : 0;
+  }
+  function calcMandats(m){
+    var prevu = Number(m.mandatPrevu) || 0;
+    var jours = joursEcoulesDepuis(m.mandatDebut);
+    var execute = Math.min(Math.floor(jours / MANDAT_DUREE_JOURS), prevu);
+    var restant = Math.max(prevu - execute, 0);
+    return {prevu: prevu, execute: execute, restant: restant};
+  }
+  function renderFonctions(){
+    var body = document.getElementById('fonctionsBody');
+    var bureauBody = document.getElementById('bureauBody');
+    if(!body || !bureauBody) return;
+    var keys = Object.keys(membersCache);
+    body.innerHTML = '';
+    bureauBody.innerHTML = '';
+    if(keys.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre pour le moment.</td></tr>';
+      bureauBody.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun membre du bureau exécutif.</td></tr>';
+      return;
+    }
+    var bureauKeys = [];
+    keys.forEach(function(key, i){
+      var m = membersCache[key];
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+(i+1)+'</td>' +
+        '<td>'+escapeHtml(m.name)+'</td>' +
+        '<td>'+escapeHtml(m.phone||'—')+'</td>' +
+        '<td><input type="text" value="'+escapeHtml(m.fonction||'')+'" placeholder="Ex : Trésorier" onchange="updateFonction(\''+key+'\', this.value)" style="width:150px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+        '<td><input type="email" value="'+escapeHtml(m.email||'')+'" placeholder="email@exemple.com" onchange="updateMemberEmail(\''+key+'\', this.value)" style="width:180px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+        '<td style="text-align:center;"><input type="checkbox" '+(m.bureauExecutif ? 'checked' : '')+' onchange="toggleBureauExecutif(\''+key+'\', this.checked)" style="width:18px; height:18px; cursor:pointer;"></td>';
+      body.appendChild(tr);
+      if(m.bureauExecutif){ bureauKeys.push(key); }
+    });
+    if(bureauKeys.length === 0){
+      bureauBody.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun membre du bureau exécutif. Cochez la case dans le tableau ci-dessus.</td></tr>';
+    } else {
+      bureauKeys.forEach(function(key, i){
+        var m = membersCache[key];
+        var mandats = calcMandats(m);
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>'+(i+1)+'</td>' +
+          '<td>'+escapeHtml(m.name)+'</td>' +
+          '<td>'+escapeHtml(m.fonction||'—')+'</td>' +
+          '<td><input type="number" min="0" step="1" value="'+mandats.prevu+'" onchange="updateMandatPrevu(\''+key+'\', this.value)" style="width:70px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td><input type="date" value="'+escapeHtml(m.mandatDebut||'')+'" onchange="updateMandatDebut(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td style="font-weight:600;">'+mandats.execute+'</td>' +
+          '<td style="font-weight:600; color:'+(mandats.restant>0 ? 'var(--gold)' : 'var(--green)')+';">'+mandats.restant+'</td>';
+        bureauBody.appendChild(tr);
+      });
+    }
+  }
+  window.updateFonction = function updateFonction(key, value){
+    update(ref(db, 'members/' + key), {fonction: value.trim()});
+  }
+  window.updateMemberEmail = function updateMemberEmail(key, value){
+    update(ref(db, 'members/' + key), {email: value.trim()});
+  }
+  window.toggleBureauExecutif = function toggleBureauExecutif(key, checked){
+    update(ref(db, 'members/' + key), {bureauExecutif: checked});
+  }
+  window.updateMandatPrevu = function updateMandatPrevu(key, value){
+    update(ref(db, 'members/' + key), {mandatPrevu: Number(value) || 0});
+  }
+  window.updateMandatDebut = function updateMandatDebut(key, value){
+    update(ref(db, 'members/' + key), {mandatDebut: value});
   }
   /* Convertit une date au format input (YYYY-MM-DD) vers DD/MM/YYYY, utilisée comme date d'adhésion */
   function formatDateInput(value){

@@ -288,6 +288,22 @@
   footer{ font-size:14px; }
   .footer-copy{ font-size:13px; }
 
+  /* Tableaux en lecture seule (fonctions, bureau exécutif) */
+  .panel-card{
+    background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:26px 24px; box-shadow:0 10px 26px rgba(27,90,133,.06); margin-top:18px;
+  }
+  .panel-card h3{ font-size:16px; font-weight:600; color:var(--blue-deep); margin-bottom:4px; }
+  .panel-card p.sub{ font-size:13px; color:var(--ink-soft); margin-bottom:18px; }
+  .table-wrap{ overflow-x:auto; }
+  .data-table{ width:100%; border-collapse:collapse; }
+  .data-table th{
+    text-align:left; padding:10px 12px; font-size:11.5px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; color:var(--ink-soft); border-bottom:1.5px solid var(--line);
+  }
+  .data-table td{ padding:12px; border-bottom:1px solid var(--line); color:var(--ink); vertical-align:middle; }
+  .data-table tr:last-child td{ border-bottom:none; }
+  .empty-row td{ text-align:center; color:var(--ink-soft); padding:26px 12px; font-style:italic; }
 </style>
 </head>
 <body>
@@ -363,6 +379,28 @@
           <p id="profilDetailTxt">La gestion de votre profil membre sera prochainement disponible.</p>
         </div>
       </div>
+
+      <div class="panel-card">
+        <h3>Fonction des membres</h3>
+        <p class="sub">Fonctions au sein de l'association.</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>N°</th><th>Nom complet</th><th>Téléphone</th><th>Fonction</th></tr></thead>
+            <tbody id="fonctionsBodyMembre"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Bureau exécutif — Suivi des mandats</h3>
+        <p class="sub">Mandat de 2 ans.</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>N°</th><th>Nom complet</th><th>Fonction</th><th>Mandats prévus</th><th>Exécutés</th><th>Restants</th></tr></thead>
+            <tbody id="bureauBodyMembre"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -408,6 +446,70 @@
     announcementsCache = snap.val() || {};
     renderMemberAnnouncements();
   });
+
+  /* ============ FONCTION DES MEMBRES / BUREAU EXÉCUTIF (lecture seule) ============ */
+  var MANDAT_DUREE_JOURS = 730; // 2 ans
+  var allMembersCache = {};
+  onValue(ref(db, 'members'), function(snap){
+    allMembersCache = snap.val() || {};
+    renderFonctionsMembre();
+  });
+  function joursEcoulesDepuis(dateInputValue){
+    if(!dateInputValue) return 0;
+    var debut = new Date(dateInputValue + 'T00:00:00');
+    if(isNaN(debut.getTime())) return 0;
+    var diff = Date.now() - debut.getTime();
+    return diff > 0 ? Math.floor(diff / 86400000) : 0;
+  }
+  function calcMandatsMembre(m){
+    var prevu = Number(m.mandatPrevu) || 0;
+    var jours = joursEcoulesDepuis(m.mandatDebut);
+    var execute = Math.min(Math.floor(jours / MANDAT_DUREE_JOURS), prevu);
+    var restant = Math.max(prevu - execute, 0);
+    return {prevu: prevu, execute: execute, restant: restant};
+  }
+  function renderFonctionsMembre(){
+    var body = document.getElementById('fonctionsBodyMembre');
+    var bureauBody = document.getElementById('bureauBodyMembre');
+    if(!body || !bureauBody) return;
+    var keys = Object.keys(allMembersCache);
+    body.innerHTML = '';
+    bureauBody.innerHTML = '';
+    if(keys.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="4">Aucun membre pour le moment.</td></tr>';
+      bureauBody.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre du bureau exécutif.</td></tr>';
+      return;
+    }
+    var bureauKeys = [];
+    keys.forEach(function(key, i){
+      var m = allMembersCache[key];
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+(i+1)+'</td>' +
+        '<td>'+escapeHtml(m.name)+'</td>' +
+        '<td>'+escapeHtml(m.phone||'—')+'</td>' +
+        '<td>'+escapeHtml(m.fonction||'—')+'</td>';
+      body.appendChild(tr);
+      if(m.bureauExecutif){ bureauKeys.push(key); }
+    });
+    if(bureauKeys.length === 0){
+      bureauBody.innerHTML = '<tr class="empty-row"><td colspan="6">Aucun membre du bureau exécutif pour le moment.</td></tr>';
+    } else {
+      bureauKeys.forEach(function(key, i){
+        var m = allMembersCache[key];
+        var mandats = calcMandatsMembre(m);
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>'+(i+1)+'</td>' +
+          '<td>'+escapeHtml(m.name)+'</td>' +
+          '<td>'+escapeHtml(m.fonction||'—')+'</td>' +
+          '<td>'+mandats.prevu+'</td>' +
+          '<td>'+mandats.execute+'</td>' +
+          '<td>'+mandats.restant+'</td>';
+        bureauBody.appendChild(tr);
+      });
+    }
+  }
 
   var memberProfileUnsub = null;
   var currentMemberCode = '';
