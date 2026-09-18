@@ -601,38 +601,65 @@
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
   }
+  function formatMontantPdf(n){
+    var s = String(Math.round(Number(n) || 0));
+    var out = '';
+    var count = 0;
+    for(var i = s.length - 1; i >= 0; i--){
+      out = s[i] + out;
+      count++;
+      if(count % 3 === 0 && i !== 0){ out = ' ' + out; }
+    }
+    return out;
+  }
   window.downloadReceipt = function downloadReceipt(){
     if(!currentReceiptData || !window.jspdf) return;
     var jsPDF = window.jspdf.jsPDF;
-    var doc = new jsPDF();
-    doc.setFontSize(17);
-    doc.text('Recu de cotisation', 20, 25);
-    doc.setFontSize(11);
-    doc.text('Association Nantamba (AN) - L\'union pour le developpement', 20, 33);
-    doc.setDrawColor(220, 227, 222);
-    doc.line(20, 40, 190, 40);
+    var doc = new jsPDF({ unit: 'mm', format: [105, 148] });
+    var marge = 8;
+    var y = 16;
     doc.setFontSize(13);
-    var y = 58;
+    doc.setFont(undefined, 'bold');
+    doc.text('Reçu de cotisation', marge, y);
+    y += 6;
+    doc.setFontSize(8.5);
+    doc.setFont(undefined, 'normal');
+    doc.text("Association Nantamba (AN)", marge, y);
+    y += 4.5;
+    doc.text("L'union pour le développement", marge, y);
+    y += 4;
+    doc.setDrawColor(220, 227, 222);
+    doc.line(marge, y, 105 - marge, y);
+    y += 8;
+
+    doc.setFontSize(9.5);
     var rows = [
-      ['Nom et prenom', currentReceiptData.name],
-      ['Code d\'acces', currentMemberCode || '-'],
-      ['Telephone', currentReceiptData.phone],
-      ['Montant cotisation', formatMontant(currentReceiptData.montant) + ' GNF'],
-      ['Paye', formatMontant(currentReceiptData.paye) + ' GNF'],
-      ['Reste a payer', formatMontant(currentReceiptData.reste) + ' GNF'],
-      ['Echeance', currentReceiptData.echeance],
+      ['Nom et prénom', currentReceiptData.name],
+      ["Code d'accès", currentMemberCode || '-'],
+      ['Téléphone', currentReceiptData.phone],
+      ['Montant cotisation', formatMontantPdf(currentReceiptData.montant) + ' GNF'],
+      ['Payé', formatMontantPdf(currentReceiptData.paye) + ' GNF'],
+      ['Reste à payer', formatMontantPdf(currentReceiptData.reste) + ' GNF'],
+      ['Échéance', currentReceiptData.echeance],
       ['Date', todayStr()]
     ];
     rows.forEach(function(r){
       doc.setFont(undefined, 'bold');
-      doc.text(r[0] + ' :', 20, y);
+      doc.text(r[0] + ' :', marge, y);
+      y += 4.2;
       doc.setFont(undefined, 'normal');
-      doc.text(String(r[1]), 75, y);
-      y += 12;
+      doc.text(String(r[1]), marge, y);
+      y += 6.3;
     });
-    doc.setFontSize(10);
+
+    doc.setDrawColor(220, 227, 222);
+    doc.line(marge, y, 105 - marge, y);
+    y += 6;
+    doc.setFontSize(7.5);
     doc.setTextColor(120, 120, 120);
-    doc.text('Cotisation a jour a la date d\'emission de ce recu.', 20, y + 8);
+    var note = doc.splitTextToSize("Cotisation à jour à la date d'émission de ce reçu.", 105 - marge * 2);
+    doc.text(note, marge, y);
+
     doc.save('recu-cotisation-' + (currentMemberCode || 'AN') + '.pdf');
   }
 
