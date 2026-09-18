@@ -431,7 +431,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+  import { getDatabase, ref, push, set, update, increment } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
@@ -492,6 +492,7 @@
       if(btn){ btn.disabled = false; }
       document.getElementById('volunteerFormBlock').style.display = 'none';
       document.getElementById('volunteerNote').style.display = 'block';
+      update(ref(db, 'siteStats'), { volunteersCount: increment(1) }).catch(function(e){ console.error(e); });
     }).catch(function(e){
       if(btn){ btn.disabled = false; }
       err.textContent = "Une erreur est survenue. Merci de réessayer.";
