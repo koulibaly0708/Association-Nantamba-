@@ -382,6 +382,16 @@
     return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
   }
 
+  /* Suivi des visites : une entrée par session pour cette page */
+  (function(){
+    try{
+      if(sessionStorage.getItem('nantamba_visit_logged_adhesion')) return;
+      sessionStorage.setItem('nantamba_visit_logged_adhesion', '1');
+    }catch(e){}
+    var visitRef = push(ref(db, 'siteVisits'));
+    set(visitRef, { page: 'adhesion', date: todayStr(), ts: Date.now() });
+  })();
+
   window.submitJoin = function submitJoin(){
     var n = document.getElementById('joinName').value.trim();
     var a = document.getElementById('joinActivity').value.trim();

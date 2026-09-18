@@ -426,7 +426,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-  import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+  import { getDatabase, ref, onValue, get, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
@@ -440,6 +440,16 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+
+  /* Suivi des visites : une entrée par session pour cette page */
+  (function(){
+    try{
+      if(sessionStorage.getItem('nantamba_visit_logged_espace-membre')) return;
+      sessionStorage.setItem('nantamba_visit_logged_espace-membre', '1');
+    }catch(e){}
+    var visitRef = push(ref(db, 'siteVisits'));
+    set(visitRef, { page: 'espace-membre', date: todayStr(), ts: Date.now() });
+  })();
 
   var announcementsCache = {};
   onValue(ref(db, 'announcements'), function(snap){
