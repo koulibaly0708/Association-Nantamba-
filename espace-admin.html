@@ -233,6 +233,8 @@
   .badge-actif{ background:#EAF3EC; color:#256B3B; }
   .badge-attente{ background:#FCF1E1; color:#9A6414; }
   .badge-refuse{ background:#FCEAEA; color:#B23A3A; }
+  .badge-neutre{ background:#EEF1EF; color:#56636E; }
+  #membersBody .badge{ white-space:nowrap; }
 
   /* Statistiques de visite */
   .stats-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:22px; }
@@ -451,13 +453,14 @@
                 <option value="">Tous les statuts</option>
                 <option value="En retard">En retard (retardataires)</option>
                 <option value="À jour">À jour</option>
+                <option value="À renouveler">À renouveler (échéance cette année)</option>
                 <option value="Non renseigné">Non renseigné</option>
               </select>
             </div>
           </div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>Téléphone</th><th>Cotisation</th><th>Montant</th><th>Payé</th><th>Reste</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
+              <thead><tr><th>Nom</th><th>Téléphone</th><th>Cotisation</th><th>Montant</th><th>Payé</th><th>Reste</th><th>Payé pour</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
               <tbody id="membersBody"></tbody>
             </table>
           </div>
@@ -773,13 +776,42 @@
   }
 
   /* ============ ONGLET 1 : MEMBRES ============ */
-  var COTISATION_OPTIONS = ['Non renseigné', 'À jour', 'En retard'];
   var COTISATION_MONTANT_DEFAUT = 100000;
+  var STATUT_NON_RENSEIGNE = 'Non renseigné';
 
-  function getYearFromEcheance(m){
-    if(!m.cotisationEcheance) return null;
-    var parts = m.cotisationEcheance.split('-');
-    return parts[0] || null;
+  /* L'échéance est ANNUELLE : seule l'année compte.
+     - L'admin renseigne « Payé pour » (ex. 2026)  ->  l'échéance à venir est automatiquement 2027.
+     - Anciennes données (date complète « 2027-12-31 ») : on lit simplement l'année. */
+  function anneeCourante(){ return new Date().getFullYear(); }
+  function getEcheanceYear(m){
+    if(m.cotisationAnnee){ return Number(m.cotisationAnnee) + 1; }
+    var match = String(m.cotisationEcheance || '').match(/^(\d{4})/);
+    return match ? Number(match[1]) : null;
+  }
+  function getAnneePayee(m){
+    if(m.cotisationAnnee){ return Number(m.cotisationAnnee); }
+    var ech = getEcheanceYear(m);
+    return ech ? ech - 1 : null;
+  }
+  /* Statut calculé à partir de l'échéance :
+     échéance > année en cours  -> À jour        (la cotisation de l'année en cours est payée)
+     échéance = année en cours  -> À renouveler  (à payer cette année)
+     échéance < année en cours  -> En retard
+     pas d'échéance             -> ancien statut saisi à la main, sinon « Non renseigné » */
+  function getStatut(m){
+    var ech = getEcheanceYear(m);
+    if(ech === null){ return m.cotisationStatut || STATUT_NON_RENSEIGNE; }
+    var an = anneeCourante();
+    if(ech > an) return 'À jour';
+    if(ech === an) return 'À renouveler';
+    return 'En retard';
+  }
+  function statutBadge(statut){
+    var cls = 'badge-neutre';
+    if(statut === 'À jour') cls = 'badge-actif';
+    else if(statut === 'À renouveler') cls = 'badge-attente';
+    else if(statut === 'En retard') cls = 'badge-refuse';
+    return '<span class="badge '+cls+'">'+escapeHtml(statut)+'</span>';
   }
   function populateYearFilter(){
     var sel = document.getElementById('filterYear');
@@ -787,7 +819,7 @@
     var current = sel.value;
     var years = {};
     Object.keys(membersCache).forEach(function(key){
-      var y = getYearFromEcheance(membersCache[key]);
+      var y = getEcheanceYear(membersCache[key]);
       if(y) years[y] = true;
     });
     var yearList = Object.keys(years).sort(function(a,b){ return b - a; });
@@ -800,13 +832,23 @@
     var statutFilter = (document.getElementById('filterStatut') || {}).value || '';
     return Object.keys(membersCache).filter(function(key){
       var m = membersCache[key];
-      if(yearFilter && getYearFromEcheance(m) !== yearFilter) return false;
-      if(statutFilter && (m.cotisationStatut || 'Non renseigné') !== statutFilter) return false;
+      if(yearFilter && String(getEcheanceYear(m)) !== yearFilter) return false;
+      if(statutFilter && getStatut(m) !== statutFilter) return false;
       return true;
     });
   }
   function formatMontant(n){
     return (Number(n) || 0).toLocaleString('fr-FR');
+  }
+  function anneePayeeSelectHtml(key, selected){
+    var an = anneeCourante();
+    var years = [];
+    for(var y = an + 1; y >= an - 5; y--){ years.push(y); }
+    if(selected && years.indexOf(selected) === -1){ years.push(selected); years.sort(function(a,b){ return b - a; }); }
+    return '<select onchange="updateCotisationAnnee(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;">' +
+      '<option value="">—</option>' +
+      years.map(function(y){ return '<option value="'+y+'"'+(y===selected ? ' selected' : '')+'>'+y+'</option>'; }).join('') +
+      '</select>';
   }
   function renderMembers(){
     populateYearFilter();
@@ -814,27 +856,25 @@
     var keys = getFilteredMemberKeys();
     body.innerHTML = '';
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="9">Aucun membre ne correspond à ce filtre.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="10">Aucun membre ne correspond à ce filtre.</td></tr>';
     } else {
       keys.forEach(function(key){
         var m = membersCache[key];
-        var statut = m.cotisationStatut || 'Non renseigné';
+        var statut = getStatut(m);
         var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : COTISATION_MONTANT_DEFAUT;
         var paye = m.cotisationPaye || 0;
         var reste = montant - paye;
+        var echeance = getEcheanceYear(m);
         var tr = document.createElement('tr');
-        var selectHtml = '<select onchange="updateCotisationStatut(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;">' +
-          COTISATION_OPTIONS.map(function(opt){
-            return '<option value="'+opt+'"'+(opt===statut ? ' selected' : '')+'>'+opt+'</option>';
-          }).join('') + '</select>';
         tr.innerHTML =
           '<td>'+escapeHtml(m.name)+'</td>' +
           '<td>'+escapeHtml(m.phone||'—')+'</td>' +
-          '<td>'+selectHtml+'</td>' +
+          '<td>'+statutBadge(statut)+'</td>' +
           '<td><input type="number" min="0" step="1000" value="'+montant+'" onchange="updateCotisationMontant(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td><input type="number" min="0" step="1000" value="'+paye+'" onchange="updateCotisationPaye(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td style="font-weight:600; color:'+(reste>0 ? 'var(--gold)' : 'var(--green)')+';">'+formatMontant(reste)+'</td>' +
-          '<td><input type="date" value="'+escapeHtml(m.cotisationEcheance||'')+'" onchange="updateCotisationEcheance(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td>'+anneePayeeSelectHtml(key, getAnneePayee(m))+'</td>' +
+          '<td style="font-weight:600;">'+(echeance ? echeance : '—')+'</td>' +
           '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
           '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>';
         body.appendChild(tr);
@@ -842,11 +882,18 @@
     }
     populateCodeMemberSelect();
   }
-  window.updateCotisationStatut = function updateCotisationStatut(key, value){
-    update(ref(db, 'members/' + key), {cotisationStatut: value});
-  }
-  window.updateCotisationEcheance = function updateCotisationEcheance(key, value){
-    update(ref(db, 'members/' + key), {cotisationEcheance: value});
+  /* Les filtres appellent renderMembers() depuis le HTML (onchange) : elle doit être globale,
+     sinon (script de type module) les filtres ne réagissent pas. */
+  window.renderMembers = renderMembers;
+
+  /* « Payé pour 2026 » -> échéance à venir 2027 (année seule, sans jour ni mois) */
+  window.updateCotisationAnnee = function updateCotisationAnnee(key, value){
+    var y = parseInt(value, 10);
+    if(!y){
+      update(ref(db, 'members/' + key), {cotisationAnnee: null, cotisationEcheance: null});
+      return;
+    }
+    update(ref(db, 'members/' + key), {cotisationAnnee: y, cotisationEcheance: String(y + 1)});
   }
   window.updateCotisationMontant = function updateCotisationMontant(key, value){
     update(ref(db, 'members/' + key), {cotisationMontant: Number(value) || 0});
@@ -974,15 +1021,16 @@
       return {
         'Nom': m.name || '',
         'Téléphone': m.phone || '',
-        'Cotisation': m.cotisationStatut || 'Non renseigné',
+        'Cotisation': getStatut(m),
         'Montant': montant,
         'Payé': paye,
         'Reste': montant - paye,
-        'Échéance': m.cotisationEcheance || '',
+        'Payé pour': getAnneePayee(m) || '',
+        'Échéance': getEcheanceYear(m) || '',
         "Date d'adhésion": m.since || ''
       };
     });
-    if(rows.length === 0){ rows.push({'Nom':'','Téléphone':'','Cotisation':'','Montant':'','Payé':'','Reste':'','Échéance':'',"Date d'adhésion":''}); }
+    if(rows.length === 0){ rows.push({'Nom':'','Téléphone':'','Cotisation':'','Montant':'','Payé':'','Reste':'','Payé pour':'','Échéance':'',"Date d'adhésion":''}); }
     var ws = XLSX.utils.json_to_sheet(rows);
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Membres');

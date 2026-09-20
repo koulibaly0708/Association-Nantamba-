@@ -549,6 +549,21 @@
   function formatMontant(n){
     return (Number(n) || 0).toLocaleString('fr-FR');
   }
+  /* L'échéance est annuelle (année seule). Payé pour 2026 -> prochaine échéance 2027.
+     Anciennes données (date complète) : on lit l'année. Même logique que l'espace administrateur. */
+  function getEcheanceYear(m){
+    if(m.cotisationAnnee){ return Number(m.cotisationAnnee) + 1; }
+    var match = String(m.cotisationEcheance || '').match(/^(\d{4})/);
+    return match ? Number(match[1]) : null;
+  }
+  function getStatut(m){
+    var ech = getEcheanceYear(m);
+    if(ech === null){ return m.cotisationStatut || 'Non renseigné'; }
+    var an = new Date().getFullYear();
+    if(ech > an) return 'À jour';
+    if(ech === an) return 'À renouveler';
+    return 'En retard';
+  }
   function renderMemberProfile(m){
     var statutEl = document.getElementById('cotisationStatutTxt');
     var detailEl = document.getElementById('cotisationDetailTxt');
@@ -564,7 +579,8 @@
       currentReceiptData = null;
       return;
     }
-    var cStatut = m.cotisationStatut || 'Non renseigné';
+    var echeanceAn = getEcheanceYear(m);
+    var cStatut = getStatut(m);
     var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : 100000;
     var paye = m.cotisationPaye || 0;
     var reste = montant - paye;
@@ -573,8 +589,8 @@
       'Montant de la cotisation : ' + formatMontant(montant) + ' GNF<br>' +
       'Payé : ' + formatMontant(paye) + ' GNF<br>' +
       'Reste à payer : ' + formatMontant(reste) + ' GNF<br>' +
-      (m.cotisationEcheance
-        ? ('Prochaine échéance : ' + escapeHtml(m.cotisationEcheance) + '.')
+      (echeanceAn
+        ? ('Prochaine échéance : ' + echeanceAn + '.')
         : 'Aucune échéance renseignée pour le moment.');
     nameEl.textContent = m.name || 'Mes informations';
     profilDetailEl.innerHTML =
@@ -588,7 +604,7 @@
         montant: montant,
         paye: paye,
         reste: reste,
-        echeance: m.cotisationEcheance || '—'
+        echeance: echeanceAn ? String(echeanceAn) : '—'
       };
       receiptBtn.style.display = 'inline-flex';
     } else {
