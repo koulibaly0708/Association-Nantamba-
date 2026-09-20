@@ -806,6 +806,18 @@
     if(ech === an) return 'À renouveler';
     return 'En retard';
   }
+  /* Remise à zéro automatique : « Payé » / « Reste » concernent la cotisation de l'année EN COURS.
+     Dès qu'une nouvelle année commence, le montant payé repart à 0, sauf si l'année déjà payée
+     couvre l'année en cours (paiement d'avance) ou si un montant a déjà été saisi cette année. */
+  function getPayeEffectif(m){
+    var an = anneeCourante();
+    var payee = getAnneePayee(m);
+    var cycle = Number(m.cotisationPayeAnnee) || payee;
+    var stocke = m.cotisationPaye || 0;
+    if(!cycle) return stocke;                       // aucune info d'année : on garde la valeur telle quelle
+    if((payee && payee >= an) || cycle === an) return stocke;
+    return 0;
+  }
   function statutBadge(statut){
     var cls = 'badge-neutre';
     if(statut === 'À jour') cls = 'badge-actif';
@@ -862,7 +874,7 @@
         var m = membersCache[key];
         var statut = getStatut(m);
         var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : COTISATION_MONTANT_DEFAUT;
-        var paye = m.cotisationPaye || 0;
+        var paye = getPayeEffectif(m);
         var reste = montant - paye;
         var echeance = getEcheanceYear(m);
         var tr = document.createElement('tr');
@@ -898,8 +910,20 @@
   window.updateCotisationMontant = function updateCotisationMontant(key, value){
     update(ref(db, 'members/' + key), {cotisationMontant: Number(value) || 0});
   }
+  /* Saisie du montant payé pour l'année en cours.
+     Si la cotisation est réglée en totalité, « Payé pour » passe automatiquement à l'année en cours
+     et l'échéance à venir à l'année suivante (payé 2027 -> échéance 2028). */
   window.updateCotisationPaye = function updateCotisationPaye(key, value){
-    update(ref(db, 'members/' + key), {cotisationPaye: Number(value) || 0});
+    var m = membersCache[key] || {};
+    var an = anneeCourante();
+    var v = Number(value) || 0;
+    var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : COTISATION_MONTANT_DEFAUT;
+    var upd = {cotisationPaye: v, cotisationPayeAnnee: an};
+    if(montant > 0 && v >= montant && (getAnneePayee(m) || 0) < an){
+      upd.cotisationAnnee = an;
+      upd.cotisationEcheance = String(an + 1);
+    }
+    update(ref(db, 'members/' + key), upd);
   }
   function populateCodeMemberSelect(){
     var sel = document.getElementById('codeForMember');
@@ -1017,7 +1041,7 @@
     var rows = keys.map(function(key){
       var m = membersCache[key];
       var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : COTISATION_MONTANT_DEFAUT;
-      var paye = m.cotisationPaye || 0;
+      var paye = getPayeEffectif(m);
       return {
         'Nom': m.name || '',
         'Téléphone': m.phone || '',

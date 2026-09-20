@@ -556,6 +556,21 @@
     var match = String(m.cotisationEcheance || '').match(/^(\d{4})/);
     return match ? Number(match[1]) : null;
   }
+  function getAnneePayee(m){
+    if(m.cotisationAnnee){ return Number(m.cotisationAnnee); }
+    var ech = getEcheanceYear(m);
+    return ech ? ech - 1 : null;
+  }
+  /* Remise à zéro automatique : le « Payé » concerne la cotisation de l'année en cours. */
+  function getPayeEffectif(m){
+    var an = new Date().getFullYear();
+    var payee = getAnneePayee(m);
+    var cycle = Number(m.cotisationPayeAnnee) || payee;
+    var stocke = m.cotisationPaye || 0;
+    if(!cycle) return stocke;
+    if((payee && payee >= an) || cycle === an) return stocke;
+    return 0;
+  }
   function getStatut(m){
     var ech = getEcheanceYear(m);
     if(ech === null){ return m.cotisationStatut || 'Non renseigné'; }
@@ -582,7 +597,7 @@
     var echeanceAn = getEcheanceYear(m);
     var cStatut = getStatut(m);
     var montant = (m.cotisationMontant !== undefined && m.cotisationMontant !== null) ? m.cotisationMontant : 100000;
-    var paye = m.cotisationPaye || 0;
+    var paye = getPayeEffectif(m);
     var reste = montant - paye;
     statutEl.textContent = 'Statut : ' + cStatut;
     detailEl.innerHTML =
@@ -590,7 +605,9 @@
       'Payé : ' + formatMontant(paye) + ' GNF<br>' +
       'Reste à payer : ' + formatMontant(reste) + ' GNF<br>' +
       (echeanceAn
-        ? ('Prochaine échéance : ' + echeanceAn + '.')
+        ? (echeanceAn >= new Date().getFullYear()
+            ? ('<strong>Échéance à venir : ' + echeanceAn + '</strong>' + (echeanceAn === new Date().getFullYear() ? ' (cotisation à renouveler cette année).' : '.'))
+            : ('Échéance dépassée : ' + echeanceAn + '.'))
         : 'Aucune échéance renseignée pour le moment.');
     nameEl.textContent = m.name || 'Mes informations';
     profilDetailEl.innerHTML =
@@ -656,7 +673,7 @@
       ['Montant cotisation', formatMontantPdf(currentReceiptData.montant) + ' GNF'],
       ['Payé', formatMontantPdf(currentReceiptData.paye) + ' GNF'],
       ['Reste à payer', formatMontantPdf(currentReceiptData.reste) + ' GNF'],
-      ['Échéance', currentReceiptData.echeance],
+      ['Échéance à venir', currentReceiptData.echeance],
       ['Date', todayStr()]
     ];
     rows.forEach(function(r){
