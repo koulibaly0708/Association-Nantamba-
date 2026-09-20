@@ -428,6 +428,7 @@
         <button class="tab-btn" data-tab="tab-benevoles" onclick="switchTab('tab-benevoles')">Bénévoles</button>
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
+        <button class="tab-btn" data-tab="tab-documents" onclick="switchTab('tab-documents')">Documents</button>
         <button class="tab-btn" data-tab="tab-fonctions" onclick="switchTab('tab-fonctions')">Liste et fonction des membres</button>
         <button class="tab-btn" data-tab="tab-stats" onclick="switchTab('tab-stats')">Statistiques de visite</button>
         <button class="tab-btn" data-tab="tab-news" onclick="switchTab('tab-news')">Actualités</button>
@@ -545,6 +546,46 @@
           <textarea id="annMsg" placeholder="Votre message aux membres..."></textarea>
           <button class="btn btn-primary" onclick="publishAnnouncement()">Publier l'annonce</button>
           <div class="announce-list" id="announceList"></div>
+        </div>
+      </div>
+
+      <!-- Onglet : Documents (affichés dans l'espace membre) -->
+      <div class="tab-panel" id="tab-documents">
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Publier un document</h3>
+          <p class="sub">Les documents publiés ici apparaissent dans la carte « Documents » de l'espace membre (comptes-rendus, statuts, bilans…).</p>
+          <div class="field"><label>Titre</label><input type="text" id="docTitle" placeholder="Ex. Compte-rendu de l'assemblée générale 2026"></div>
+          <div class="field">
+            <label>Catégorie</label>
+            <select id="docCategory" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:7px; font-size:16px; color:var(--ink);">
+              <option value="Compte-rendu">Compte-rendu</option>
+              <option value="Statuts et règlement">Statuts et règlement</option>
+              <option value="Finances">Finances</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fichier (PDF, Word, Excel, PowerPoint, image — 1,5 Mo maximum)</label>
+            <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png">
+          </div>
+          <div class="field">
+            <label>… ou un lien (Google Drive, Dropbox…) pour un fichier plus lourd</label>
+            <input type="url" id="docLink" placeholder="https://...">
+          </div>
+          <div id="docError" style="display:none; margin-bottom:14px; font-size:13.5px; background:#FCEAEA; color:#B23A3A; padding:10px 12px; border-radius:7px;"></div>
+          <button class="btn btn-primary" id="docPublishBtn" onclick="publishDocument()">Publier le document</button>
+          <div class="login-note" id="docPublishedNote">Document publié : il est maintenant visible dans l'espace membre.</div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Documents publiés</h3>
+          <p class="sub">Du plus récent au plus ancien. Supprimer un document le retire aussi de l'espace membre.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Titre</th><th>Catégorie</th><th>Type</th><th>Date</th><th></th></tr></thead>
+              <tbody id="docsBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -673,7 +714,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-  import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+  import { getDatabase, ref, onValue, get, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -1560,6 +1601,12 @@
     document.getElementById('annTitle').value = '';
     document.getElementById('annMsg').value = '';
   }
+  window.deleteAnnouncement = function deleteAnnouncement(key){
+    var a = announcementsCache[key];
+    if(!a) return;
+    if(!confirm('Supprimer l\'annonce « ' + a.title + ' » ? Elle ne sera plus visible par les membres.')) return;
+    remove(ref(db, 'announcements/' + key));
+  }
   function renderAnnouncements(){
     var wrap = document.getElementById('announceList');
     var keys = Object.keys(announcementsCache).sort(function(a,b){ return (announcementsCache[b].ts||0) - (announcementsCache[a].ts||0); });
@@ -1573,10 +1620,135 @@
       var item = document.createElement('div');
       item.className = 'announce-item';
       item.innerHTML =
-        '<div class="a-title">'+escapeHtml(a.title)+'</div>' +
-        '<div class="a-date">'+escapeHtml(a.date)+'</div>' +
+        '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">' +
+          '<div><div class="a-title">'+escapeHtml(a.title)+'</div>' +
+          '<div class="a-date">'+escapeHtml(a.date)+'</div></div>' +
+          '<button class="row-btn delete" style="flex-shrink:0;" onclick="deleteAnnouncement(\''+key+'\')">Supprimer</button>' +
+        '</div>' +
         '<div class="a-msg">'+escapeHtml(a.message)+'</div>';
       wrap.appendChild(item);
+    });
+  }
+
+  /* ============ ONGLET : DOCUMENTS (visibles dans l'espace membre) ============ */
+  var DOC_MAX_BYTES = 1500000;                       /* 1,5 Mo par fichier */
+  var DOC_EXT_OK = /\.(pdf|docx?|xlsx?|pptx?|txt|jpe?g|png)$/i;
+  var docsCache = {};
+  onValue(ref(db, 'documents'), function(snap){ docsCache = snap.val() || {}; renderDocsAdmin(); });
+
+  function formatTaille(octets){
+    if(octets >= 1000000) return (octets / 1000000).toFixed(1).replace('.', ',') + ' Mo';
+    return Math.max(1, Math.round(octets / 1000)) + ' Ko';
+  }
+  function docShowError(msg){
+    var err = document.getElementById('docError');
+    err.textContent = msg; err.style.display = 'block';
+  }
+  function downloadDataUrl(dataUrl, fileName){
+    var parts = String(dataUrl).split(',');
+    var mime = (parts[0].match(/:(.*?);/) || [])[1] || 'application/octet-stream';
+    var bin = atob(parts[1] || '');
+    var bytes = new Uint8Array(bin.length);
+    for(var i = 0; i < bin.length; i++){ bytes[i] = bin.charCodeAt(i); }
+    var url = URL.createObjectURL(new Blob([bytes], {type: mime}));
+    var a = document.createElement('a');
+    a.href = url; a.download = fileName || 'document';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+  window.publishDocument = function publishDocument(){
+    var title = document.getElementById('docTitle').value.trim();
+    var category = document.getElementById('docCategory').value;
+    var link = document.getElementById('docLink').value.trim();
+    var fileInput = document.getElementById('docFile');
+    var file = fileInput.files && fileInput.files[0];
+    var note = document.getElementById('docPublishedNote');
+    var btn = document.getElementById('docPublishBtn');
+    document.getElementById('docError').style.display = 'none';
+    note.style.display = 'none';
+
+    if(!title){ docShowError('Merci de saisir un titre.'); return; }
+    if(!file && !link){ docShowError('Ajoutez un fichier ou un lien.'); return; }
+    if(file && link){ docShowError('Choisissez soit un fichier, soit un lien (pas les deux).'); return; }
+    if(link && !/^https?:\/\/\S+$/i.test(link)){ docShowError('Le lien doit commencer par http:// ou https://'); return; }
+    if(file && !DOC_EXT_OK.test(file.name)){ docShowError('Format non accepté. Formats possibles : PDF, Word, Excel, PowerPoint, texte, JPG, PNG.'); return; }
+    if(file && file.size > DOC_MAX_BYTES){
+      docShowError('Fichier trop volumineux (' + formatTaille(file.size) + '). Maximum : 1,5 Mo. Pour un fichier plus lourd, mettez-le sur Google Drive et collez le lien.');
+      return;
+    }
+
+    var meta = {title: title, category: category, date: todayStr(), ts: Date.now()};
+    var newRef = push(ref(db, 'documents'));
+    var id = newRef.key;
+    btn.disabled = true;
+
+    function finish(){
+      set(newRef, meta).then(function(){
+        btn.disabled = false;
+        document.getElementById('docTitle').value = '';
+        document.getElementById('docLink').value = '';
+        fileInput.value = '';
+        note.style.display = 'block';
+      }).catch(fail);
+    }
+    function fail(e){
+      btn.disabled = false;
+      docShowError('Une erreur est survenue. Merci de réessayer.');
+      console.error(e);
+    }
+
+    if(link){
+      meta.type = 'link'; meta.url = link;
+      finish();
+    } else {
+      var reader = new FileReader();
+      reader.onerror = fail;
+      reader.onload = function(){
+        meta.type = 'file'; meta.fileName = file.name; meta.fileSize = file.size;
+        /* le contenu est stocké à part pour ne pas alourdir la liste des documents */
+        set(ref(db, 'documentFiles/' + id), {data: reader.result}).then(finish).catch(fail);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  window.openDocumentAdmin = function openDocumentAdmin(key){
+    var d = docsCache[key];
+    if(!d) return;
+    if(d.type === 'link'){ window.open(d.url, '_blank', 'noopener'); return; }
+    get(ref(db, 'documentFiles/' + key)).then(function(snap){
+      var v = snap.val();
+      if(!v || !v.data){ alert('Le contenu de ce fichier est introuvable.'); return; }
+      downloadDataUrl(v.data, d.fileName);
+    }).catch(function(e){ console.error(e); alert('Impossible de récupérer le fichier.'); });
+  }
+  window.deleteDocument = function deleteDocument(key){
+    var d = docsCache[key];
+    if(!d) return;
+    if(!confirm('Supprimer le document « ' + d.title + ' » ? Les membres ne pourront plus le consulter.')) return;
+    remove(ref(db, 'documents/' + key));
+    if(d.type === 'file'){ remove(ref(db, 'documentFiles/' + key)); }
+  }
+  function renderDocsAdmin(){
+    var body = document.getElementById('docsBody');
+    if(!body) return;
+    var keys = Object.keys(docsCache).sort(function(a,b){ return (docsCache[b].ts||0) - (docsCache[a].ts||0); });
+    body.innerHTML = '';
+    if(keys.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">Aucun document publié pour le moment.</td></tr>';
+      return;
+    }
+    keys.forEach(function(key){
+      var d = docsCache[key];
+      var type = d.type === 'link' ? 'Lien' : 'Fichier' + (d.fileSize ? ' (' + formatTaille(d.fileSize) + ')' : '');
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+escapeHtml(d.title)+'</td>' +
+        '<td>'+escapeHtml(d.category||'—')+'</td>' +
+        '<td>'+escapeHtml(type)+'</td>' +
+        '<td>'+escapeHtml(d.date||'')+'</td>' +
+        '<td style="white-space:nowrap;"><button class="row-btn copy" onclick="openDocumentAdmin(\''+key+'\')">Ouvrir</button> ' +
+        '<button class="row-btn delete" onclick="deleteDocument(\''+key+'\')">Supprimer</button></td>';
+      body.appendChild(tr);
     });
   }
 

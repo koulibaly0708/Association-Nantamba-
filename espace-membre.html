@@ -364,8 +364,9 @@
         </div>
         <div class="member-card">
           <div class="tag">Documents</div>
-          <h3>Comptes-rendus</h3>
-          <p>Les documents et comptes-rendus de l'association seront publiés dans cet espace.</p>
+          <h3>Comptes-rendus et documents</h3>
+          <p>Retrouvez ici les documents publiés par l'association.</p>
+          <div id="memberDocList"></div>
         </div>
         <div class="member-card">
           <div class="tag">Actualités</div>
@@ -545,6 +546,65 @@
         '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px;">'+escapeHtml(a.date||'')+'</div>' +
         '<div style="font-size:13.5px;">'+escapeHtml(a.message)+'</div></div>';
     }).join('');
+  }
+  /* ============ DOCUMENTS (publiés depuis l'espace administrateur) ============ */
+  var documentsCache = {};
+  var documentsUnsub = null;
+  function safeHttpUrl(u){ return /^https?:\/\/\S+$/i.test(u || '') ? u : ''; }
+  function renderMemberDocuments(message){
+    var wrap = document.getElementById('memberDocList');
+    if(!wrap) return;
+    var keys = Object.keys(documentsCache).sort(function(a,b){ return (documentsCache[b].ts||0) - (documentsCache[a].ts||0); });
+    if(message){
+      wrap.innerHTML = '<p style="font-size:13.5px;color:var(--ink-soft);">'+escapeHtml(message)+'</p>';
+      return;
+    }
+    if(keys.length === 0){
+      wrap.innerHTML = '<p style="font-size:13.5px;color:var(--ink-soft);">Aucun document publié pour le moment.</p>';
+      return;
+    }
+    wrap.innerHTML = keys.map(function(key){
+      var d = documentsCache[key];
+      var action = '';
+      if(d.type === 'link' && safeHttpUrl(d.url)){
+        action = '<a class="btn btn-outline" style="padding:6px 14px;font-size:13px;" href="'+escapeHtml(d.url)+'" target="_blank" rel="noopener noreferrer">Ouvrir le document</a>';
+      } else if(d.type === 'file'){
+        action = '<button class="btn btn-outline" style="padding:6px 14px;font-size:13px;" onclick="openMemberDocument(\''+key+'\')">Télécharger' +
+          (d.fileSize ? ' (' + (d.fileSize >= 1000000 ? (d.fileSize/1000000).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(d.fileSize/1000)) + ' Ko') + ')' : '') + '</button>';
+      }
+      return '<div style="border-top:1px solid var(--line);padding-top:10px;margin-top:10px;">' +
+        '<div style="font-weight:600;font-size:14px;">'+escapeHtml(d.title)+'</div>' +
+        '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">'+escapeHtml(d.category||'Document')+' · '+escapeHtml(d.date||'')+'</div>' +
+        action + '</div>';
+    }).join('');
+  }
+  function startDocumentsListener(){
+    if(documentsUnsub){ documentsUnsub(); documentsUnsub = null; }
+    documentsUnsub = onValue(ref(db, 'documents'), function(snap){
+      documentsCache = snap.val() || {};
+      renderMemberDocuments();
+    }, function(e){
+      console.error(e);
+      renderMemberDocuments('Les documents ne peuvent pas être affichés pour le moment.');
+    });
+  }
+  window.openMemberDocument = function openMemberDocument(id){
+    var d = documentsCache[id];
+    if(!d) return;
+    get(ref(db, 'documentFiles/' + id)).then(function(snap){
+      var v = snap.val();
+      if(!v || !v.data){ alert('Ce document est momentanément indisponible.'); return; }
+      var parts = String(v.data).split(',');
+      var mime = (parts[0].match(/:(.*?);/) || [])[1] || 'application/octet-stream';
+      var bin = atob(parts[1] || '');
+      var bytes = new Uint8Array(bin.length);
+      for(var i = 0; i < bin.length; i++){ bytes[i] = bin.charCodeAt(i); }
+      var url = URL.createObjectURL(new Blob([bytes], {type: mime}));
+      var a = document.createElement('a');
+      a.href = url; a.download = d.fileName || 'document';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    }).catch(function(e){ console.error(e); alert('Impossible de récupérer ce document pour le moment.'); });
   }
   function formatMontant(n){
     return (Number(n) || 0).toLocaleString('fr-FR');
@@ -741,6 +801,7 @@
     document.getElementById('memberDashboard').style.display = 'block';
     document.getElementById('memberDashboard').scrollIntoView({behavior:'smooth', block:'start'});
     if(memberProfileUnsub){ memberProfileUnsub(); memberProfileUnsub = null; }
+    startDocumentsListener();
     if(memberId){
       memberProfileUnsub = onValue(ref(db, 'members/' + memberId), function(snap){
         renderMemberProfile(snap.val());
@@ -754,6 +815,8 @@
     currentMemberCode = '';
     currentReceiptData = null;
     if(memberProfileUnsub){ memberProfileUnsub(); memberProfileUnsub = null; }
+    if(documentsUnsub){ documentsUnsub(); documentsUnsub = null; }
+    documentsCache = {};
     document.getElementById('memberDashboard').style.display = 'none';
     document.getElementById('memberAccessCard').style.display = 'block';
   }
