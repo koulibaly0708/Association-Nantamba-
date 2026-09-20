@@ -323,6 +323,11 @@
     display:none; margin-bottom:14px; font-size:13px; background:#FCEAEA; color:#B23A3A;
     padding:10px 12px; border-radius:7px;
   }
+  .access-modal .modal-info{
+    display:none; margin-bottom:14px; font-size:13px; background:#E8F5EC; color:#1F7A3D;
+    padding:10px 12px; border-radius:7px;
+  }
+  .access-modal .forgot-link.is-loading{ opacity:.55; pointer-events:none; }
 
   /* ============ NORMALISATION TYPOGRAPHIQUE (lisibilité) ============ */
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
@@ -657,9 +662,10 @@
     <p class="modal-sub">Accès réservé.</p>
     <span class="modal-tab">Se connecter</span>
     <div class="modal-error" id="accessModalError">Identifiants incorrects. Veuillez réessayer.</div>
+    <div class="modal-info" id="accessModalInfo"></div>
     <div class="field"><input type="email" id="accessEmail" placeholder="Adresse e-mail"></div>
     <div class="field"><input type="password" id="accessPass" placeholder="Mot de passe (6 caractères min.)"></div>
-    <a href="#" class="forgot-link" onclick="return false;">Mot de passe oublié ?</a>
+    <a href="#" class="forgot-link" id="forgotLink" onclick="return forgotPassword(event)">Mot de passe oublié ?</a>
     <button class="btn btn-primary" onclick="submitAccessLogin()">Se connecter</button>
   </div>
 </div>
@@ -668,7 +674,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
@@ -711,6 +717,7 @@
     currentAccessSpace = space;
     document.getElementById('accessModalTitle').textContent = 'Espace Administrateur';
     document.getElementById('accessModalError').style.display = 'none';
+    document.getElementById('accessModalInfo').style.display = 'none';
     document.getElementById('accessEmail').value = '';
     document.getElementById('accessPass').value = '';
     document.getElementById('accessOverlay').classList.add('open');
@@ -725,6 +732,7 @@
     var pass = document.getElementById('accessPass').value.trim();
     var err = document.getElementById('accessModalError');
     var btn = document.querySelector('#accessOverlay .btn-primary');
+    document.getElementById('accessModalInfo').style.display = 'none';
     if(!email || pass.length < 6){
       err.textContent = 'Identifiants incorrects. Veuillez réessayer.';
       err.style.display = 'block';
@@ -740,6 +748,44 @@
       err.style.display = 'block';
       console.error(e);
     });
+  }
+  /* Mot de passe oublié : envoie l'e-mail de réinitialisation Firebase à l'adresse saisie */
+  window.forgotPassword = function forgotPassword(ev){
+    if(ev && ev.preventDefault){ ev.preventDefault(); }
+    var email = document.getElementById('accessEmail').value.trim();
+    var err = document.getElementById('accessModalError');
+    var info = document.getElementById('accessModalInfo');
+    var link = document.getElementById('forgotLink');
+    info.style.display = 'none';
+    err.style.display = 'none';
+    if(!email){
+      err.textContent = 'Saisissez d\'abord votre adresse e-mail ci-dessus, puis cliquez sur « Mot de passe oublié ? ».';
+      err.style.display = 'block';
+      document.getElementById('accessEmail').focus();
+      return false;
+    }
+    link.classList.add('is-loading');
+    sendPasswordResetEmail(auth, email).then(function(){
+      link.classList.remove('is-loading');
+      info.textContent = 'Si un compte existe pour ' + email + ', un e-mail de réinitialisation vient d\'être envoyé. Pensez à vérifier vos courriers indésirables (spam).';
+      info.style.display = 'block';
+    }).catch(function(e){
+      link.classList.remove('is-loading');
+      console.error(e);
+      var code = e && e.code ? e.code : '';
+      if(code === 'auth/user-not-found'){
+        /* message volontairement identique : on ne révèle pas si le compte existe */
+        info.textContent = 'Si un compte existe pour ' + email + ', un e-mail de réinitialisation vient d\'être envoyé. Pensez à vérifier vos courriers indésirables (spam).';
+        info.style.display = 'block';
+        return;
+      }
+      if(code === 'auth/invalid-email') err.textContent = 'Adresse e-mail invalide. Vérifiez-la et réessayez.';
+      else if(code === 'auth/too-many-requests') err.textContent = 'Trop de tentatives. Patientez quelques minutes avant de réessayer.';
+      else if(code === 'auth/network-request-failed') err.textContent = 'Connexion impossible. Vérifiez votre accès Internet et réessayez.';
+      else err.textContent = 'Impossible d\'envoyer l\'e-mail de réinitialisation pour le moment. Réessayez plus tard.';
+      err.style.display = 'block';
+    });
+    return false;
   }
   function showAdminSpace(scroll){
     closeAccessModal();
