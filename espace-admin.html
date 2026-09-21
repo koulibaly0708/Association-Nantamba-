@@ -468,7 +468,8 @@
       </div>
 
       <div class="tabs-nav">
-        <button class="tab-btn active" data-tab="tab-membres" onclick="switchTab('tab-membres')">Suivi cotisation</button>
+        <button class="tab-btn active" data-tab="tab-liste-generale" onclick="switchTab('tab-liste-generale')">Liste générale</button>
+        <button class="tab-btn" data-tab="tab-membres" onclick="switchTab('tab-membres')">Suivi cotisation</button>
         <button class="tab-btn" data-tab="tab-adhesion" onclick="switchTab('tab-adhesion')">Demandes d'adhésion</button>
         <button class="tab-btn" data-tab="tab-dons" onclick="switchTab('tab-dons')">Demandes de don</button>
         <button class="tab-btn" data-tab="tab-tresorerie" onclick="switchTab('tab-tresorerie')">Tableau de trésorerie</button>
@@ -481,18 +482,32 @@
         <button class="tab-btn" data-tab="tab-news" onclick="switchTab('tab-news')">Actualités</button>
       </div>
 
+      <!-- Onglet 0 : Liste générale -->
+      <div class="tab-panel active" id="tab-liste-generale">
+        <div class="panel-card">
+          <h3>Liste générale</h3>
+          <p class="sub">Liste de référence de tous les membres de l'Association Nantamba. C'est ici qu'on ajoute ou retire un membre : la liste alimente automatiquement tous les autres onglets (cotisation, fonctions, trésorerie, codes d'accès, etc.).</p>
+          <div class="inline-form">
+            <div class="field"><label>Nom complet</label><input type="text" id="glName" placeholder="Nom du membre"></div>
+            <div class="field"><label>Date d'adhésion</label><input type="date" id="glDate"></div>
+            <div class="field"><label>Téléphone</label><input type="text" id="glPhone" placeholder="Téléphone"></div>
+            <button class="btn btn-primary" onclick="addMember()">+ Ajouter</button>
+            <button class="btn btn-outline" onclick="exportListeGeneraleToExcel()">⬇ Exporter en Excel</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Nom complet</th><th>Date d'adhésion</th><th>Téléphone</th><th></th></tr></thead>
+              <tbody id="listeGeneraleBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Onglet 1 : Suivi cotisation -->
-      <div class="tab-panel active" id="tab-membres">
+      <div class="tab-panel" id="tab-membres">
         <div class="panel-card">
           <h3>Suivi cotisation</h3>
-          <p class="sub">Membres actifs de l'Association Nantamba.</p>
-          <div class="inline-form">
-            <div class="field"><label>Nom complet</label><input type="text" id="memName" placeholder="Nom du membre"></div>
-            <div class="field"><label>Date d'adhésion</label><input type="date" id="memDate"></div>
-            <div class="field"><label>Téléphone</label><input type="text" id="memPhone" placeholder="Téléphone"></div>
-            <button class="btn btn-primary" onclick="addMember()">+ Ajouter</button>
-            <button class="btn btn-outline" onclick="exportMembersToExcel()">⬇ Exporter en Excel</button>
-          </div>
+          <p class="sub">Suivi des cotisations des membres de l'Association Nantamba. Pour ajouter, modifier ou retirer un membre, utilisez l'onglet « Liste générale ».</p>
           <div class="inline-form" style="margin-top:-6px;">
             <div class="field">
               <label>Filtrer par année d'échéance</label>
@@ -510,10 +525,11 @@
                 <option value="Non renseigné">Non renseigné</option>
               </select>
             </div>
+            <button class="btn btn-outline" onclick="exportMembersToExcel()">⬇ Exporter en Excel</button>
           </div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>Téléphone</th><th>Cotisation</th><th>Montant</th><th>Payé</th><th>Reste</th><th>Payé pour</th><th>Échéance</th><th>Depuis</th><th></th></tr></thead>
+              <thead><tr><th>Nom</th><th>Cotisation</th><th>Montant</th><th>Payé</th><th>Reste</th><th>Payé pour</th><th>Échéance</th></tr></thead>
               <tbody id="membersBody"></tbody>
             </table>
           </div>
@@ -875,7 +891,7 @@
   var visitsCache = {};
   var newsCache = {};
 
-  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); });
+  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderListeGenerale(); renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
@@ -966,7 +982,7 @@
     closeAccessModal();
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
-    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderStats(); renderNewsAdmin();
+    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderStats(); renderNewsAdmin(); renderListeGenerale();
     startTresoListener(); tresoInitForms();
     if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
@@ -1092,7 +1108,7 @@
     var keys = getFilteredMemberKeys();
     body.innerHTML = '';
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="10">Aucun membre ne correspond à ce filtre.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun membre ne correspond à ce filtre.</td></tr>';
     } else {
       keys.forEach(function(key){
         var m = membersCache[key];
@@ -1104,23 +1120,44 @@
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td>'+escapeHtml(m.name)+'</td>' +
-          '<td>'+escapeHtml(m.phone||'—')+'</td>' +
           '<td>'+statutBadge(statut)+'</td>' +
           '<td><input type="number" min="0" step="1000" value="'+montant+'" onchange="updateCotisationMontant(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td><input type="number" min="0" step="1000" value="'+paye+'" onchange="updateCotisationPaye(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td style="font-weight:600; color:'+(reste>0 ? 'var(--gold)' : 'var(--green)')+';">'+formatMontant(reste)+'</td>' +
           '<td>'+anneePayeeSelectHtml(key, getAnneePayee(m))+'</td>' +
-          '<td style="font-weight:600;">'+(echeance ? echeance : '—')+'</td>' +
-          '<td>'+escapeHtml(m.since||todayStr())+'</td>' +
-          '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>';
+          '<td style="font-weight:600;">'+(echeance ? echeance : '—')+'</td>';
         body.appendChild(tr);
       });
     }
-    populateCodeMemberSelect();
   }
   /* Les filtres appellent renderMembers() depuis le HTML (onchange) : elle doit être globale,
      sinon (script de type module) les filtres ne réagissent pas. */
   window.renderMembers = renderMembers;
+
+  /* ============ ONGLET 0 : LISTE GÉNÉRALE ============
+     Liste de référence des membres (identité). C'est ici que l'on ajoute et retire
+     un membre ; les autres onglets (cotisation, fonctions, trésorerie, codes...)
+     se contentent de lire membersCache, déjà alimenté par ce même nœud 'members'. */
+  function renderListeGenerale(){
+    var body = document.getElementById('listeGeneraleBody');
+    if(!body) return;
+    var keys = Object.keys(membersCache);
+    if(keys.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="4">Aucun membre enregistré. Ajoutez le premier avec le formulaire ci-dessus.</td></tr>';
+    } else {
+      body.innerHTML = keys.map(function(key){
+        var m = membersCache[key];
+        return '<tr>' +
+          '<td>'+escapeHtml(m.name||'')+'</td>' +
+          '<td>'+escapeHtml(m.since||'—')+'</td>' +
+          '<td>'+escapeHtml(m.phone||'—')+'</td>' +
+          '<td><button class="row-btn delete" onclick="removeMember(\''+key+'\')">Retirer</button></td>' +
+          '</tr>';
+      }).join('');
+    }
+    populateCodeMemberSelect();
+  }
+  window.renderListeGenerale = renderListeGenerale;
 
   /* « Payé pour 2026 » -> échéance à venir 2027 (année seule, sans jour ni mois) */
   window.updateCotisationAnnee = function updateCotisationAnnee(key, value){
@@ -1161,16 +1198,16 @@
     if(keys.indexOf(current) !== -1){ sel.value = current; }
   }
   window.addMember = function addMember(){
-    var name = document.getElementById('memName').value.trim();
-    var dateInput = document.getElementById('memDate').value;
-    var phone = document.getElementById('memPhone').value.trim();
+    var name = document.getElementById('glName').value.trim();
+    var dateInput = document.getElementById('glDate').value;
+    var phone = document.getElementById('glPhone').value.trim();
     if(!name) return;
     var since = dateInput ? formatDateInput(dateInput) : todayStr();
     var newRef = push(ref(db, 'members'));
     set(newRef, {name:name, phone:phone, status:'Actif', since:since, cotisationStatut:'Non renseigné', cotisationMontant:COTISATION_MONTANT_DEFAUT, cotisationPaye:0});
-    document.getElementById('memName').value = '';
-    document.getElementById('memDate').value = '';
-    document.getElementById('memPhone').value = '';
+    document.getElementById('glName').value = '';
+    document.getElementById('glDate').value = '';
+    document.getElementById('glPhone').value = '';
   }
   window.removeMember = function removeMember(key){
     remove(ref(db, 'members/' + key));
@@ -1268,21 +1305,35 @@
       var paye = getPayeEffectif(m);
       return {
         'Nom': m.name || '',
-        'Téléphone': m.phone || '',
         'Cotisation': getStatut(m),
         'Montant': montant,
         'Payé': paye,
         'Reste': montant - paye,
         'Payé pour': getAnneePayee(m) || '',
-        'Échéance': getEcheanceYear(m) || '',
-        "Date d'adhésion": m.since || ''
+        'Échéance': getEcheanceYear(m) || ''
       };
     });
-    if(rows.length === 0){ rows.push({'Nom':'','Téléphone':'','Cotisation':'','Montant':'','Payé':'','Reste':'','Payé pour':'','Échéance':'',"Date d'adhésion":''}); }
+    if(rows.length === 0){ rows.push({'Nom':'','Cotisation':'','Montant':'','Payé':'','Reste':'','Payé pour':'','Échéance':''}); }
     var ws = XLSX.utils.json_to_sheet(rows);
     var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Membres');
-    XLSX.writeFile(wb, 'membres-association-nantamba-' + todayStr().split('/').reverse().join('-') + '.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, 'Cotisations');
+    XLSX.writeFile(wb, 'cotisations-association-nantamba-' + todayStr().split('/').reverse().join('-') + '.xlsx');
+  }
+  window.exportListeGeneraleToExcel = function exportListeGeneraleToExcel(){
+    var keys = Object.keys(membersCache);
+    var rows = keys.map(function(key){
+      var m = membersCache[key];
+      return {
+        'Nom complet': m.name || '',
+        "Date d'adhésion": m.since || '',
+        'Téléphone': m.phone || ''
+      };
+    });
+    if(rows.length === 0){ rows.push({'Nom complet':'', "Date d'adhésion":'', 'Téléphone':''}); }
+    var ws = XLSX.utils.json_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Liste générale');
+    XLSX.writeFile(wb, 'liste-generale-association-nantamba-' + todayStr().split('/').reverse().join('-') + '.xlsx');
   }
   window.exportFonctionsToExcel = function exportFonctionsToExcel(){
     var keys = Object.keys(membersCache);
