@@ -369,6 +369,48 @@
   .footer-copy{ font-size:13px; }
 
 </style>
+<style>
+  /* ============ TABLEAU DE TRÉSORERIE ============ */
+  .tr-statement{ display:flex; flex-direction:column; max-width:640px; }
+  .tr-line{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    padding:12px 2px; border-bottom:1px solid var(--line);
+  }
+  .tr-line .tr-name{ color:var(--ink); }
+  .tr-line .tr-name small{ display:block; font-size:13px; line-height:1.4; color:var(--ink-soft); }
+  .tr-line .tr-amt{ font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .tr-line.plus .tr-amt{ color:var(--green); }
+  .tr-line.minus .tr-amt{ color:#B23A3A; }
+  .tr-line.total{ border-bottom:none; border-top:2px solid var(--blue-deep); margin-top:6px; padding-top:16px; }
+  .tr-line.total .tr-name{ font-weight:700; font-size:1.1rem; color:var(--blue-deep); }
+  .tr-line.total .tr-amt{ font-size:1.5rem; color:var(--blue-deep); }
+  .tr-line.total.neg .tr-amt{ color:#B23A3A; }
+  .tr-memo{ margin-top:10px; font-size:14px; line-height:1.5; color:var(--ink-soft); }
+
+  .tr-note{ font-size:14px; line-height:1.5; color:var(--ink-soft); margin:0 0 14px; }
+  .tr-error{
+    display:none; margin-bottom:14px; font-size:14px; background:#FCEAEA; color:#B23A3A;
+    padding:10px 12px; border-radius:7px;
+  }
+  .tr-select{
+    width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:7px;
+    font-size:16px; color:var(--ink); background:var(--white);
+  }
+  .tr-select:focus{ outline:none; border-color:var(--blue); }
+  .data-table th.tr-right, .data-table td.tr-amount-cell{ text-align:right; }
+  .data-table td.tr-amount-cell{ white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:600; }
+  .tr-sub{ display:block; font-size:12.5px; line-height:1.4; color:var(--ink-soft); }
+
+  .tr-badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:12.5px; font-weight:600; white-space:nowrap; }
+  .tr-badge.ok{ background:#EAF3EC; color:#256B3B; }
+  .tr-badge.wait{ background:#FCF1E1; color:#9A6414; }
+  .tr-badge.no{ background:#FCEAEA; color:#B23A3A; }
+
+  .tr-charts{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .tr-chart-box h4{ font-size:15px; font-weight:600; color:var(--ink); margin-bottom:10px; }
+  .tr-canvas-wrap{ position:relative; height:290px; }
+  @media (max-width:800px){ .tr-charts{ grid-template-columns:1fr; } }
+</style>
 </head>
 <body>
 
@@ -425,6 +467,7 @@
         <button class="tab-btn active" data-tab="tab-membres" onclick="switchTab('tab-membres')">Suivi cotisation</button>
         <button class="tab-btn" data-tab="tab-adhesion" onclick="switchTab('tab-adhesion')">Demandes d'adhésion</button>
         <button class="tab-btn" data-tab="tab-dons" onclick="switchTab('tab-dons')">Demandes de don</button>
+        <button class="tab-btn" data-tab="tab-tresorerie" onclick="switchTab('tab-tresorerie')">Tableau de trésorerie</button>
         <button class="tab-btn" data-tab="tab-benevoles" onclick="switchTab('tab-benevoles')">Bénévoles</button>
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
@@ -497,6 +540,90 @@
               <thead><tr><th>Nom complet</th><th>Numéro</th><th>Montant</th><th>Date</th><th>Statut</th><th></th></tr></thead>
               <tbody id="donsBody"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet : Tableau de trésorerie -->
+      <div class="tab-panel" id="tab-tresorerie">
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Tableau de trésorerie</h3>
+          <p class="sub">État financier de l'association. Solde final = solde initial + recettes − dépenses approuvées. Les membres le consultent en lecture seule dans leur espace.</p>
+          <div class="inline-form" style="margin-bottom:10px;">
+            <button class="btn btn-outline" onclick="exportTresorerieToExcel()">⬇ Exporter en Excel</button>
+          </div>
+          <div id="trStatement" class="tr-statement"></div>
+        </div>
+
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Solde initial</h3>
+          <p class="sub">Montant disponible au démarrage du suivi. Chaque enregistrement est daté et signé de votre nom.</p>
+          <div class="inline-form" style="margin-bottom:8px;">
+            <div class="field"><label for="trOpeningInput">Solde initial (GNF)</label><input type="number" id="trOpeningInput" min="0" step="1" placeholder="Ex : 500000"></div>
+            <button class="btn btn-primary" onclick="saveOpeningBalance()">Enregistrer le solde initial</button>
+          </div>
+          <div class="tr-error" id="trOpeningError"></div>
+          <p class="tr-note" id="trOpeningMeta" style="margin-bottom:0;"></p>
+        </div>
+
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Recettes</h3>
+          <p class="sub">Cotisations, dons et autres entrées d'argent. Chaque recette s'ajoute au solde final.</p>
+          <div class="inline-form">
+            <div class="field" style="flex:2; min-width:200px;"><label for="trIncomeLabel">Libellé</label><input type="text" id="trIncomeLabel" maxlength="150" placeholder="Ex : Cotisations de septembre"></div>
+            <div class="field"><label for="trIncomeCategory">Type</label>
+              <select id="trIncomeCategory" class="tr-select">
+                <option value="cotisation">Cotisation</option>
+                <option value="don">Don</option>
+                <option value="autre">Autre recette</option>
+              </select>
+            </div>
+            <div class="field"><label for="trIncomeDate">Date</label><input type="date" id="trIncomeDate"></div>
+            <div class="field"><label for="trIncomeAmount">Montant (GNF)</label><input type="number" id="trIncomeAmount" min="1" step="1" placeholder="0"></div>
+            <button class="btn btn-primary" onclick="addTresoIncome()">Ajouter la recette</button>
+          </div>
+          <div class="tr-error" id="trIncomeError"></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Libellé</th><th>Type</th><th class="tr-right">Montant</th><th>Saisi par</th></tr></thead>
+              <tbody id="trIncomeBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Dépenses</h3>
+          <p class="sub">Une dépense saisie reste « en attente » : elle ne diminue le solde final qu'une fois approuvée par le président.</p>
+          <p class="tr-note" id="trWhoAmI" style="margin-bottom:6px;"></p>
+          <p class="tr-note" id="trPresidentNote"></p>
+          <div class="inline-form">
+            <div class="field" style="flex:2; min-width:200px;"><label for="trExpenseLabel">Libellé</label><input type="text" id="trExpenseLabel" maxlength="150" placeholder="Ex : Achat de fournitures"></div>
+            <div class="field"><label for="trExpenseDate">Date</label><input type="date" id="trExpenseDate"></div>
+            <div class="field"><label for="trExpenseAmount">Montant (GNF)</label><input type="number" id="trExpenseAmount" min="1" step="1" placeholder="0"></div>
+            <button class="btn btn-primary" onclick="addTresoExpense()">Ajouter la dépense</button>
+          </div>
+          <div class="tr-error" id="trExpenseError"></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Libellé</th><th class="tr-right">Montant</th><th>Saisi par</th><th>Statut</th><th>Décision</th></tr></thead>
+              <tbody id="trExpenseBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Analyse des entrées et des sorties</h3>
+          <p class="sub">Les sorties ne comptent que les dépenses approuvées.</p>
+          <p class="tr-note" id="trChartsMsg" style="display:none;">Les graphiques ne peuvent pas s'afficher : vérifiez votre connexion Internet et rechargez la page.</p>
+          <div class="tr-charts">
+            <div class="tr-chart-box">
+              <h4>Entrées et sorties par mois</h4>
+              <div class="tr-canvas-wrap"><canvas id="trChartFlow"></canvas></div>
+            </div>
+            <div class="tr-chart-box">
+              <h4>Origine des entrées et destination des sorties</h4>
+              <div class="tr-canvas-wrap"><canvas id="trChartMix"></canvas></div>
+            </div>
           </div>
         </div>
       </div>
@@ -712,6 +839,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, onValue, get, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -741,7 +869,7 @@
   var visitsCache = {};
   var newsCache = {};
 
-  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); });
+  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); renderTresorerie(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
@@ -833,6 +961,7 @@
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
     renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderStats(); renderNewsAdmin();
+    startTresoListener(); tresoInitForms();
     if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
   window.adminLogout = function adminLogout(){
@@ -844,6 +973,7 @@
     if(user){
       showAdminSpace(authChecked);
     } else {
+      stopTresoListener();
       document.getElementById('adminDashboard').style.display = 'none';
       document.getElementById('adminAccessCard').style.display = 'block';
       openAccessModal('admin');
@@ -855,6 +985,7 @@
   window.switchTab = function switchTab(id){
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === id); });
     document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id === id); });
+    if(id === 'tab-tresorerie'){ renderTresorerie(); }
   }
 
   function todayStr(){
@@ -1751,6 +1882,486 @@
       body.appendChild(tr);
     });
   }
+
+var TRESO_EDIT = true;
+  /* ============ ONGLET : TABLEAU DE TRÉSORERIE ============
+     Données Firebase :
+       treasury/opening            -> solde initial {amount, by, byEmail, date, ts}
+       treasury/incomes/{id}       -> recettes {label, category, date, amount, by, byEmail, enteredDate, ts}
+       treasury/expenses/{id}      -> dépenses {label, date, amount, status, by, byEmail, enteredDate, ts,
+                                                decidedBy, decidedByEmail, decidedDate, decidedAt}
+     Solde final = solde initial + cotisations + dons + autres recettes − dépenses APPROUVÉES.
+     Une dépense « en attente » ou « rejetée » ne modifie jamais le solde. */
+  var treasuryCache = {};
+  var tresoUnsub = null;
+  var tresoCharts = { flow: null, mix: null };
+  var TRESO_CATEGORIES = { cotisation: 'Cotisation', don: 'Don', autre: 'Autre recette' };
+
+  function startTresoListener(){
+    if(tresoUnsub){ return; }
+    tresoUnsub = onValue(ref(db, 'treasury'), function(snap){
+      treasuryCache = snap.val() || {};
+      renderTresorerie();
+    }, function(e){
+      console.error(e);
+      tresoUnsub = null;
+      var el = document.getElementById('trStatement');
+      if(el){ el.innerHTML = '<p class="tr-note">La trésorerie ne peut pas être affichée pour le moment. Rechargez la page ; si le problème continue, prévenez un administrateur.</p>'; }
+    });
+  }
+  function stopTresoListener(){
+    if(tresoUnsub){ tresoUnsub(); tresoUnsub = null; }
+    treasuryCache = {};
+    ['flow', 'mix'].forEach(function(k){
+      if(tresoCharts[k]){ tresoCharts[k].destroy(); tresoCharts[k] = null; }
+    });
+  }
+
+  /* Liste triée (date la plus récente d'abord) à partir d'un nœud Firebase */
+  function tresoList(obj){
+    return Object.keys(obj || {}).map(function(k){
+      return Object.assign({ _key: k }, obj[k] || {});
+    }).sort(function(a, b){
+      var da = String(a.date || ''), dz = String(b.date || '');
+      if(da !== dz){ return da < dz ? 1 : -1; }
+      return (b.ts || 0) - (a.ts || 0);
+    });
+  }
+  function tresoTotals(){
+    var incomes = tresoList(treasuryCache.incomes);
+    var expenses = tresoList(treasuryCache.expenses);
+    var sums = { cotisation: 0, don: 0, autre: 0 };
+    incomes.forEach(function(r){
+      var c = TRESO_CATEGORIES[r.category] ? r.category : 'autre';
+      sums[c] += Number(r.amount) || 0;
+    });
+    var approved = 0, pending = 0, rejected = 0;
+    expenses.forEach(function(x){
+      var a = Number(x.amount) || 0;
+      if(x.status === 'approved'){ approved += a; }
+      else if(x.status === 'rejected'){ rejected += a; }
+      else { pending += a; }
+    });
+    var opening = Number((treasuryCache.opening || {}).amount) || 0;
+    var entrees = sums.cotisation + sums.don + sums.autre;
+    return {
+      opening: opening, sums: sums, entrees: entrees,
+      approved: approved, pending: pending, rejected: rejected,
+      final: opening + entrees - approved,
+      incomes: incomes, expenses: expenses
+    };
+  }
+  function tresoFmtDate(iso){
+    var p = String(iso || '').split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : (iso || '—');
+  }
+  function tresoLine(name, amount, cls, sub, sign){
+    return '<div class="tr-line ' + (cls || '') + '">' +
+      '<div class="tr-name">' + name + (sub ? '<small>' + sub + '</small>' : '') + '</div>' +
+      '<div class="tr-amt">' + (sign || '') + formatMontant(amount) + ' GNF</div></div>';
+  }
+
+  function tresoRenderStatement(T){
+    var el = document.getElementById('trStatement');
+    if(!el){ return; }
+    var op = treasuryCache.opening;
+    var opSub = (op && op.by)
+      ? 'défini par ' + escapeHtml(op.by) + (op.date ? ' le ' + escapeHtml(op.date) : '')
+      : 'pas encore défini';
+    el.innerHTML =
+      tresoLine('Solde initial', T.opening, '', opSub, '') +
+      tresoLine('Cotisations', T.sums.cotisation, 'plus', '', '+ ') +
+      tresoLine('Dons', T.sums.don, 'plus', '', '+ ') +
+      tresoLine('Autres recettes', T.sums.autre, 'plus', '', '+ ') +
+      tresoLine('Dépenses approuvées', T.approved, 'minus', '', '− ') +
+      tresoLine('Solde final', T.final, 'total' + (T.final < 0 ? ' neg' : ''), '', '') +
+      '<div class="tr-memo">Dépenses en attente d\'approbation : ' + formatMontant(T.pending) +
+      ' GNF. Elles ne sont déduites du solde qu\'après approbation du président.</div>';
+  }
+
+  function tresoRenderIncomes(T){
+    var body = document.getElementById('trIncomeBody');
+    if(!body){ return; }
+    if(T.incomes.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">' +
+        (TRESO_EDIT ? 'Aucune recette enregistrée. Ajoutez la première avec le formulaire ci-dessus.' : 'Aucune recette enregistrée pour le moment.') +
+        '</td></tr>';
+      return;
+    }
+    body.innerHTML = T.incomes.map(function(r){
+      return '<tr>' +
+        '<td>' + escapeHtml(tresoFmtDate(r.date)) + '</td>' +
+        '<td>' + escapeHtml(r.label || '') + '</td>' +
+        '<td>' + escapeHtml(TRESO_CATEGORIES[r.category] || 'Autre recette') + '</td>' +
+        '<td class="tr-amount-cell">' + formatMontant(r.amount) + ' GNF</td>' +
+        '<td>' + escapeHtml(r.by || '—') + (r.enteredDate ? '<span class="tr-sub">saisi le ' + escapeHtml(r.enteredDate) + '</span>' : '') + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function tresoRenderExpenses(T){
+    var body = document.getElementById('trExpenseBody');
+    if(!body){ return; }
+    var cols = TRESO_EDIT ? 6 : 5;
+    if(T.expenses.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="' + cols + '">' +
+        (TRESO_EDIT ? 'Aucune dépense enregistrée. Ajoutez la première avec le formulaire ci-dessus.' : 'Aucune dépense enregistrée pour le moment.') +
+        '</td></tr>';
+      return;
+    }
+    var isPres = TRESO_EDIT ? tresoIsPresident() : false;
+    body.innerHTML = T.expenses.map(function(x){
+      var st = x.status === 'approved' || x.status === 'rejected' ? x.status : 'pending';
+      var badge = st === 'approved' ? '<span class="tr-badge ok">Approuvée</span>'
+        : st === 'rejected' ? '<span class="tr-badge no">Rejetée</span>'
+        : '<span class="tr-badge wait">En attente</span>';
+      var decided = (st !== 'pending' && x.decidedBy)
+        ? '<span class="tr-sub">par ' + escapeHtml(x.decidedBy) + (x.decidedDate ? ', le ' + escapeHtml(x.decidedDate) : '') + '</span>'
+        : '';
+      var actions = '';
+      if(TRESO_EDIT){
+        if(st === 'pending'){
+          actions = isPres
+            ? '<td><div class="row-actions">' +
+                '<button class="row-btn accept" onclick="decideTresoExpense(\'' + x._key + '\', \'approved\')">Approuver</button>' +
+                '<button class="row-btn refuse" onclick="decideTresoExpense(\'' + x._key + '\', \'rejected\')">Rejeter</button>' +
+              '</div></td>'
+            : '<td><span class="tr-sub">Décision du président</span></td>';
+        } else {
+          actions = '<td></td>';
+        }
+      }
+      return '<tr>' +
+        '<td>' + escapeHtml(tresoFmtDate(x.date)) + '</td>' +
+        '<td>' + escapeHtml(x.label || '') + '</td>' +
+        '<td class="tr-amount-cell">' + formatMontant(x.amount) + ' GNF</td>' +
+        '<td>' + escapeHtml(x.by || '—') + (x.enteredDate ? '<span class="tr-sub">saisi le ' + escapeHtml(x.enteredDate) + '</span>' : '') + '</td>' +
+        '<td>' + badge + decided + '</td>' +
+        actions +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ---------- Graphiques (Chart.js) ---------- */
+  function tresoMonthIdx(iso){
+    var m = /^(\d{4})-(\d{2})/.exec(String(iso || ''));
+    return m ? Number(m[1]) * 12 + (Number(m[2]) - 1) : null;
+  }
+  function tresoMonthLabel(idx){
+    return new Date(Math.floor(idx / 12), idx % 12, 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+  }
+  function tresoRenderCharts(T){
+    var flowEl = document.getElementById('trChartFlow');
+    var mixEl = document.getElementById('trChartMix');
+    var msg = document.getElementById('trChartsMsg');
+    /* Onglet masqué : les graphiques sont dessinés à l'ouverture de l'onglet */
+    if(!flowEl || !mixEl || flowEl.offsetParent === null){ return; }
+    if(!window.Chart){
+      if(msg){ msg.style.display = 'block'; }
+      return;
+    }
+    if(msg){ msg.style.display = 'none'; }
+    Chart.defaults.font.family = "'Roboto', sans-serif";
+
+    /* Graphique 1 : entrées et sorties mois par mois (12 mois maximum) */
+    var now = new Date();
+    var nowIdx = now.getFullYear() * 12 + now.getMonth();
+    var byIn = {}, byOut = {}, minIdx = null, maxIdx = null;
+    function track(i){
+      if(minIdx === null || i < minIdx){ minIdx = i; }
+      if(maxIdx === null || i > maxIdx){ maxIdx = i; }
+    }
+    T.incomes.forEach(function(r){
+      var i = tresoMonthIdx(r.date);
+      if(i === null){ return; }
+      byIn[i] = (byIn[i] || 0) + (Number(r.amount) || 0);
+      track(i);
+    });
+    T.expenses.forEach(function(x){
+      if(x.status !== 'approved'){ return; }
+      var i = tresoMonthIdx(x.date);
+      if(i === null){ return; }
+      byOut[i] = (byOut[i] || 0) + (Number(x.amount) || 0);
+      track(i);
+    });
+    var end = Math.max(nowIdx, maxIdx === null ? nowIdx : maxIdx);
+    var start = minIdx === null ? end - 5 : Math.max(Math.min(minIdx, end), end - 11);
+    var labels = [], ins = [], outs = [];
+    for(var i = start; i <= end; i++){
+      labels.push(tresoMonthLabel(i));
+      ins.push(byIn[i] || 0);
+      outs.push(byOut[i] || 0);
+    }
+    if(tresoCharts.flow){ tresoCharts.flow.destroy(); }
+    tresoCharts.flow = new Chart(flowEl.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Entrées', data: ins, backgroundColor: '#2E9E4F', borderRadius: 4 },
+          { label: 'Sorties', data: outs, backgroundColor: '#B23A3A', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ' : ' + formatMontant(c.parsed.y) + ' GNF'; } } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v){ return formatMontant(v); } } } }
+      }
+    });
+
+    /* Graphique 2 : d'où vient l'argent, où il part */
+    if(tresoCharts.mix){ tresoCharts.mix.destroy(); }
+    tresoCharts.mix = new Chart(mixEl.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['Cotisations', 'Dons', 'Autres recettes', 'Dépenses approuvées', 'Dépenses en attente'],
+        datasets: [{
+          data: [T.sums.cotisation, T.sums.don, T.sums.autre, T.approved, T.pending],
+          backgroundColor: ['#2E9E4F', '#63B57B', '#A5D5B2', '#B23A3A', '#C9CFD3'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){ return formatMontant(c.parsed.x) + ' GNF'; } } }
+        },
+        scales: { x: { beginAtZero: true, ticks: { callback: function(v){ return formatMontant(v); } } } }
+      }
+    });
+  }
+
+  function renderTresorerie(){
+    var T = tresoTotals();
+    tresoRenderStatement(T);
+    tresoRenderIncomes(T);
+    tresoRenderExpenses(T);
+    if(TRESO_EDIT){ tresoRenderEditMeta(); }
+    tresoRenderCharts(T);
+  }
+  window.renderTresorerie = renderTresorerie;
+
+  /* ---------- Export Excel : état financier, recettes, dépenses ---------- */
+  window.exportTresorerieToExcel = function exportTresorerieToExcel(){
+    if(!window.XLSX){
+      alert("L'export Excel n'est pas disponible pour le moment. Vérifiez votre connexion Internet et rechargez la page.");
+      return;
+    }
+    var T = tresoTotals();
+    var wb = XLSX.utils.book_new();
+
+    var etat = [
+      ['État financier — Association Nantamba', ''],
+      ['Édité le', todayStr()],
+      [],
+      ['Poste', 'Montant (GNF)'],
+      ['Solde initial', T.opening],
+      ['Cotisations', T.sums.cotisation],
+      ['Dons', T.sums.don],
+      ['Autres recettes', T.sums.autre],
+      ['Dépenses approuvées', T.approved],
+      ['Solde final', T.final],
+      [],
+      ["Dépenses en attente d'approbation (non déduites)", T.pending]
+    ];
+    var wsEtat = XLSX.utils.aoa_to_sheet(etat);
+    wsEtat['B10'] = { t: 'n', v: T.final, f: 'B5+B6+B7+B8-B9' };
+    ['B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B12'].forEach(function(c){ if(wsEtat[c]){ wsEtat[c].z = '#,##0'; } });
+    wsEtat['!cols'] = [{ wch: 50 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, wsEtat, 'État financier');
+
+    var recettes = T.incomes.slice().reverse().map(function(r){
+      return [tresoFmtDate(r.date), r.label || '', TRESO_CATEGORIES[r.category] || 'Autre recette', Number(r.amount) || 0, r.by || '', r.enteredDate || ''];
+    });
+    var wsRec = XLSX.utils.aoa_to_sheet(
+      [['Date', 'Libellé', 'Type', 'Montant (GNF)', 'Saisi par', 'Saisi le']]
+        .concat(recettes)
+        .concat([[], ['', '', 'Total des recettes', T.entrees, '', '']])
+    );
+    wsRec['!cols'] = [{ wch: 12 }, { wch: 42 }, { wch: 18 }, { wch: 16 }, { wch: 26 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsRec, 'Recettes');
+
+    var statusLabel = { approved: 'Approuvée', rejected: 'Rejetée', pending: 'En attente' };
+    var depenses = T.expenses.slice().reverse().map(function(x){
+      var st = x.status === 'approved' || x.status === 'rejected' ? x.status : 'pending';
+      return [tresoFmtDate(x.date), x.label || '', Number(x.amount) || 0, statusLabel[st], x.by || '', x.enteredDate || '', st === 'pending' ? '' : (x.decidedBy || ''), st === 'pending' ? '' : (x.decidedDate || '')];
+    });
+    var wsDep = XLSX.utils.aoa_to_sheet(
+      [['Date', 'Libellé', 'Montant (GNF)', 'Statut', 'Saisi par', 'Saisi le', 'Décision par', 'Décision le']]
+        .concat(depenses)
+        .concat([[], ['', 'Total des dépenses approuvées', T.approved, '', '', '', '', '']])
+    );
+    wsDep['!cols'] = [{ wch: 12 }, { wch: 42 }, { wch: 16 }, { wch: 14 }, { wch: 26 }, { wch: 12 }, { wch: 26 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsDep, 'Dépenses');
+
+    XLSX.writeFile(wb, 'tresorerie-association-nantamba-' + todayStr().split('/').reverse().join('-') + '.xlsx');
+  };
+
+  /* ---------- Saisie (espace administrateur uniquement) ---------- */
+  function tresoNormalize(s){
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+  /* L'administrateur connecté est reconnu par son e-mail de connexion, comparé à l'e-mail
+     renseigné dans « Liste et fonction des membres ». */
+  function tresoAuthMember(){
+    var user = auth.currentUser;
+    var email = user && user.email ? user.email.trim().toLowerCase() : '';
+    if(!email){ return null; }
+    var keys = Object.keys(membersCache);
+    for(var i = 0; i < keys.length; i++){
+      var m = membersCache[keys[i]];
+      if(String(m.email || '').trim().toLowerCase() === email){ return m; }
+    }
+    return null;
+  }
+  function tresoAuthor(){
+    var user = auth.currentUser;
+    var email = user && user.email ? user.email : '';
+    var m = tresoAuthMember();
+    return { name: (m && m.name) ? m.name : (email || 'Administrateur'), email: email };
+  }
+  /* Président = membre dont la fonction contient « président » (hors vice-président) */
+  function tresoIsPresident(){
+    var m = tresoAuthMember();
+    if(!m){ return false; }
+    var f = tresoNormalize(m.fonction);
+    return /\bpresident/.test(f) && !/vice/.test(f);
+  }
+  function tresoTodayIso(){
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  window.tresoInitForms = function tresoInitForms(){
+    ['trIncomeDate', 'trExpenseDate'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && !el.value){ el.value = tresoTodayIso(); }
+    });
+  };
+  function tresoShowError(id, msg){
+    var el = document.getElementById(id);
+    if(!el){ return; }
+    if(!msg){ el.style.display = 'none'; return; }
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  function tresoRenderEditMeta(){
+    var who = tresoAuthor();
+    var pres = tresoIsPresident();
+    var whoEl = document.getElementById('trWhoAmI');
+    if(whoEl){
+      whoEl.textContent = 'Vos saisies sont enregistrées au nom de : ' + who.name + (pres ? ' (président)' : '') + '.';
+    }
+    var noteEl = document.getElementById('trPresidentNote');
+    if(noteEl){
+      noteEl.textContent = pres
+        ? 'Vous êtes reconnu comme président : vous pouvez approuver ou rejeter les dépenses en attente.'
+        : "Seul le président peut approuver ou rejeter une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Président », dans l'onglet « Liste et fonction des membres ».";
+    }
+    var op = treasuryCache.opening;
+    var input = document.getElementById('trOpeningInput');
+    if(input && document.activeElement !== input){ input.value = op ? (Number(op.amount) || 0) : ''; }
+    var meta = document.getElementById('trOpeningMeta');
+    if(meta){
+      meta.textContent = (op && op.by)
+        ? 'Dernier enregistrement : ' + formatMontant(op.amount) + ' GNF, par ' + op.by + (op.date ? ' le ' + op.date : '') + '.'
+        : 'Le solde initial n\'a pas encore été saisi.';
+    }
+  }
+
+  window.saveOpeningBalance = function saveOpeningBalance(){
+    var input = document.getElementById('trOpeningInput');
+    var amount = Number(input.value);
+    tresoShowError('trOpeningError', '');
+    if(input.value === '' || !isFinite(amount) || amount < 0){
+      tresoShowError('trOpeningError', 'Saisissez un solde initial valide (0 ou plus).');
+      return;
+    }
+    amount = Math.round(amount);
+    var previous = treasuryCache.opening;
+    if(previous && previous.by && !confirm('Remplacer le solde initial actuel (' + formatMontant(previous.amount) + ' GNF) par ' + formatMontant(amount) + ' GNF ? Cette modification sera enregistrée à votre nom.')){
+      return;
+    }
+    var who = tresoAuthor();
+    set(ref(db, 'treasury/opening'), { amount: amount, by: who.name, byEmail: who.email, date: todayStr(), ts: Date.now() })
+      .catch(function(e){
+        console.error(e);
+        tresoShowError('trOpeningError', "Le solde initial n'a pas pu être enregistré. Vérifiez votre connexion et réessayez.");
+      });
+  };
+
+  window.addTresoIncome = function addTresoIncome(){
+    var label = document.getElementById('trIncomeLabel').value.trim().slice(0, 150);
+    var category = document.getElementById('trIncomeCategory').value;
+    var date = document.getElementById('trIncomeDate').value;
+    var amount = Number(document.getElementById('trIncomeAmount').value);
+    tresoShowError('trIncomeError', '');
+    if(!label){ tresoShowError('trIncomeError', 'Ajoutez un libellé pour cette recette.'); return; }
+    if(!date){ tresoShowError('trIncomeError', 'Choisissez la date de la recette.'); return; }
+    if(!isFinite(amount) || amount <= 0){ tresoShowError('trIncomeError', 'Saisissez un montant supérieur à 0.'); return; }
+    if(!TRESO_CATEGORIES[category]){ category = 'autre'; }
+    var who = tresoAuthor();
+    var newRef = push(ref(db, 'treasury/incomes'));
+    set(newRef, {
+      label: label, category: category, date: date, amount: Math.round(amount),
+      by: who.name, byEmail: who.email, enteredDate: todayStr(), ts: Date.now()
+    }).then(function(){
+      document.getElementById('trIncomeLabel').value = '';
+      document.getElementById('trIncomeAmount').value = '';
+    }).catch(function(e){
+      console.error(e);
+      tresoShowError('trIncomeError', "La recette n'a pas pu être enregistrée. Vérifiez votre connexion et réessayez.");
+    });
+  };
+
+  window.addTresoExpense = function addTresoExpense(){
+    var label = document.getElementById('trExpenseLabel').value.trim().slice(0, 150);
+    var date = document.getElementById('trExpenseDate').value;
+    var amount = Number(document.getElementById('trExpenseAmount').value);
+    tresoShowError('trExpenseError', '');
+    if(!label){ tresoShowError('trExpenseError', 'Ajoutez un libellé pour cette dépense.'); return; }
+    if(!date){ tresoShowError('trExpenseError', 'Choisissez la date de la dépense.'); return; }
+    if(!isFinite(amount) || amount <= 0){ tresoShowError('trExpenseError', 'Saisissez un montant supérieur à 0.'); return; }
+    var who = tresoAuthor();
+    var newRef = push(ref(db, 'treasury/expenses'));
+    set(newRef, {
+      label: label, date: date, amount: Math.round(amount), status: 'pending',
+      by: who.name, byEmail: who.email, enteredDate: todayStr(), ts: Date.now()
+    }).then(function(){
+      document.getElementById('trExpenseLabel').value = '';
+      document.getElementById('trExpenseAmount').value = '';
+    }).catch(function(e){
+      console.error(e);
+      tresoShowError('trExpenseError', "La dépense n'a pas pu être enregistrée. Vérifiez votre connexion et réessayez.");
+    });
+  };
+
+  /* Approbation / rejet : réservé au président. Une décision est définitive. */
+  window.decideTresoExpense = function decideTresoExpense(key, decision){
+    var x = (treasuryCache.expenses || {})[key];
+    if(!x || (x.status && x.status !== 'pending')){ return; }
+    if(!tresoIsPresident()){
+      alert('Seul le président peut approuver ou rejeter une dépense.');
+      return;
+    }
+    var montant = formatMontant(x.amount) + ' GNF';
+    var question = decision === 'approved'
+      ? 'Approuver la dépense « ' + x.label + ' » de ' + montant + ' ? Le solde final sera diminué de ce montant.'
+      : 'Rejeter la dépense « ' + x.label + ' » de ' + montant + ' ? Le solde final ne changera pas.';
+    if(!confirm(question)){ return; }
+    var who = tresoAuthor();
+    update(ref(db, 'treasury/expenses/' + key), {
+      status: decision === 'approved' ? 'approved' : 'rejected',
+      decidedBy: who.name, decidedByEmail: who.email, decidedDate: todayStr(), decidedAt: Date.now()
+    }).catch(function(e){
+      console.error(e);
+      alert("La décision n'a pas pu être enregistrée. Vérifiez votre connexion et réessayez.");
+    });
+  };
 
   /* ============ UTILITAIRE ============ */
   function escapeHtml(str){
