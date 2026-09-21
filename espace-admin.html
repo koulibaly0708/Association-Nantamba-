@@ -388,7 +388,8 @@
   .tr-memo{ margin-top:10px; font-size:14px; line-height:1.5; color:var(--ink-soft); }
 
   .tr-note{ font-size:14px; line-height:1.5; color:var(--ink-soft); margin:0 0 14px; }
-  .inline-form input:disabled, .inline-form select:disabled, .inline-form button:disabled{
+  .inline-form input:disabled, .inline-form select:disabled, .inline-form button:disabled,
+  .data-table input:disabled, .data-table select:disabled{
     opacity:.5; cursor:not-allowed; background:#EDEFEC;
   }
   .inline-form button.btn-primary:disabled{ background:#B7C0BA; box-shadow:none; }
@@ -508,6 +509,7 @@
         <div class="panel-card">
           <h3>Suivi cotisation</h3>
           <p class="sub">Suivi des cotisations des membres de l'Association Nantamba. Pour ajouter, modifier ou retirer un membre, utilisez l'onglet « Liste générale ».</p>
+          <p class="tr-note" id="cotisationTresorierNote" style="margin-bottom:14px;"></p>
           <div class="inline-form" style="margin-top:-6px;">
             <div class="field">
               <label>Filtrer par année d'échéance</label>
@@ -1092,12 +1094,12 @@
   function formatMontant(n){
     return (Number(n) || 0).toLocaleString('fr-FR');
   }
-  function anneePayeeSelectHtml(key, selected){
+  function anneePayeeSelectHtml(key, selected, disabled){
     var an = anneeCourante();
     var years = [];
     for(var y = an + 1; y >= an - 5; y--){ years.push(y); }
     if(selected && years.indexOf(selected) === -1){ years.push(selected); years.sort(function(a,b){ return b - a; }); }
-    return '<select onchange="updateCotisationAnnee(\''+key+'\', this.value)" style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;">' +
+    return '<select onchange="updateCotisationAnnee(\''+key+'\', this.value)" '+(disabled ? 'disabled' : '')+' style="font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;">' +
       '<option value="">—</option>' +
       years.map(function(y){ return '<option value="'+y+'"'+(y===selected ? ' selected' : '')+'>'+y+'</option>'; }).join('') +
       '</select>';
@@ -1106,6 +1108,13 @@
     populateYearFilter();
     var body = document.getElementById('membersBody');
     var keys = getFilteredMemberKeys();
+    var isTreso = tresoIsTresorier();
+    var noteEl = document.getElementById('cotisationTresorierNote');
+    if(noteEl){
+      noteEl.textContent = isTreso
+        ? 'Vous êtes reconnu comme trésorier : vous pouvez mettre à jour les cotisations.'
+        : "Seul un trésorier peut saisir ou modifier une cotisation. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres ».";
+    }
     body.innerHTML = '';
     if(keys.length === 0){
       body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun membre ne correspond à ce filtre.</td></tr>';
@@ -1117,14 +1126,15 @@
         var paye = getPayeEffectif(m);
         var reste = montant - paye;
         var echeance = getEcheanceYear(m);
+        var dis = isTreso ? '' : 'disabled';
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td>'+escapeHtml(m.name)+'</td>' +
           '<td>'+statutBadge(statut)+'</td>' +
-          '<td><input type="number" min="0" step="1000" value="'+montant+'" onchange="updateCotisationMontant(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
-          '<td><input type="number" min="0" step="1000" value="'+paye+'" onchange="updateCotisationPaye(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td><input type="number" min="0" step="1000" value="'+montant+'" '+dis+' onchange="updateCotisationMontant(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
+          '<td><input type="number" min="0" step="1000" value="'+paye+'" '+dis+' onchange="updateCotisationPaye(\''+key+'\', this.value)" style="width:92px; font-size:13.5px; padding:4px 6px; border:1px solid var(--line); border-radius:5px;"></td>' +
           '<td style="font-weight:600; color:'+(reste>0 ? 'var(--gold)' : 'var(--green)')+';">'+formatMontant(reste)+'</td>' +
-          '<td>'+anneePayeeSelectHtml(key, getAnneePayee(m))+'</td>' +
+          '<td>'+anneePayeeSelectHtml(key, getAnneePayee(m), !isTreso)+'</td>' +
           '<td style="font-weight:600;">'+(echeance ? echeance : '—')+'</td>';
         body.appendChild(tr);
       });
@@ -1161,6 +1171,7 @@
 
   /* « Payé pour 2026 » -> échéance à venir 2027 (année seule, sans jour ni mois) */
   window.updateCotisationAnnee = function updateCotisationAnnee(key, value){
+    if(!tresoIsTresorier()){ alert('Seul un trésorier peut modifier une cotisation.'); renderMembers(); return; }
     var y = parseInt(value, 10);
     if(!y){
       update(ref(db, 'members/' + key), {cotisationAnnee: null, cotisationEcheance: null});
@@ -1169,12 +1180,14 @@
     update(ref(db, 'members/' + key), {cotisationAnnee: y, cotisationEcheance: String(y + 1)});
   }
   window.updateCotisationMontant = function updateCotisationMontant(key, value){
+    if(!tresoIsTresorier()){ alert('Seul un trésorier peut modifier une cotisation.'); renderMembers(); return; }
     update(ref(db, 'members/' + key), {cotisationMontant: Number(value) || 0});
   }
   /* Saisie du montant payé pour l'année en cours.
      Si la cotisation est réglée en totalité, « Payé pour » passe automatiquement à l'année en cours
      et l'échéance à venir à l'année suivante (payé 2027 -> échéance 2028). */
   window.updateCotisationPaye = function updateCotisationPaye(key, value){
+    if(!tresoIsTresorier()){ alert('Seul un trésorier peut modifier une cotisation.'); renderMembers(); return; }
     var m = membersCache[key] || {};
     var an = anneeCourante();
     var v = Number(value) || 0;
