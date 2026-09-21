@@ -388,6 +388,10 @@
   .tr-memo{ margin-top:10px; font-size:14px; line-height:1.5; color:var(--ink-soft); }
 
   .tr-note{ font-size:14px; line-height:1.5; color:var(--ink-soft); margin:0 0 14px; }
+  .inline-form input:disabled, .inline-form select:disabled, .inline-form button:disabled{
+    opacity:.5; cursor:not-allowed; background:#EDEFEC;
+  }
+  .inline-form button.btn-primary:disabled{ background:#B7C0BA; box-shadow:none; }
   .tr-error{
     display:none; margin-bottom:14px; font-size:14px; background:#FCEAEA; color:#B23A3A;
     padding:10px 12px; border-radius:7px;
@@ -569,6 +573,7 @@
         <div class="panel-card" style="margin-bottom:22px;">
           <h3>Recettes</h3>
           <p class="sub">Cotisations, dons et autres entrées d'argent. Chaque recette s'ajoute au solde final.</p>
+          <p class="tr-note" id="trIncomeNote"></p>
           <div class="inline-form">
             <div class="field" style="flex:2; min-width:200px;"><label for="trIncomeLabel">Libellé</label><input type="text" id="trIncomeLabel" maxlength="150" placeholder="Ex : Cotisations de septembre"></div>
             <div class="field"><label for="trIncomeCategory">Type</label>
@@ -580,7 +585,7 @@
             </div>
             <div class="field"><label for="trIncomeDate">Date</label><input type="date" id="trIncomeDate"></div>
             <div class="field"><label for="trIncomeAmount">Montant (GNF)</label><input type="number" id="trIncomeAmount" min="1" step="1" placeholder="0"></div>
-            <button class="btn btn-primary" onclick="addTresoIncome()">Ajouter la recette</button>
+            <button class="btn btn-primary" id="trIncomeSubmit" onclick="addTresoIncome()">Ajouter la recette</button>
           </div>
           <div class="tr-error" id="trIncomeError"></div>
           <div class="table-wrap">
@@ -595,12 +600,13 @@
           <h3>Dépenses</h3>
           <p class="sub">Une dépense saisie reste « en attente » : elle ne diminue le solde final qu'une fois approuvée par le président.</p>
           <p class="tr-note" id="trWhoAmI" style="margin-bottom:6px;"></p>
+          <p class="tr-note" id="trTresorierNote" style="margin-bottom:6px;"></p>
           <p class="tr-note" id="trPresidentNote"></p>
           <div class="inline-form">
             <div class="field" style="flex:2; min-width:200px;"><label for="trExpenseLabel">Libellé</label><input type="text" id="trExpenseLabel" maxlength="150" placeholder="Ex : Achat de fournitures"></div>
             <div class="field"><label for="trExpenseDate">Date</label><input type="date" id="trExpenseDate"></div>
             <div class="field"><label for="trExpenseAmount">Montant (GNF)</label><input type="number" id="trExpenseAmount" min="1" step="1" placeholder="0"></div>
-            <button class="btn btn-primary" onclick="addTresoExpense()">Ajouter la dépense</button>
+            <button class="btn btn-primary" id="trExpenseSubmit" onclick="addTresoExpense()">Ajouter la dépense</button>
           </div>
           <div class="tr-error" id="trExpenseError"></div>
           <div class="table-wrap">
@@ -869,7 +875,7 @@
   var visitsCache = {};
   var newsCache = {};
 
-  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); renderTresorerie(); });
+  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
@@ -2232,6 +2238,34 @@ var TRESO_EDIT = true;
     var f = tresoNormalize(m.fonction);
     return /\bpresident/.test(f) && !/vice/.test(f);
   }
+  /* Trésorier(ère) = membre dont la fonction contient « trésorier ». Seul un
+     trésorier peut saisir une recette ou une dépense. */
+  function tresoIsTresorier(){
+    var m = tresoAuthMember();
+    if(!m){ return false; }
+    var f = tresoNormalize(m.fonction);
+    return /\btresorier/.test(f);
+  }
+  /* Recopie, à chaque changement de « Liste et fonction des membres », la liste
+     des e-mails reconnus président / trésorier dans un nœud à part (roleIndex).
+     C'est ce nœud que les règles de sécurité Firebase consultent pour autoriser
+     ou refuser réellement les écritures de trésorerie côté serveur — la
+     vérification faite plus haut dans ce fichier ne protège que l'affichage. */
+  function tresoSyncRoleIndex(){
+    var treasurers = [], presidents = [];
+    Object.keys(membersCache).forEach(function(key){
+      var m = membersCache[key];
+      var email = String(m.email || '').trim().toLowerCase();
+      if(!email){ return; }
+      var f = tresoNormalize(m.fonction);
+      if(/\btresorier/.test(f)){ treasurers.push(email); }
+      if(/\bpresident/.test(f) && !/vice/.test(f)){ presidents.push(email); }
+    });
+    set(ref(db, 'roleIndex'), {
+      treasurers: ',' + treasurers.join(',') + ',',
+      presidents: ',' + presidents.join(',') + ','
+    }).catch(function(e){ console.error('roleIndex sync failed', e); });
+  }
   function tresoTodayIso(){
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -2252,9 +2286,10 @@ var TRESO_EDIT = true;
   function tresoRenderEditMeta(){
     var who = tresoAuthor();
     var pres = tresoIsPresident();
+    var treso = tresoIsTresorier();
     var whoEl = document.getElementById('trWhoAmI');
     if(whoEl){
-      whoEl.textContent = 'Vos saisies sont enregistrées au nom de : ' + who.name + (pres ? ' (président)' : '') + '.';
+      whoEl.textContent = 'Vos saisies sont enregistrées au nom de : ' + who.name + (pres ? ' (président)' : '') + (treso ? ' (trésorier)' : '') + '.';
     }
     var noteEl = document.getElementById('trPresidentNote');
     if(noteEl){
@@ -2262,6 +2297,18 @@ var TRESO_EDIT = true;
         ? 'Vous êtes reconnu comme président : vous pouvez approuver ou rejeter les dépenses en attente.'
         : "Seul le président peut approuver ou rejeter une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Président », dans l'onglet « Liste et fonction des membres ».";
     }
+    var tresoNoteMsg = treso
+      ? 'Vous êtes reconnu comme trésorier : vous pouvez saisir des recettes et des dépenses.'
+      : "Seul un trésorier peut saisir une recette ou une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres ».";
+    var incomeNoteEl = document.getElementById('trIncomeNote');
+    if(incomeNoteEl){ incomeNoteEl.textContent = tresoNoteMsg; }
+    var expenseNoteEl = document.getElementById('trTresorierNote');
+    if(expenseNoteEl){ expenseNoteEl.textContent = tresoNoteMsg; }
+    ['trIncomeLabel','trIncomeCategory','trIncomeDate','trIncomeAmount','trIncomeSubmit',
+     'trExpenseLabel','trExpenseDate','trExpenseAmount','trExpenseSubmit'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el){ el.disabled = !treso; }
+    });
     var op = treasuryCache.opening;
     var input = document.getElementById('trOpeningInput');
     if(input && document.activeElement !== input){ input.value = op ? (Number(op.amount) || 0) : ''; }
@@ -2300,6 +2347,7 @@ var TRESO_EDIT = true;
     var date = document.getElementById('trIncomeDate').value;
     var amount = Number(document.getElementById('trIncomeAmount').value);
     tresoShowError('trIncomeError', '');
+    if(!tresoIsTresorier()){ tresoShowError('trIncomeError', "Seul un trésorier peut saisir une recette. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres »."); return; }
     if(!label){ tresoShowError('trIncomeError', 'Ajoutez un libellé pour cette recette.'); return; }
     if(!date){ tresoShowError('trIncomeError', 'Choisissez la date de la recette.'); return; }
     if(!isFinite(amount) || amount <= 0){ tresoShowError('trIncomeError', 'Saisissez un montant supérieur à 0.'); return; }
@@ -2323,6 +2371,7 @@ var TRESO_EDIT = true;
     var date = document.getElementById('trExpenseDate').value;
     var amount = Number(document.getElementById('trExpenseAmount').value);
     tresoShowError('trExpenseError', '');
+    if(!tresoIsTresorier()){ tresoShowError('trExpenseError', "Seul un trésorier peut saisir une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres »."); return; }
     if(!label){ tresoShowError('trExpenseError', 'Ajoutez un libellé pour cette dépense.'); return; }
     if(!date){ tresoShowError('trExpenseError', 'Choisissez la date de la dépense.'); return; }
     if(!isFinite(amount) || amount <= 0){ tresoShowError('trExpenseError', 'Saisissez un montant supérieur à 0.'); return; }
