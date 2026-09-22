@@ -549,7 +549,7 @@
           <p class="sub">Demandes envoyées depuis le formulaire d'adhésion du site.</p>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+              <thead><tr><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Ville</th><th>Date</th><th>Statut</th><th></th></tr></thead>
               <tbody id="requestsBody"></tbody>
             </table>
           </div>
@@ -1123,7 +1123,7 @@
     if(noteEl){
       noteEl.textContent = isTreso
         ? 'Vous êtes reconnu comme trésorier : vous pouvez mettre à jour les cotisations.'
-        : "Seul un trésorier peut saisir ou modifier une cotisation. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres ».";
+        : "Seul un trésorier peut saisir ou modifier une cotisation.";
     }
     body.innerHTML = '';
     if(keys.length === 0){
@@ -1387,7 +1387,7 @@
     body.innerHTML = '';
     var keys = Object.keys(requestsCache).filter(function(k){ return requestsCache[k].status !== 'traitée'; });
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucune demande en attente.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucune demande en attente.</td></tr>';
       return;
     }
     keys.forEach(function(key){
@@ -1398,6 +1398,7 @@
         '<td>'+escapeHtml(r.name)+'</td>' +
         '<td>'+escapeHtml(r.email||r.activity||'—')+'</td>' +
         '<td>'+escapeHtml(r.phone||'—')+'</td>' +
+        '<td>'+escapeHtml(r.city||'—')+'</td>' +
         '<td>'+escapeHtml(r.date||'—')+'</td>' +
         '<td>'+badge+'</td>' +
         '<td><div class="row-actions">' +
@@ -1411,7 +1412,7 @@
     var r = requestsCache[key];
     if(!r) return;
     var newRef = push(ref(db, 'members'));
-    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné', cotisationMontant:COTISATION_MONTANT_DEFAUT, cotisationPaye:0});
+    set(newRef, {name:r.name, email:r.email||'', phone:r.phone||'', ville:r.city||'', status:'Actif', since:todayStr(), cotisationStatut:'Non renseigné', cotisationMontant:COTISATION_MONTANT_DEFAUT, cotisationPaye:0});
     update(ref(db, 'joinRequests/' + key), {status:'traitée'});
   }
   window.refuseRequest = function refuseRequest(key){
@@ -2373,11 +2374,11 @@ var TRESO_EDIT = true;
     if(noteEl){
       noteEl.textContent = pres
         ? 'Vous êtes reconnu comme président : vous pouvez approuver ou rejeter les dépenses en attente.'
-        : "Seul le président peut approuver ou rejeter une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Président », dans l'onglet « Liste et fonction des membres ».";
+        : "Seul le président peut approuver ou rejeter une dépense.";
     }
     var tresoNoteMsg = treso
       ? 'Vous êtes reconnu comme trésorier : vous pouvez saisir des recettes et des dépenses.'
-      : "Seul un trésorier peut saisir une recette ou une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres ».";
+      : "Seul un trésorier peut saisir une recette ou une dépense.";
     var incomeNoteEl = document.getElementById('trIncomeNote');
     if(incomeNoteEl){ incomeNoteEl.textContent = tresoNoteMsg; }
     var expenseNoteEl = document.getElementById('trTresorierNote');
@@ -2425,7 +2426,7 @@ var TRESO_EDIT = true;
     var date = document.getElementById('trIncomeDate').value;
     var amount = Number(document.getElementById('trIncomeAmount').value);
     tresoShowError('trIncomeError', '');
-    if(!tresoIsTresorier()){ tresoShowError('trIncomeError', "Seul un trésorier peut saisir une recette. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres »."); return; }
+    if(!tresoIsTresorier()){ tresoShowError('trIncomeError', "Seul un trésorier peut saisir une recette."); return; }
     if(!label){ tresoShowError('trIncomeError', 'Ajoutez un libellé pour cette recette.'); return; }
     if(!date){ tresoShowError('trIncomeError', 'Choisissez la date de la recette.'); return; }
     if(!isFinite(amount) || amount <= 0){ tresoShowError('trIncomeError', 'Saisissez un montant supérieur à 0.'); return; }
@@ -2449,7 +2450,7 @@ var TRESO_EDIT = true;
     var date = document.getElementById('trExpenseDate').value;
     var amount = Number(document.getElementById('trExpenseAmount').value);
     tresoShowError('trExpenseError', '');
-    if(!tresoIsTresorier()){ tresoShowError('trExpenseError', "Seul un trésorier peut saisir une dépense. Pour être reconnu, votre e-mail de connexion doit être renseigné pour un membre dont la fonction est « Trésorier », dans l'onglet « Liste et fonction des membres »."); return; }
+    if(!tresoIsTresorier()){ tresoShowError('trExpenseError', "Seul un trésorier peut saisir une dépense."); return; }
     if(!label){ tresoShowError('trExpenseError', 'Ajoutez un libellé pour cette dépense.'); return; }
     if(!date){ tresoShowError('trExpenseError', 'Choisissez la date de la dépense.'); return; }
     if(!isFinite(amount) || amount <= 0){ tresoShowError('trExpenseError', 'Saisissez un montant supérieur à 0.'); return; }

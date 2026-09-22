@@ -768,7 +768,11 @@
             : ('Échéance dépassée : ' + echeanceAn + '.'))
         : 'Aucune échéance renseignée pour le moment.');
     nameEl.textContent = m.name || 'Mes informations';
+    var fonctionTxt = m.fonction || 'Membre';
     profilDetailEl.innerHTML =
+      'Code d\'accès : ' + escapeHtml(currentMemberCode || '—') + '<br>' +
+      'Fonction : ' + escapeHtml(fonctionTxt) + '<br>' +
+      'Ville : ' + escapeHtml(m.ville || '—') + '<br>' +
       (m.phone ? 'Téléphone : ' + escapeHtml(m.phone) + '<br>' : '') +
       'Membre depuis : ' + escapeHtml(m.since || '—');
 
