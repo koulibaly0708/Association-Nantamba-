@@ -341,7 +341,7 @@
       <div class="via">à envoyer via Orange Money</div>
     </div>
     <div class="payment-number">
-      <span class="num">224 621 10 98 47</span>
+      <span class="num">224 622 65 86 96</span>
       <button class="copy-btn" onclick="copyPaymentNumber()">Copier</button>
     </div>
     <ol class="payment-steps">
@@ -428,7 +428,7 @@
   }
 
   /* ============ PANNEAU PAIEMENT ============ */
-  var WHATSAPP_NUMBER = '224621109847'; // même numéro que l'Orange Money, sans espaces ni +
+  var WHATSAPP_NUMBER = '224622658696'; // même numéro que l'Orange Money, sans espaces ni +
   window.openPaymentPanel = function openPaymentPanel(name){
     var msg = 'Bonjour, voici la preuve de paiement de mon adhésion à l\'Association Nantamba' + (name ? (' (' + name + ')') : '') + '.';
     document.getElementById('whatsappProofLink').href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
@@ -438,7 +438,7 @@
     document.getElementById('paymentOverlay').classList.remove('open');
   }
   window.copyPaymentNumber = function copyPaymentNumber(){
-    if(navigator.clipboard){ navigator.clipboard.writeText('224621109847'); }
+    if(navigator.clipboard){ navigator.clipboard.writeText('224622658696'); }
   }
 </script>
 </body>

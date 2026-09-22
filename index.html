@@ -267,7 +267,15 @@
   .ach-item .ach-toggle:hover{ text-decoration:underline; }
 
   /* A propos */
-  .apropos-grid{ display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
+  .apropos-grid{ display:grid; grid-template-columns:1fr; gap:16px; align-items:start; max-width:900px; }
+  .apropos-full{ display:none; }
+  .apropos-full.open{ display:block; }
+  .apropos-subtitle{ font-size:17px; font-weight:700; color:var(--ink); margin:6px 0 16px; }
+  .apropos-toggle{
+    margin-top:10px; background:none; border:none; color:var(--blue-deep);
+    font-weight:600; font-size:13.5px; cursor:pointer; padding:0; display:block;
+  }
+  .apropos-toggle:hover{ text-decoration:underline; }
   .apropos-grid p{ font-size:15px; color:var(--ink-soft); line-height:1.7; margin-bottom:16px; }
   .values{ display:flex; flex-direction:column; gap:18px; }
   .value-item{ padding-left:18px; border-left:2px solid var(--blue); }
@@ -309,6 +317,26 @@
   .contact-info{ display:flex; flex-direction:column; gap:20px; }
   .contact-info .item .lbl{ font-size:12.5px; font-weight:600; color:var(--green); margin-bottom:4px; }
   .contact-info .item .val{ font-size:15px; color:var(--ink); }
+  .payment-amount{
+    background:var(--sand); border:1.5px solid var(--line); border-radius:12px;
+    padding:16px 18px; text-align:center; margin-bottom:16px;
+  }
+  .payment-amount .amt{ font-size:26px; font-weight:700; color:var(--blue-deep); }
+  .payment-amount .via{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
+  .payment-number{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#EAF1F8; border-radius:10px; padding:12px 16px; margin-bottom:18px;
+  }
+  .payment-number .num{ font-family:monospace; font-size:17px; font-weight:700; color:var(--blue-deep); letter-spacing:.03em; }
+  .payment-number .copy-btn{ font-size:12.5px; font-weight:600; color:var(--blue-deep); background:var(--white); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+  .payment-steps{ margin:0 0 20px; padding-left:18px; }
+  .payment-steps li{ font-size:13.5px; color:var(--ink); line-height:1.7; list-style:decimal; }
+  .whatsapp-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:#25D366; color:var(--white); width:100%; padding:13px 20px;
+    border-radius:8px; font-weight:600; font-size:14.5px; text-decoration:none; margin-bottom:10px;
+  }
+  .whatsapp-btn:hover{ filter:brightness(0.95); }
   .ct-list{ display:flex; flex-direction:column; }
   .ct-row{ display:flex; align-items:flex-start; gap:22px; padding:22px 0; border-bottom:1px solid var(--line); }
   .ct-row:first-child{ padding-top:4px; }
@@ -491,7 +519,6 @@
     .ach-item.ach-photo{ grid-template-columns:320px 1fr; gap:48px; padding:34px; }
     .ach-item h3{ font-size:1.625rem; }
 
-    .apropos-grid{ grid-template-columns:1.15fr .85fr; gap:72px; align-items:center; }
     .apropos-grid p{ font-size:18px; line-height:1.7; }
     .value-item{
       background:var(--white); border:1px solid var(--line);
@@ -661,27 +688,28 @@
   <div class="wrap">
     <div class="section-head">
       <div class="eyebrow">À propos</div>
-      <h2>Qui est Association Nantamba</h2>
+      <h2>Qui sommes-nous</h2>
     </div>
     <div class="apropos-grid">
-      <div>
-        <p>Association Nantamba (AN) est une association dont la mission est de fédérer ses membres autour d'initiatives de développement communautaire. Ce texte de présentation pourra être complété avec l'historique et la mission exacte de l'association.</p>
-        <p>Notre vision est celle d'une communauté unie, active et engagée pour son propre développement, portée par la solidarité entre ses membres.</p>
+      <p>L'Association Nantamba (AN) est une organisation dynamique qui fédère ses membres autour d'initiatives concrètes de développement. Notre vision est celle d'un collectif uni, actif et résolument engagé, où la solidarité entre les membres constitue le moteur de chaque action. Ensemble, nous unissons nos forces pour bâtir un avenir meilleur et participer activement à la prospérité de la République de Guinée.</p>
+      <div class="apropos-full" id="aproposFull">
+        <div class="apropos-subtitle">Nos Valeurs et Engagements Fondamentaux :</div>
+        <div class="values">
+          <div class="value-item">
+            <h3>Droits et Citoyenneté</h3>
+            <p>Nous proclamons notre attachement indéfectible aux droits, devoirs et principes fondamentaux inscrits dans la Constitution guinéenne, la Charte africaine des droits de l'homme et des peuples, ainsi que les protocoles additionnels relatifs aux droits des femmes.</p>
+          </div>
+          <div class="value-item">
+            <h3>Unité et Cohésion</h3>
+            <p>Nous agissons au quotidien dans un esprit d'unité, de solidarité et de renforcement de la cohésion nationale.</p>
+          </div>
+          <div class="value-item">
+            <h3>Ouverture et Coopération</h3>
+            <p>Nous croyons à la force du partenariat. C'est pourquoi nous développons des relations d'amitié et de coopération avec les institutions du monde entier, sur la base de l'égalité, du respect mutuel et de l'intérêt partagé.</p>
+          </div>
+        </div>
       </div>
-      <div class="values">
-        <div class="value-item">
-          <h3>Union</h3>
-          <p>Rassembler les membres autour d'objectifs communs.</p>
-        </div>
-        <div class="value-item">
-          <h3>Solidarité</h3>
-          <p>S'entraider pour avancer ensemble.</p>
-        </div>
-        <div class="value-item">
-          <h3>Développement</h3>
-          <p>Agir concrètement pour la communauté.</p>
-        </div>
-      </div>
+      <button class="apropos-toggle" onclick="toggleNews(this,'aproposFull')">Lire la suite ▾</button>
     </div>
   </div>
 </section>
@@ -815,11 +843,21 @@
 
     <div id="donateStepSuccess" style="display:none;">
       <h3>Merci pour votre générosité !</h3>
-      <p>Votre demande a bien été enregistrée. Pour finaliser votre don, vous pouvez nous contacter directement :</p>
-      <div class="contact-info" style="margin:18px 0;">
-        <div class="item"><div class="lbl">Adresse e-mail</div><div class="val">contact@association-nantamba.org</div></div>
-        <div class="item"><div class="lbl">Téléphone / WhatsApp</div><div class="val">À compléter</div></div>
+      <p>Votre demande a bien été enregistrée. Dernière étape : envoyez votre don via Orange Money.</p>
+      <div class="payment-amount">
+        <div class="amt" id="donateAmountDisplay">0 GNF</div>
+        <div class="via">à envoyer via Orange Money</div>
       </div>
+      <div class="payment-number">
+        <span class="num">224 622 65 86 96</span>
+        <button class="copy-btn" onclick="copyDonationNumber()">Copier</button>
+      </div>
+      <ol class="payment-steps">
+        <li>Envoyez le montant ci-dessus au numéro indiqué via Orange Money.</li>
+        <li>Faites une capture d'écran de la confirmation de paiement.</li>
+        <li>Envoyez-la nous par WhatsApp au même numéro (bouton ci-dessous), pour que nous puissions confirmer la réception de votre don.</li>
+      </ol>
+      <a class="whatsapp-btn" id="donateWhatsappLink" href="#" target="_blank" rel="noopener">Envoyer la preuve par WhatsApp</a>
       <button class="btn btn-outline" style="width:100%;" onclick="closeDonateModal()">Fermer</button>
     </div>
   </div>
@@ -915,6 +953,7 @@
     document.getElementById('donateName').value = '';
     document.getElementById('donatePhone').value = '';
     document.getElementById('donateAmount').value = '';
+    document.getElementById('donateAmountDisplay').textContent = '0 GNF';
     document.getElementById('donateOverlay').classList.add('open');
   }
   function closeDonateModal(){
@@ -1021,6 +1060,13 @@
     }).join('');
   }
 
+  var DON_WHATSAPP_NUMBER = '224622658696'; // numéro Orange Money / WhatsApp pour les dons
+  function formatMontantGNF(n){
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' GNF';
+  }
+  window.copyDonationNumber = function copyDonationNumber(){
+    if(navigator.clipboard){ navigator.clipboard.writeText('224622658696'); }
+  }
   window.submitDonation = function submitDonation(){
     var name = document.getElementById('donateName').value.trim();
     var phone = document.getElementById('donatePhone').value.trim();
@@ -1046,6 +1092,9 @@
       ts: Date.now()
     }).then(function(){
       if(btn){ btn.disabled = false; }
+      document.getElementById('donateAmountDisplay').textContent = formatMontantGNF(Number(amount));
+      var msg = 'Bonjour, voici la preuve de paiement de mon don de ' + formatMontantGNF(Number(amount)) + ' à l\'Association Nantamba (' + name + ').';
+      document.getElementById('donateWhatsappLink').href = 'https://wa.me/' + DON_WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
       document.getElementById('donateStepForm').style.display = 'none';
       document.getElementById('donateStepSuccess').style.display = 'block';
     }).catch(function(e){
