@@ -271,6 +271,20 @@
   .announce-item .a-date{ font-size:12px; color:var(--ink-soft); margin-bottom:8px; }
   .announce-item .a-msg{ font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
 
+  /* Onglet Missions bénévoles */
+  .mission-vol-card{ border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; }
+  .mission-vol-head{ display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .mission-vol-head h4{ font-size:15px; font-weight:600; color:var(--ink); }
+  .mission-vol-head .code-display{ font-size:12.5px; }
+  .mission-sector-block{ margin-bottom:12px; }
+  .mission-sector-block:last-child{ margin-bottom:0; }
+  .mission-sector-title{ font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em; margin-bottom:8px; }
+  .mission-check-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:6px 14px; }
+  .mission-check-item{ display:flex; align-items:flex-start; gap:8px; font-size:13.5px; padding:6px 4px; border-radius:6px; cursor:pointer; }
+  .mission-check-item:hover{ background:#F5F7F5; }
+  .mission-check-item input{ margin-top:3px; width:16px; height:16px; accent-color:var(--green); cursor:pointer; flex:none; }
+  .mission-check-item .mc-label{ line-height:1.35; }
+  .mission-check-item .mc-date{ display:block; font-size:11.5px; color:var(--ink-soft); }
   .panel-card textarea{
     width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:8px; font-size:14.5px;
     min-height:100px; resize:vertical; margin-bottom:14px;
@@ -435,6 +449,7 @@
       <a href="espace-membre.html">Espace membre</a>
       <a href="espace-admin.html">Espace Administrateur</a>
       <a href="benevolat.html">Devenir bénévole</a>
+      <a href="espace-benevole-donateur.html">Bénévoles &amp; donateurs</a>
     </nav>
   </div>
 </header>
@@ -478,6 +493,7 @@
         <button class="tab-btn" data-tab="tab-dons" onclick="switchTab('tab-dons')">Demandes de don</button>
         <button class="tab-btn" data-tab="tab-tresorerie" onclick="switchTab('tab-tresorerie')">Tableau de trésorerie</button>
         <button class="tab-btn" data-tab="tab-benevoles" onclick="switchTab('tab-benevoles')">Bénévoles</button>
+        <button class="tab-btn" data-tab="tab-missions" onclick="switchTab('tab-missions')">Missions bénévoles</button>
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
         <button class="tab-btn" data-tab="tab-documents" onclick="switchTab('tab-documents')">Documents</button>
@@ -558,15 +574,24 @@
 
       <!-- Onglet : Demandes de don -->
       <div class="tab-panel" id="tab-dons">
-        <div class="panel-card">
+        <div class="panel-card" style="margin-bottom:22px;">
           <h3>Demandes de don</h3>
-          <p class="sub">Demandes envoyées depuis le bouton « Faire un don » du site.</p>
+          <p class="sub">Demandes envoyées depuis le bouton « Faire un don » du site. « Activer l'espace » génère un code d'accès à transmettre au donateur pour son espace personnel (profil, satisfecit, messages).</p>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom complet</th><th>Numéro</th><th>Montant</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+              <thead><tr><th>Nom complet</th><th>Numéro</th><th>Montant</th><th>Date</th><th>Statut</th><th>Espace donateur</th><th></th></tr></thead>
               <tbody id="donsBody"></tbody>
             </table>
           </div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Message aux donateurs</h3>
+          <p class="sub">Publiez un message visible par tous les donateurs dans leur espace personnel.</p>
+          <div class="field"><label>Titre</label><input type="text" id="donMsgTitle" placeholder="Titre du message"></div>
+          <textarea id="donMsgBody" placeholder="Votre message aux donateurs..."></textarea>
+          <button class="btn btn-primary" onclick="publishDonorMessage()">Publier le message</button>
+          <div class="announce-list" id="donMsgList"></div>
         </div>
       </div>
 
@@ -658,19 +683,38 @@
 
       <!-- Onglet : Bénévoles -->
       <div class="tab-panel" id="tab-benevoles">
-        <div class="panel-card">
+        <div class="panel-card" style="margin-bottom:22px;">
           <h3>Bénévoles</h3>
-          <p class="sub">Candidatures envoyées depuis la page « Devenir bénévole » du site.</p>
+          <p class="sub">Candidatures envoyées depuis la page « Devenir bénévole » du site. « Activer l'espace » génère un code d'accès à transmettre au bénévole pour son espace personnel (profil, documents, messages, carte de bénévolat).</p>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Nom complet</th><th>Numéro</th><th>E-mail</th><th>Compétences</th><th>Disponibilités</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+              <thead><tr><th>Nom complet</th><th>Numéro</th><th>E-mail</th><th>Compétences</th><th>Disponibilités</th><th>Date</th><th>Statut</th><th>Espace bénévole</th><th></th></tr></thead>
               <tbody id="benevolesBody"></tbody>
             </table>
           </div>
         </div>
+
+        <div class="panel-card">
+          <h3>Message aux bénévoles</h3>
+          <p class="sub">Publiez un message visible par tous les bénévoles dans leur espace personnel.</p>
+          <div class="field"><label>Titre</label><input type="text" id="volMsgTitle" placeholder="Titre du message"></div>
+          <textarea id="volMsgBody" placeholder="Votre message aux bénévoles..."></textarea>
+          <button class="btn btn-primary" onclick="publishVolunteerMessage()">Publier le message</button>
+          <div class="announce-list" id="volMsgList"></div>
+        </div>
+      </div>
+
+      <!-- Onglet : Missions bénévoles -->
+      <div class="tab-panel" id="tab-missions">
+        <div class="panel-card">
+          <h3>Missions bénévoles</h3>
+          <p class="sub">Cochez les missions accomplies par chaque bénévole. Dès qu'une mission est cochée, le satisfecit correspondant se débloque automatiquement dans l'espace personnel du bénévole (téléchargeable avec son nom, la mission et la date). Décocher une mission retire le satisfecit de son espace.</p>
+          <div id="missionsVolList"></div>
+        </div>
       </div>
 
       <!-- Onglet 3 : Création de code d'accès -->
+
       <div class="tab-panel" id="tab-codes">
         <div class="panel-card">
           <h3>Création de code d'accès</h3>
@@ -900,6 +944,50 @@
   var benevolesCache = {};
   var visitsCache = {};
   var newsCache = {};
+  var volunteerAccessCache = {};
+  var donorAccessCache = {};
+  var volunteerMsgCache = {};
+  var donorMsgCache = {};
+  var volunteerMissionsCache = {};
+
+  /* Catalogue des missions bénévoles, regroupées par secteur (fiche de bénévolat) */
+  var MISSION_CATALOG = [
+    { sector:'edu', sectorLabel:'📚 Éducation, enfance et formation', missions:[
+      { id:'soutien-scolaire', label:'Soutien scolaire & Alphabétisation' },
+      { id:'animation-socio-educative', label:'Animation socio-éducative' },
+      { id:'initiation-numerique', label:'Initiation au numérique' }
+    ]},
+    { sector:'sante', sectorLabel:'🩺 Santé communautaire et sensibilisation', missions:[
+      { id:'campagnes-sensibilisation', label:'Campagnes de sensibilisation' },
+      { id:'appui-logistique-medical', label:'Appui logistique médical' },
+      { id:'soutien-psychosocial', label:'Soutien psychologique et social' }
+    ]},
+    { sector:'env', sectorLabel:'🌱 Environnement, agriculture et développement durable', missions:[
+      { id:'reforestation-eco', label:'Reforestation & Éco-citoyenneté' },
+      { id:'appui-agricole', label:'Appui agricole' },
+      { id:'gestion-dechets', label:'Gestion des déchets' }
+    ]},
+    { sector:'admin', sectorLabel:'💼 Administration, communication et gestion', missions:[
+      { id:'reseaux-sociaux', label:'Gestion des réseaux sociaux' },
+      { id:'collecte-fonds', label:'Collecte de fonds' },
+      { id:'secretariat-accueil', label:'Secrétariat et accueil' }
+    ]},
+    { sector:'digital', sectorLabel:'🖥️ Outils digitaux et graphiques', missions:[
+      { id:'identite-visuelle', label:'Identité visuelle et Branding' },
+      { id:'design-ui-ux', label:"Design d'interface (UI/UX)" },
+      { id:'supports-print', label:'Supports de communication print' },
+      { id:'contenus-reseaux-sociaux', label:'Contenus pour réseaux sociaux' },
+      { id:'creation-site-internet', label:'Création de sites vitrines et institutionnels' },
+      { id:'maintenance-site', label:'Maintenance et mises à jour du site' },
+      { id:'base-donnees-adherents', label:'Base de données des adhérents et bénévoles' },
+      { id:'tableaux-de-bord', label:'Tableaux de bord de suivi (Dashboards)' },
+      { id:'automatisation-taches', label:'Automatisation des tâches' },
+      { id:'cartes-de-visite', label:'Conception de cartes de visite' },
+      { id:'cartes-de-membres', label:'Conception de cartes de membres' },
+      { id:'certificats-benevolat', label:"Certificats de bénévolat et d'engagement" },
+      { id:'attestations-competences', label:'Attestations de compétences' }
+    ]}
+  ];
 
   onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderListeGenerale(); renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
@@ -909,6 +997,11 @@
   onValue(ref(db, 'volunteerRequests'), function(snap){ benevolesCache = snap.val() || {}; renderBenevoles(); });
   onValue(ref(db, 'siteVisits'), function(snap){ visitsCache = snap.val() || {}; renderStats(); });
   onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNewsAdmin(); });
+  onValue(ref(db, 'volunteerAccess'), function(snap){ volunteerAccessCache = snap.val() || {}; renderBenevoles(); });
+  onValue(ref(db, 'donorAccess'), function(snap){ donorAccessCache = snap.val() || {}; renderDons(); });
+  onValue(ref(db, 'volunteerMessages'), function(snap){ volunteerMsgCache = snap.val() || {}; renderVolunteerMessages(); });
+  onValue(ref(db, 'donorMessages'), function(snap){ donorMsgCache = snap.val() || {}; renderDonorMessages(); });
+  onValue(ref(db, 'volunteerMissions'), function(snap){ volunteerMissionsCache = snap.val() || {}; renderMissionsTab(); });
 
   /* ============ CONNEXION VIA FIREBASE AUTHENTICATION ============ */
   var currentAccessSpace = 'admin';
@@ -993,7 +1086,7 @@
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
     var sf = document.querySelector('.support-footer'); if(sf){ sf.style.display = 'flex'; }
-    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderStats(); renderNewsAdmin(); renderListeGenerale();
+    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderMissionsTab(); renderStats(); renderNewsAdmin(); renderListeGenerale();
     startTresoListener(); tresoInitForms();
     if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
@@ -1420,14 +1513,44 @@
     update(ref(db, 'joinRequests/' + key), {status:'traitée'});
   }
 
-  /* ============ ONGLET : DEMANDES DE DON ============ */
+  /* Génère un code au format PREFIX-LLNN à partir d'un nom complet (ex. buildCode("Solo Koulibaly","ANB") -> ANB-KOSO57) */
+  function buildCode(fullName, prefix){
+    var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    var clean = (fullName || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase().replace(/[^A-Z\s]/g, '');
+    var parts = clean.split(/\s+/).filter(Boolean);
+    var letters = '';
+    if(parts.length >= 2){
+      letters = parts[1].substring(0,2) + parts[0].substring(0,2);
+    } else if(parts.length === 1){
+      letters = parts[0].substring(0,4);
+    }
+    while(letters.length < 4){
+      letters += alphabet.charAt(Math.floor(Math.random()*alphabet.length));
+    }
+    var digits = String(Math.floor(Math.random()*100)).padStart(2, '0');
+    return prefix + '-' + letters + digits;
+  }
+  function accessCellHtml(access, kind, key, uploadLabel, uploadFn){
+    if(access && access.status !== 'Révoqué'){
+      return '<span class="code-display">'+escapeHtml(access.code)+'</span> ' +
+        '<button class="row-btn copy" onclick="copyCode(\''+access.code+'\')">Copier</button> ' +
+        '<label class="row-btn copy" style="cursor:pointer;">'+uploadLabel+(access.hasFile ? ' ✓' : '')+
+        '<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="'+uploadFn+'(\''+key+'\', this)"></label> ' +
+        '<button class="row-btn delete" onclick="revoke'+kind+'Access(\''+key+'\')">Révoquer</button>';
+    }
+    return '<button class="row-btn accept" onclick="activate'+kind+'(\''+key+'\')">Activer l\'espace</button>';
+  }
+
+  /* ============ ONGLET : DEMANDES DE DON / ESPACE DONATEUR ============ */
   function renderDons(){
     var body = document.getElementById('donsBody');
     if(!body) return;
     body.innerHTML = '';
     var keys = Object.keys(donsCache).sort(function(a,b){ return (donsCache[b].ts||0) - (donsCache[a].ts||0); });
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="6">Aucune demande de don pour le moment.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucune demande de don pour le moment.</td></tr>';
       return;
     }
     keys.forEach(function(key){
@@ -1440,6 +1563,7 @@
         '<td>'+formatMontant(d.amount)+' GNF</td>' +
         '<td>'+escapeHtml(d.date||'—')+'</td>' +
         '<td>'+badge+'</td>' +
+        '<td>'+accessCellHtml(donorAccessCache[key], 'Donor', key, 'Satisfecit', 'uploadDonorCertificate')+'</td>' +
         '<td><div class="row-actions">' +
           (d.status === 'traité' ? '' : '<button class="row-btn accept" onclick="traiterDon(\''+key+'\')">Marquer traité</button>') +
           '<button class="row-btn refuse" onclick="supprimerDon(\''+key+'\')">Supprimer</button>' +
@@ -1454,16 +1578,71 @@
   window.supprimerDon = function supprimerDon(key){
     if(!donsCache[key]) return;
     remove(ref(db, 'donationRequests/' + key));
+    remove(ref(db, 'donorAccess/' + key));
+    remove(ref(db, 'donorCertFiles/' + key));
+  }
+  window.activateDonor = function activateDonor(key){
+    var d = donsCache[key];
+    if(!d) return;
+    var code = buildCode(d.name, 'AND');
+    set(ref(db, 'donorAccess/' + key), {code: code, date: todayStr(), status: 'Actif', hasFile:false, ts: Date.now()});
+  }
+  window.revokeDonorAccess = function revokeDonorAccess(key){
+    if(!donorAccessCache[key]) return;
+    update(ref(db, 'donorAccess/' + key), {status:'Révoqué'});
+  }
+  window.uploadDonorCertificate = function uploadDonorCertificate(key, inputEl){
+    var file = inputEl.files && inputEl.files[0];
+    if(!file) return;
+    if(file.size > DOC_MAX_BYTES){ alert('Fichier trop volumineux (maximum 1,5 Mo).'); inputEl.value=''; return; }
+    var reader = new FileReader();
+    reader.onerror = function(){ alert('Impossible de lire le fichier.'); };
+    reader.onload = function(){
+      set(ref(db, 'donorCertFiles/' + key), {data: reader.result, fileName: file.name, ts: Date.now()}).then(function(){
+        update(ref(db, 'donorAccess/' + key), {hasFile:true});
+        inputEl.value = '';
+      }).catch(function(e){ console.error(e); alert('Une erreur est survenue lors de l\'envoi.'); });
+    };
+    reader.readAsDataURL(file);
+  }
+  window.publishDonorMessage = function publishDonorMessage(){
+    var title = document.getElementById('donMsgTitle').value.trim();
+    var msg = document.getElementById('donMsgBody').value.trim();
+    if(!title || !msg) return;
+    var newRef = push(ref(db, 'donorMessages'));
+    set(newRef, {title:title, message:msg, date:todayStr(), ts:Date.now()});
+    document.getElementById('donMsgTitle').value = '';
+    document.getElementById('donMsgBody').value = '';
+  }
+  window.deleteDonorMessage = function deleteDonorMessage(key){
+    if(!donorMsgCache[key]) return;
+    if(!confirm('Supprimer ce message ? Il ne sera plus visible par les donateurs.')) return;
+    remove(ref(db, 'donorMessages/' + key));
+  }
+  function renderDonorMessages(){
+    var wrap = document.getElementById('donMsgList');
+    if(!wrap) return;
+    var keys = Object.keys(donorMsgCache).sort(function(a,b){ return (donorMsgCache[b].ts||0) - (donorMsgCache[a].ts||0); });
+    wrap.innerHTML = '';
+    if(keys.length === 0){ wrap.innerHTML = '<p class="sub" style="margin:0;">Aucun message publié pour le moment.</p>'; return; }
+    keys.forEach(function(key){
+      var a = donorMsgCache[key];
+      var div = document.createElement('div');
+      div.className = 'announce-item';
+      div.innerHTML = '<div class="a-title">'+escapeHtml(a.title)+'</div><div class="a-date">'+escapeHtml(a.date||'')+'</div><div class="a-msg">'+escapeHtml(a.message)+'</div>' +
+        '<button class="row-btn delete" style="margin-top:8px;" onclick="deleteDonorMessage(\''+key+'\')">Supprimer</button>';
+      wrap.appendChild(div);
+    });
   }
 
-  /* ============ ONGLET : BENEVOLES ============ */
+  /* ============ ONGLET : BENEVOLES / ESPACE BENEVOLE ============ */
   function renderBenevoles(){
     var body = document.getElementById('benevolesBody');
     if(!body) return;
     body.innerHTML = '';
     var keys = Object.keys(benevolesCache).sort(function(a,b){ return (benevolesCache[b].ts||0) - (benevolesCache[a].ts||0); });
     if(keys.length === 0){
-      body.innerHTML = '<tr class="empty-row"><td colspan="8">Aucune candidature de bénévole pour le moment.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="9">Aucune candidature de bénévole pour le moment.</td></tr>';
       return;
     }
     keys.forEach(function(key){
@@ -1478,6 +1657,7 @@
         '<td>'+escapeHtml(v.availability||'—')+'</td>' +
         '<td>'+escapeHtml(v.date||'—')+'</td>' +
         '<td>'+badge+'</td>' +
+        '<td>'+accessCellHtml(volunteerAccessCache[key], 'Volunteer', key, 'Carte', 'uploadVolunteerCard')+'</td>' +
         '<td><div class="row-actions">' +
           (v.status === 'traité' ? '' : '<button class="row-btn accept" onclick="traiterBenevole(\''+key+'\')">Marquer traité</button>') +
           '<button class="row-btn refuse" onclick="supprimerBenevole(\''+key+'\')">Supprimer</button>' +
@@ -1492,6 +1672,110 @@
   window.supprimerBenevole = function supprimerBenevole(key){
     if(!benevolesCache[key]) return;
     remove(ref(db, 'volunteerRequests/' + key));
+    remove(ref(db, 'volunteerAccess/' + key));
+    remove(ref(db, 'volunteerCardFiles/' + key));
+  }
+  window.activateVolunteer = function activateVolunteer(key){
+    var v = benevolesCache[key];
+    if(!v) return;
+    var code = buildCode(v.name, 'ANB');
+    set(ref(db, 'volunteerAccess/' + key), {code: code, date: todayStr(), status: 'Actif', hasFile:false, ts: Date.now()});
+  }
+  window.revokeVolunteerAccess = function revokeVolunteerAccess(key){
+    if(!volunteerAccessCache[key]) return;
+    update(ref(db, 'volunteerAccess/' + key), {status:'Révoqué'});
+  }
+  window.uploadVolunteerCard = function uploadVolunteerCard(key, inputEl){
+    var file = inputEl.files && inputEl.files[0];
+    if(!file) return;
+    if(file.size > DOC_MAX_BYTES){ alert('Fichier trop volumineux (maximum 1,5 Mo).'); inputEl.value=''; return; }
+    var reader = new FileReader();
+    reader.onerror = function(){ alert('Impossible de lire le fichier.'); };
+    reader.onload = function(){
+      set(ref(db, 'volunteerCardFiles/' + key), {data: reader.result, fileName: file.name, ts: Date.now()}).then(function(){
+        update(ref(db, 'volunteerAccess/' + key), {hasFile:true});
+        inputEl.value = '';
+      }).catch(function(e){ console.error(e); alert('Une erreur est survenue lors de l\'envoi.'); });
+    };
+    reader.readAsDataURL(file);
+  }
+  /* ============ ONGLET : MISSIONS BENEVOLES / SATISFECIT ============ */
+  function renderMissionsTab(){
+    var wrap = document.getElementById('missionsVolList');
+    if(!wrap) return;
+    var keys = Object.keys(volunteerAccessCache).filter(function(k){
+      return volunteerAccessCache[k] && volunteerAccessCache[k].status === 'Actif' && benevolesCache[k];
+    }).sort(function(a,b){
+      return (benevolesCache[a].name||'').localeCompare(benevolesCache[b].name||'');
+    });
+    if(keys.length === 0){
+      wrap.innerHTML = '<p class="empty-note">Aucun bénévole avec un espace actif pour le moment. Activez d\'abord son espace dans l\'onglet « Bénévoles ».</p>';
+      return;
+    }
+    wrap.innerHTML = '';
+    keys.forEach(function(key){
+      var v = benevolesCache[key];
+      var access = volunteerAccessCache[key];
+      var done = volunteerMissionsCache[key] || {};
+      var card = document.createElement('div');
+      card.className = 'mission-vol-card';
+      var head = '<div class="mission-vol-head"><h4>'+escapeHtml(v.name)+'</h4>' +
+        '<span class="code-display">'+escapeHtml(access.code)+'</span></div>';
+      var body = '';
+      MISSION_CATALOG.forEach(function(sect){
+        body += '<div class="mission-sector-block"><div class="mission-sector-title">'+sect.sectorLabel+'</div><div class="mission-check-grid">';
+        sect.missions.forEach(function(m){
+          var d = done[m.id];
+          var checked = d ? 'checked' : '';
+          var dateHtml = d ? '<span class="mc-date">Accompli le '+escapeHtml(d.date)+'</span>' : '';
+          body += '<label class="mission-check-item"><input type="checkbox" '+checked+
+            ' onchange="toggleVolunteerMission(\''+key+'\',\''+m.id+'\',\''+sect.sector+'\',\''+escapeHtml(m.label).replace(/'/g,"\\'")+'\',this.checked)">' +
+            '<span class="mc-label">'+escapeHtml(m.label)+dateHtml+'</span></label>';
+        });
+        body += '</div></div>';
+      });
+      card.innerHTML = head + body;
+      wrap.appendChild(card);
+    });
+  }
+  window.toggleVolunteerMission = function toggleVolunteerMission(volKey, missionId, sector, label, checked){
+    if(checked){
+      set(ref(db, 'volunteerMissions/' + volKey + '/' + missionId), {
+        sector: sector, label: label, date: todayStr(), ts: Date.now()
+      });
+    } else {
+      remove(ref(db, 'volunteerMissions/' + volKey + '/' + missionId));
+    }
+  }
+
+  window.publishVolunteerMessage = function publishVolunteerMessage(){
+    var title = document.getElementById('volMsgTitle').value.trim();
+    var msg = document.getElementById('volMsgBody').value.trim();
+    if(!title || !msg) return;
+    var newRef = push(ref(db, 'volunteerMessages'));
+    set(newRef, {title:title, message:msg, date:todayStr(), ts:Date.now()});
+    document.getElementById('volMsgTitle').value = '';
+    document.getElementById('volMsgBody').value = '';
+  }
+  window.deleteVolunteerMessage = function deleteVolunteerMessage(key){
+    if(!volunteerMsgCache[key]) return;
+    if(!confirm('Supprimer ce message ? Il ne sera plus visible par les bénévoles.')) return;
+    remove(ref(db, 'volunteerMessages/' + key));
+  }
+  function renderVolunteerMessages(){
+    var wrap = document.getElementById('volMsgList');
+    if(!wrap) return;
+    var keys = Object.keys(volunteerMsgCache).sort(function(a,b){ return (volunteerMsgCache[b].ts||0) - (volunteerMsgCache[a].ts||0); });
+    wrap.innerHTML = '';
+    if(keys.length === 0){ wrap.innerHTML = '<p class="sub" style="margin:0;">Aucun message publié pour le moment.</p>'; return; }
+    keys.forEach(function(key){
+      var a = volunteerMsgCache[key];
+      var div = document.createElement('div');
+      div.className = 'announce-item';
+      div.innerHTML = '<div class="a-title">'+escapeHtml(a.title)+'</div><div class="a-date">'+escapeHtml(a.date||'')+'</div><div class="a-msg">'+escapeHtml(a.message)+'</div>' +
+        '<button class="row-btn delete" style="margin-top:8px;" onclick="deleteVolunteerMessage(\''+key+'\')">Supprimer</button>';
+      wrap.appendChild(div);
+    });
   }
 
   /* ============ ONGLET : STATISTIQUES DE VISITE ============ */

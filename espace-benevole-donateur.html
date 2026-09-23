@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-<title>Adhésion — Association Nantamba (AN)</title>
-<meta name="description" content="Devenez membre de l'Association Nantamba (AN) : remplissez le formulaire d'adhésion en ligne et rejoignez notre union pour le développement local.">
+<title>Espace bénévole &amp; donateur — Association Nantamba (AN)</title>
+<meta name="description" content="Espace personnel des bénévoles et donateurs de l'Association Nantamba (AN) : profil, documents, messages, carte de bénévolat et satisfecit à télécharger.">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -191,6 +191,124 @@
     color:var(--blue-deep); margin-bottom:6px;
   }
 
+  /* ============ DASHBOARD ADMIN ============ */
+  .admin-dashboard{ display:none; margin-top:48px; }
+  .dash-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  .dash-head h2{ font-size:22px; font-weight:600; color:var(--blue-deep); }
+  .logout-link{ font-size:13px; font-weight:600; color:var(--ink-soft); }
+  .logout-link:hover{ color:var(--blue-deep); }
+
+  .tabs-nav{ display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:28px; }
+  .tab-btn{
+    padding:11px 18px; font-size:13.5px; font-weight:600; color:var(--ink-soft);
+    border-bottom:2.5px solid transparent; margin-bottom:-1px; transition:color .15s ease, border-color .15s ease;
+  }
+  .tab-btn:hover{ color:var(--blue-deep); }
+  .tab-btn.active{ color:var(--blue-deep); border-bottom-color:var(--blue-deep); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .panel-card{
+    background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:26px 24px; box-shadow:0 10px 26px rgba(27,90,133,.06);
+  }
+  .panel-card h3{ font-size:16px; font-weight:600; color:var(--blue-deep); margin-bottom:4px; }
+  .panel-card p.sub{ font-size:13px; color:var(--ink-soft); margin-bottom:18px; }
+
+  .inline-form{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
+  .inline-form .field{ flex:1; min-width:150px; margin-bottom:0; }
+  .inline-form .btn{ height:41px; white-space:nowrap; }
+
+  .data-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .data-table th{
+    text-align:left; padding:10px 12px; font-size:11.5px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; color:var(--ink-soft); border-bottom:1.5px solid var(--line);
+  }
+  .data-table td{ padding:12px; border-bottom:1px solid var(--line); color:var(--ink); vertical-align:middle; }
+  .data-table tr:last-child td{ border-bottom:none; }
+  .table-wrap{ overflow-x:auto; }
+  .empty-row td{ text-align:center; color:var(--ink-soft); padding:26px 12px; font-style:italic; }
+
+  .badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
+  .badge-actif{ background:#EAF3EC; color:#256B3B; }
+  .badge-attente{ background:#FCF1E1; color:#9A6414; }
+  .badge-refuse{ background:#FCEAEA; color:#B23A3A; }
+
+  .row-btn{ font-size:12.5px; font-weight:600; padding:6px 10px; border-radius:6px; }
+  .row-btn.accept{ background:#EAF3EC; color:#256B3B; }
+  .row-btn.refuse{ background:#FCEAEA; color:#B23A3A; }
+  .row-btn.delete{ background:#FCEAEA; color:#B23A3A; }
+  .row-btn.copy{ background:#EAF1F8; color:var(--blue-deep); }
+  .row-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+
+  .code-display{
+    font-family:monospace; font-size:14px; font-weight:600; letter-spacing:.04em;
+    background:var(--sand); padding:4px 10px; border-radius:6px; color:var(--blue-deep);
+  }
+
+  .announce-list{ display:flex; flex-direction:column; gap:14px; margin-top:22px; }
+  .announce-item{ padding:16px 18px; border:1px solid var(--line); border-radius:10px; background:var(--sand); }
+  .announce-item .a-title{ font-weight:600; color:var(--ink); margin-bottom:4px; font-size:14.5px; }
+  .announce-item .a-date{ font-size:12px; color:var(--ink-soft); margin-bottom:8px; }
+  .announce-item .a-msg{ font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+
+  .panel-card textarea{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:8px; font-size:14.5px;
+    min-height:100px; resize:vertical; margin-bottom:14px;
+  }
+  .panel-card textarea:focus{ outline:none; border-color:var(--blue); }
+
+  @media (max-width:600px){
+    .data-table{ font-size:12.5px; }
+    .data-table th, .data-table td{ padding:9px 8px; }
+  }
+
+  /* ============ MODALE DE CONNEXION A L'ESPACE ============ */
+  body.modal-open{ overflow:hidden; }
+  .page-blur{ transition:filter .2s ease; }
+  body.modal-open .page-blur{ filter:blur(5px); pointer-events:none; user-select:none; }
+
+  .access-overlay{
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(27,36,48,.45);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .access-overlay.open{ display:flex; }
+  .access-modal{
+    position:relative; width:100%; max-width:430px;
+    background:var(--sand); border-radius:16px; padding:34px 30px 30px;
+    box-shadow:0 24px 60px rgba(27,36,48,.28);
+    max-height:90vh; overflow-y:auto;
+  }
+  .access-modal .modal-close{
+    position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%;
+    background:var(--white); border:1px solid var(--line); font-size:16px; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .access-modal .modal-close:hover{ color:var(--blue-deep); border-color:var(--blue); }
+  .access-modal h3{ font-size:26px; font-weight:600; color:var(--blue-deep); margin-bottom:10px; padding-right:30px; }
+  .access-modal p.modal-sub{ font-size:14.5px; color:var(--ink-soft); margin-bottom:22px; }
+  .access-modal .modal-tab{
+    font-weight:600; font-size:15px; color:var(--blue-deep); padding-bottom:10px;
+    border-bottom:2.5px solid var(--blue); display:inline-block; margin-bottom:22px;
+  }
+  .access-modal .field{ margin-bottom:14px; }
+  .access-modal .field input{
+    width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:9px;
+    font-size:15px; color:var(--ink); background:var(--white);
+  }
+  .access-modal .field input:focus{ outline:none; border-color:var(--blue); }
+  .access-modal .forgot-link{
+    display:inline-block; font-size:13.5px; font-weight:600; color:var(--blue-deep);
+    text-decoration:underline; margin-bottom:20px;
+  }
+  .access-modal .btn-primary{ width:100%; padding:13px 24px; font-size:15px; }
+  .access-modal .modal-error{
+    display:none; margin-bottom:14px; font-size:13px; background:#FCEAEA; color:#B23A3A;
+    padding:10px 12px; border-radius:7px;
+  }
+
   /* ============ NORMALISATION TYPOGRAPHIQUE (lisibilité) ============ */
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
 
@@ -224,43 +342,6 @@
   /* Formulaires et navigation, pour rester cohérent avec le nouveau corps de texte */
   .field label{ font-size:14px; }
   .field input, .access-modal input, .contact-form input, .contact-form textarea{ font-size:16px; }
-
-  /* ============ PANNEAU PAIEMENT (après envoi du formulaire) ============ */
-  .payment-overlay{
-    display:none; position:fixed; inset:0; background:rgba(27,36,48,.6);
-    align-items:center; justify-content:center; z-index:200; padding:20px;
-  }
-  .payment-overlay.open{ display:flex; }
-  .payment-modal{
-    background:var(--white); border-radius:16px; max-width:440px; width:100%;
-    padding:32px 28px; position:relative; box-shadow:0 24px 60px rgba(0,0,0,.25);
-    max-height:90vh; overflow-y:auto;
-  }
-  .payment-modal .modal-close{
-    position:absolute; top:14px; right:16px; font-size:20px; color:var(--ink-soft); cursor:pointer;
-  }
-  .payment-modal h3{ font-size:19px; font-weight:600; color:var(--blue-deep); margin-bottom:10px; }
-  .payment-modal p{ font-size:14.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:14px; }
-  .payment-amount{
-    background:var(--sand); border:1.5px solid var(--line); border-radius:12px;
-    padding:16px 18px; text-align:center; margin-bottom:16px;
-  }
-  .payment-amount .amt{ font-size:26px; font-weight:700; color:var(--blue-deep); }
-  .payment-amount .via{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
-  .payment-number{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    background:#EAF1F8; border-radius:10px; padding:12px 16px; margin-bottom:18px;
-  }
-  .payment-number .num{ font-family:monospace; font-size:17px; font-weight:700; color:var(--blue-deep); letter-spacing:.03em; }
-  .payment-number .copy-btn{ font-size:12.5px; font-weight:600; color:var(--blue-deep); background:var(--white); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
-  .payment-steps{ margin:0 0 20px; padding-left:18px; }
-  .payment-steps li{ font-size:13.5px; color:var(--ink); line-height:1.7; list-style:decimal; }
-  .whatsapp-btn{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    background:#25D366; color:var(--white); width:100%; padding:13px 20px;
-    border-radius:8px; font-weight:600; font-size:14.5px;
-  }
-  .whatsapp-btn:hover{ filter:brightness(0.95); }
   .btn{ font-size:15.5px; }
   nav.menu a{ font-size:16px; }
   .data-table{ font-size:14.5px; }
@@ -268,9 +349,77 @@
   .footer-copy{ font-size:13px; }
 
 </style>
+<style>
+  .volunteer-note{ margin-top:16px; }
+</style>
+
+<style>
+  .dash-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-top:26px; }
+  @media (max-width:800px){ .dash-grid{ grid-template-columns:1fr; } }
+  .info-row{ display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14.5px; }
+  .info-row:last-child{ border-bottom:none; }
+  .info-row .k{ color:var(--ink-soft); }
+  .info-row .v{ font-weight:600; color:var(--ink); text-align:right; }
+  .empty-note{ font-size:13.5px; color:var(--ink-soft); font-style:italic; margin:0; }
+  .dl-btn{ margin-top:6px; width:100%; }
+
+  /* Missions & satisfecits */
+  .mission-item{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:12px 0; border-bottom:1px solid var(--line); flex-wrap:wrap;
+  }
+  .mission-item:last-child{ border-bottom:none; }
+  .mission-item .mi-text strong{ display:block; font-size:14.5px; color:var(--ink); }
+  .mission-item .mi-text span{ display:block; font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+  .mission-item .row-btn{
+    font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:6px;
+    background:#EAF1F8; color:var(--blue-deep); white-space:nowrap;
+  }
+  .mission-item .row-btn:hover{ background:#DCEAF6; }
+
+  /* Gabarit du satisfecit (hors écran, capturé en image au téléchargement) */
+  #certTemplate{
+    position:fixed; left:-99999px; top:0; width:1200px; height:850px;
+    background:#FFFFFF; padding:28px; box-sizing:border-box;
+  }
+  #certTemplate .cert-outer{
+    width:100%; height:100%; border:10px solid var(--gold); box-sizing:border-box;
+    padding:14px; display:flex;
+  }
+  #certTemplate .cert-inner{
+    width:100%; height:100%; border:2px solid var(--blue-deep); box-sizing:border-box;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px 80px; font-family:'Inter', sans-serif;
+  }
+  #certTemplate .cert-logo{ width:100px; height:auto; margin-bottom:14px; }
+  #certTemplate .cert-title{
+    font-family:'Fraunces', serif; font-weight:700; font-size:40px; letter-spacing:.02em;
+    color:var(--blue-deep); text-transform:uppercase; margin-bottom:26px;
+  }
+  #certTemplate .cert-decerne{ font-size:16px; font-style:italic; color:var(--ink-soft); margin-bottom:8px; }
+  #certTemplate .cert-name{
+    font-family:'Fraunces', serif; font-weight:700; font-size:46px; color:var(--gold); margin-bottom:26px;
+  }
+  #certTemplate .cert-line{ font-size:16px; color:var(--blue-deep); margin-bottom:6px; }
+  #certTemplate .cert-mission{
+    font-family:'Fraunces', serif; font-weight:700; font-size:23px; color:var(--blue-deep); margin:10px 0 24px;
+  }
+  #certTemplate .cert-date{ font-size:14.5px; color:var(--ink-soft); margin-bottom:0; }
+  #certTemplate .cert-footer{
+    width:100%; display:flex; align-items:flex-end; justify-content:space-between;
+    margin-top:60px; text-align:left;
+  }
+  #certTemplate .cert-sign{ border-top:1.5px solid var(--ink); padding-top:8px; min-width:260px; }
+  #certTemplate .cert-sign strong{ display:block; font-size:14.5px; color:var(--ink); }
+  #certTemplate .cert-sign span{ display:block; font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  #certTemplate .cert-code{ text-align:right; font-size:12px; color:var(--ink-soft); }
+  #certTemplate .cert-code strong{ display:block; color:var(--ink); font-size:12.5px; margin-bottom:2px; }
+  .dash-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:6px; }
+  .dash-sub{ font-size:14px; color:var(--ink-soft); margin-bottom:0; }
+</style>
 </head>
 <body>
-
+<div class="page-blur">
 <header class="site">
   <div class="nav-inner">
     <div class="brand">
@@ -280,7 +429,9 @@
     <button class="nav-toggle" onclick="document.querySelector('nav.menu').classList.toggle('open')">☰</button>
     <nav class="menu">
       <a href="index.html">Accueil</a>
-      <a href="espace-membre.html">Espaces réservés</a>
+      <a href="espace-membre.html">Espace membre</a>
+      <a href="espace-admin.html">Espace Administrateur</a>
+      <a href="benevolat.html">Devenir bénévole</a>
       <a href="espace-benevole-donateur.html">Bénévoles &amp; donateurs</a>
     </nav>
   </div>
@@ -290,81 +441,170 @@
   <a class="back-link" href="index.html">&larr; Retour au site</a>
 </div>
 
-<!-- ============ ADHESION ============ -->
-<section id="adhesion" class="section">
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="eyebrow">Espaces personnels</div>
+  <h1>Espace bénévole &amp; donateur</h1>
+  <p class="lead">Un espace dédié à celles et ceux qui donnent de leur temps ou de leurs moyens à l'Association Nantamba. Connectez-vous avec le code d'accès qui vous a été transmis pour retrouver votre profil, vos documents, vos messages et vos justificatifs.</p>
+</section>
+
+<!-- ============ ESPACE BENEVOLE ============ -->
+<section id="benevole" class="section">
   <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">Adhésion</div>
-      <h2>Devenir membre de l'Association Nantamba</h2>
-      <p>Rejoignez l'association et participez à ses actions pour le développement de la communauté.</p>
-    </div>
     <div class="space-block">
       <div class="space-text">
-        <h2 style="font-size:20px;">Pourquoi adhérer ?</h2>
-        <p>En devenant membre, vous participez aux décisions de l'association et à ses réalisations sur le terrain.</p>
+        <div class="eyebrow">Espace bénévole</div>
+        <h2>Retrouvez votre espace personnel</h2>
+        <p>Si vous avez déjà posé votre candidature via la page « Devenir bénévole » et que l'association a activé votre accès, connectez-vous avec le code qui vous a été transmis.</p>
         <ul>
-          <li>Prendre part aux activités et projets</li>
-          <li>Accéder à l'espace membre</li>
-          <li>Contribuer aux décisions de l'association</li>
-        </ul>
-        <h2 style="font-size:20px; margin-top:28px;">Conditions d'adhésion</h2>
-        <ul>
-          <li>Accepter le statut et règlement intérieur de l'association Nantamba</li>
-          <li>Être guinéen ou sympathisant de la Guinée</li>
-          <li>Payer son droit d'adhésion</li>
+          <li>Votre profil et vos informations de bénévole</li>
+          <li>Les documents publiés par l'association</li>
+          <li>Les messages qui vous sont destinés</li>
+          <li>Votre carte de bénévolat à télécharger</li>
         </ul>
       </div>
-      <div class="login-card">
-        <h3>Formulaire d'adhésion</h3>
-        <p class="sub">Remplissez ce formulaire pour demander à devenir membre.</p>
-        <div class="field"><label for="joinName">Nom complet</label><input type="text" id="joinName" placeholder="Votre nom complet"></div>
-        <div class="field"><label for="joinActivity">Activité</label><input type="text" id="joinActivity" placeholder="Votre activité (profession, métier...)"></div>
-        <div class="field"><label for="joinPhone">Téléphone</label><input type="text" id="joinPhone" placeholder="Votre numéro de téléphone"></div>
-        <div class="field"><label for="joinCity">Ville</label><input type="text" id="joinCity" placeholder="Votre ville"></div>
-        <div class="field" style="display:flex; align-items:flex-start; gap:8px;">
-          <input type="checkbox" id="joinAgree" style="margin-top:3px; width:auto;">
-          <label for="joinAgree" style="font-size:13px; font-weight:400; color:var(--ink-soft); margin-bottom:0;">J'accepte le statut et règlement intérieur de l'association Nantamba.</label>
+      <div class="login-card" id="volLoginCard">
+        <h3>Connexion bénévole</h3>
+        <p class="sub">Saisissez votre code d'accès (ex. ANB-KOSO57).</p>
+        <div class="field"><label>Code d'accès</label><input type="text" id="volCodeInput" placeholder="ANB-XXXX00" style="text-transform:uppercase;"></div>
+        <div class="modal-error" id="volLoginError" style="display:none;"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="volunteerLogin()">Se connecter</button>
+        <p class="sub" style="margin-top:14px; margin-bottom:0;">Vous n'avez pas encore de code ? <a href="benevolat.html" style="text-decoration:underline; color:var(--blue-deep);">Devenez bénévole</a>, l'association vous en transmettra un après validation.</p>
+      </div>
+    </div>
+
+    <!-- Tableau de bord bénévole -->
+    <div class="admin-dashboard" id="volDashboard">
+      <div class="dash-head">
+        <h2 id="volDashName">Mon espace bénévole</h2>
+        <a href="#" class="logout-link" onclick="volunteerLogout(); return false;">Se déconnecter</a>
+      </div>
+      <p class="dash-sub">Bienvenue dans votre espace personnel de bénévole de l'Association Nantamba.</p>
+
+      <div class="dash-grid">
+        <div class="panel-card">
+          <h3>Profil</h3>
+          <p class="sub">Vos informations de bénévole.</p>
+          <div id="volProfile"></div>
         </div>
-        <button class="btn btn-primary" onclick="submitJoin()">Envoyer ma demande d'adhésion</button>
-        <div class="login-note" id="joinNote">Demande envoyée — nous reviendrons vers vous rapidement.</div>
+
+        <div class="panel-card">
+          <h3>Carte de bénévolat</h3>
+          <p class="sub">Téléchargez votre carte officielle de bénévole.</p>
+          <div id="volCardBox"><p class="empty-note">Chargement…</p></div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Document</h3>
+          <p class="sub">Documents publiés par l'association (comptes-rendus, statuts…).</p>
+          <div id="volDocsBox"><p class="empty-note">Chargement…</p></div>
+        </div>
+
+        <div class="panel-card" style="grid-column:1 / -1;">
+          <h3>Mes missions &amp; satisfecits</h3>
+          <p class="sub">Missions accomplies validées par l'association. Un satisfecit est disponible en téléchargement pour chaque mission cochée.</p>
+          <div id="volMissionsBox"><p class="empty-note">Chargement…</p></div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Message</h3>
+          <p class="sub">Messages de l'association à l'attention des bénévoles.</p>
+          <div class="announce-list" id="volMsgBox" style="margin-top:0;"><p class="empty-note">Chargement…</p></div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ PANNEAU PAIEMENT APRÈS ENVOI DE LA DEMANDE ============ -->
-<div class="payment-overlay" id="paymentOverlay">
-  <div class="payment-modal">
-    <span class="modal-close" onclick="closePaymentPanel()">✕</span>
-    <h3>Demande envoyée !</h3>
-    <p>Dernière étape : réglez votre droit d'adhésion pour finaliser votre inscription et recevoir votre code d'accès membre.</p>
-    <div class="payment-amount">
-      <div class="amt">30 000 GNF</div>
-      <div class="via">à envoyer via Orange Money</div>
+<!-- ============ ESPACE DONATEUR ============ -->
+<section id="donateur" class="section">
+  <div class="wrap">
+    <div class="space-block">
+      <div class="space-text">
+        <div class="eyebrow">Espace donateur</div>
+        <h2>Retrouvez votre espace personnel</h2>
+        <p>Si vous avez déjà fait un don via le bouton « Faire un don » du site et que l'association a activé votre accès, connectez-vous avec le code qui vous a été transmis.</p>
+        <ul>
+          <li>Votre profil de donateur</li>
+          <li>Votre satisfecit à télécharger</li>
+          <li>Les messages et informations qui vous sont destinés</li>
+        </ul>
+      </div>
+      <div class="login-card" id="donLoginCard">
+        <h3>Connexion donateur</h3>
+        <p class="sub">Saisissez votre code d'accès (ex. AND-KOSO57).</p>
+        <div class="field"><label>Code d'accès</label><input type="text" id="donCodeInput" placeholder="AND-XXXX00" style="text-transform:uppercase;"></div>
+        <div class="modal-error" id="donLoginError" style="display:none;"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="donorLogin()">Se connecter</button>
+        <p class="sub" style="margin-top:14px; margin-bottom:0;">Vous n'avez pas encore de code ? Il vous sera transmis par l'association après votre don.</p>
+      </div>
     </div>
-    <div class="payment-number">
-      <span class="num">224 622 65 86 96</span>
-      <button class="copy-btn" onclick="copyPaymentNumber()">Copier</button>
+
+    <!-- Tableau de bord donateur -->
+    <div class="admin-dashboard" id="donDashboard">
+      <div class="dash-head">
+        <h2 id="donDashName">Mon espace donateur</h2>
+        <a href="#" class="logout-link" onclick="donorLogout(); return false;">Se déconnecter</a>
+      </div>
+      <p class="dash-sub">Merci pour votre générosité envers l'Association Nantamba.</p>
+
+      <div class="dash-grid">
+        <div class="panel-card">
+          <h3>Profil</h3>
+          <p class="sub">Vos informations de donateur.</p>
+          <div id="donProfile"></div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Satisfecit</h3>
+          <p class="sub">Téléchargez votre satisfecit officiel de don.</p>
+          <div id="donCertBox"><p class="empty-note">Chargement…</p></div>
+        </div>
+
+        <div class="panel-card" style="grid-column:1 / -1;">
+          <h3>Message / info</h3>
+          <p class="sub">Messages et informations de l'association à l'attention des donateurs.</p>
+          <div class="announce-list" id="donMsgBox" style="margin-top:0;"><p class="empty-note">Chargement…</p></div>
+        </div>
+      </div>
     </div>
-    <ol class="payment-steps">
-      <li>Envoyez 30 000 GNF au numéro ci-dessus via Orange Money.</li>
-      <li>Faites une capture d'écran de la confirmation de paiement.</li>
-      <li>Envoyez cette capture par WhatsApp au même numéro (bouton ci-dessous).</li>
-      <li>Votre adhésion sera validée et votre code d'accès vous sera transmis par WhatsApp.</li>
-    </ol>
-    <a class="whatsapp-btn" id="whatsappProofLink" href="#" target="_blank" rel="noopener">
-      Envoyer la preuve par WhatsApp
-    </a>
   </div>
-</div>
+</section>
 
 <footer>
   <div class="wrap">Association Nantamba (AN) — L'union pour le développement</div>
 </footer>
+</div><!-- /.page-blur -->
 
+<!-- Gabarit du satisfecit, capturé en image au moment du téléchargement -->
+<div id="certTemplate">
+  <div class="cert-outer">
+    <div class="cert-inner">
+      <img class="cert-logo" src="data:image/webp;base64,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" alt="Logo Association Nantamba">
+      <div class="cert-title">Satisfecit de bénévolat</div>
+      <div class="cert-decerne">décerné à</div>
+      <div class="cert-name" id="certName">—</div>
+      <div class="cert-line">pour avoir accompli avec engagement la mission</div>
+      <div class="cert-mission" id="certMission">—</div>
+      <div class="cert-date" id="certDate">—</div>
+      <div class="cert-footer">
+        <div class="cert-sign">
+          <strong>Association Nantamba (AN)</strong>
+          <span>L'union pour le développement</span>
+        </div>
+        <div class="cert-code">
+          <strong id="certCode">—</strong>
+          <span>Vérifiable via l'Espace bénévole &amp; donateur</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+  import { getDatabase, ref, get, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
@@ -383,65 +623,298 @@
     var d = new Date();
     return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
   }
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function infoRow(k, v){
+    return '<div class="info-row"><span class="k">'+escapeHtml(k)+'</span><span class="v">'+escapeHtml(v||'—')+'</span></div>';
+  }
+  function downloadDataUrl(dataUrl, fileName){
+    var parts = String(dataUrl).split(',');
+    var mime = (parts[0].match(/:(.*?);/) || [])[1] || 'application/octet-stream';
+    var bin = atob(parts[1] || '');
+    var bytes = new Uint8Array(bin.length);
+    for(var i = 0; i < bin.length; i++){ bytes[i] = bin.charCodeAt(i); }
+    var url = URL.createObjectURL(new Blob([bytes], {type: mime}));
+    var a = document.createElement('a');
+    a.href = url; a.download = fileName || 'fichier';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
 
   /* Suivi des visites : une entrée par session pour cette page */
   (function(){
     try{
-      if(sessionStorage.getItem('nantamba_visit_logged_adhesion')) return;
-      sessionStorage.setItem('nantamba_visit_logged_adhesion', '1');
+      if(sessionStorage.getItem('nantamba_visit_logged_benevole_donateur')) return;
+      sessionStorage.setItem('nantamba_visit_logged_benevole_donateur', '1');
     }catch(e){}
     var visitRef = push(ref(db, 'siteVisits'));
-    set(visitRef, { page: 'adhesion', date: todayStr(), ts: Date.now() });
+    set(visitRef, { page: 'benevole-donateur', date: todayStr(), ts: Date.now() });
   })();
 
-  window.submitJoin = function submitJoin(){
-    var n = document.getElementById('joinName').value.trim();
-    var a = document.getElementById('joinActivity').value.trim();
-    var p = document.getElementById('joinPhone').value.trim();
-    var v = document.getElementById('joinCity').value.trim();
-    var agree = document.getElementById('joinAgree').checked;
-    var note = document.getElementById('joinNote');
-    if(n && a && v && agree){
-      var newReqRef = push(ref(db, 'joinRequests'));
-      set(newReqRef, {
-        name: n,
-        email: '',
-        phone: p,
-        activity: a,
-        city: v,
-        date: todayStr(),
-        status: 'attente'
-      }).then(function(){
-        note.style.display = 'block';
-        openPaymentPanel(n);
-        document.getElementById('joinName').value = '';
-        document.getElementById('joinActivity').value = '';
-        document.getElementById('joinPhone').value = '';
-        document.getElementById('joinCity').value = '';
-        document.getElementById('joinAgree').checked = false;
-      }).catch(function(e){
-        note.textContent = "Erreur d'envoi, réessayez.";
-        note.style.display = 'block';
-        console.error(e);
-      });
-    } else {
-      note.style.display = 'none';
+  /* ============ ESPACE BENEVOLE ============ */
+  window.volunteerLogin = function volunteerLogin(){
+    var input = document.getElementById('volCodeInput');
+    var err = document.getElementById('volLoginError');
+    var code = input.value.trim().toUpperCase();
+    err.style.display = 'none';
+    if(!code){ err.textContent = 'Merci de saisir votre code d\'accès.'; err.style.display = 'block'; return; }
+    get(ref(db, 'volunteerAccess')).then(function(snap){
+      var all = snap.val() || {};
+      var foundKey = null;
+      Object.keys(all).forEach(function(k){ if(all[k].code === code && all[k].status === 'Actif'){ foundKey = k; } });
+      if(!foundKey){
+        err.textContent = 'Code invalide ou révoqué. Vérifiez votre code ou contactez l\'association.';
+        err.style.display = 'block';
+        return;
+      }
+      try{ sessionStorage.setItem('an_vol_key', foundKey); }catch(e){}
+      loadVolunteerSpace(foundKey);
+    }).catch(function(e){
+      console.error(e);
+      err.textContent = 'Erreur de connexion. Réessayez.';
+      err.style.display = 'block';
+    });
+  }
+  window.volunteerLogout = function volunteerLogout(){
+    try{ sessionStorage.removeItem('an_vol_key'); }catch(e){}
+    document.getElementById('volDashboard').style.display = 'none';
+    document.getElementById('volLoginCard').style.display = 'block';
+    document.getElementById('volCodeInput').value = '';
+  }
+  var currentVolunteerName = '';
+  var currentVolunteerCode = '';
+
+  function loadVolunteerSpace(key){
+    get(ref(db, 'volunteerRequests/' + key)).then(function(snap){
+      var v = snap.val();
+      if(!v){
+        var err = document.getElementById('volLoginError');
+        err.textContent = 'Votre profil est introuvable. Contactez l\'association.';
+        err.style.display = 'block';
+        return;
+      }
+      currentVolunteerName = v.name;
+      document.getElementById('volLoginCard').style.display = 'none';
+      document.getElementById('volDashboard').style.display = 'block';
+      document.getElementById('volDashName').textContent = 'Bonjour ' + v.name;
+      document.getElementById('volProfile').innerHTML =
+        infoRow('Nom complet', v.name) +
+        infoRow('Téléphone', v.phone) +
+        infoRow('E-mail', v.email) +
+        infoRow('Compétences', v.skills) +
+        infoRow('Disponibilités', v.availability) +
+        infoRow('Bénévole depuis', v.date);
+      document.getElementById('volDashboard').scrollIntoView({behavior:'smooth', block:'start'});
+    }).catch(function(e){ console.error(e); });
+
+    onValue(ref(db, 'documents'), function(snap){ renderVolDocs(snap.val() || {}); });
+    onValue(ref(db, 'volunteerMessages'), function(snap){ renderVolMessages(snap.val() || {}); });
+    onValue(ref(db, 'volunteerAccess/' + key), function(snap){
+      var access = snap.val();
+      currentVolunteerCode = access ? access.code : '';
+      renderVolCard(access);
+    });
+    onValue(ref(db, 'volunteerMissions/' + key), function(snap){ renderVolMissions(snap.val() || {}); });
+  }
+  function renderVolMissions(missions){
+    var wrap = document.getElementById('volMissionsBox');
+    if(!wrap) return;
+    var keys = Object.keys(missions).sort(function(a,b){ return (missions[b].ts||0) - (missions[a].ts||0); });
+    if(keys.length === 0){
+      wrap.innerHTML = '<p class="empty-note">Aucune mission validée pour le moment. Une fois qu\'une mission accomplie sera cochée par l\'association, votre satisfecit apparaîtra ici.</p>';
+      return;
     }
+    wrap.innerHTML = '';
+    keys.forEach(function(missionId){
+      var m = missions[missionId];
+      var row = document.createElement('div');
+      row.className = 'mission-item';
+      row.innerHTML =
+        '<div class="mi-text"><strong>'+escapeHtml(m.label)+'</strong><span>Accomplie le '+escapeHtml(m.date)+'</span></div>' +
+        '<button class="row-btn" onclick="downloadMissionCertificate(\''+missionId+'\')">⬇ Télécharger le satisfecit</button>';
+      wrap.appendChild(row);
+    });
+  }
+  window.downloadMissionCertificate = function downloadMissionCertificate(missionId){
+    var key;
+    try{ key = sessionStorage.getItem('an_vol_key'); }catch(e){}
+    if(!key) return;
+    get(ref(db, 'volunteerMissions/' + key + '/' + missionId)).then(function(snap){
+      var m = snap.val();
+      if(!m){ alert('Mission introuvable.'); return; }
+      var initials = (currentVolunteerName||'').split(/\s+/).filter(Boolean).map(function(w){ return w[0]; }).join('').toUpperCase();
+      var code = (currentVolunteerCode || 'ANB') + '-' + initials + '-' + String(m.ts).slice(-4);
+      document.getElementById('certName').textContent = currentVolunteerName || 'Bénévole';
+      document.getElementById('certMission').textContent = '« ' + m.label + ' »';
+      document.getElementById('certDate').textContent = 'Le ' + m.date;
+      document.getElementById('certCode').textContent = 'Code de vérification : ' + code;
+      var el = document.getElementById('certTemplate');
+      html2canvas(el, {scale:2, backgroundColor:'#FFFFFF'}).then(function(canvas){
+        var dataUrl = canvas.toDataURL('image/png');
+        var fileName = 'satisfecit-' + missionId + '-' + (currentVolunteerName||'').replace(/\s+/g,'-').toLowerCase() + '.png';
+        downloadDataUrl(dataUrl, fileName);
+      }).catch(function(e){ console.error(e); alert('Impossible de générer le satisfecit. Réessayez.'); });
+    }).catch(function(e){ console.error(e); alert('Impossible de récupérer la mission.'); });
+  }
+  function renderVolDocs(docs){
+    var wrap = document.getElementById('volDocsBox');
+    if(!wrap) return;
+    var keys = Object.keys(docs).sort(function(a,b){ return (docs[b].ts||0) - (docs[a].ts||0); });
+    if(keys.length === 0){ wrap.innerHTML = '<p class="empty-note">Aucun document publié pour le moment.</p>'; return; }
+    wrap.innerHTML = '';
+    keys.forEach(function(key){
+      var d = docs[key];
+      var row = document.createElement('div');
+      row.className = 'info-row';
+      row.innerHTML = '<span class="k">'+escapeHtml(d.title)+'</span><button class="row-btn copy" onclick="openSharedDocument(\''+key+'\')">Ouvrir</button>';
+      wrap.appendChild(row);
+    });
+  }
+  window.openSharedDocument = function openSharedDocument(key){
+    get(ref(db, 'documents/' + key)).then(function(snap){
+      var d = snap.val();
+      if(!d) return;
+      if(d.type === 'link'){ window.open(d.url, '_blank', 'noopener'); return; }
+      get(ref(db, 'documentFiles/' + key)).then(function(s2){
+        var v = s2.val();
+        if(!v || !v.data){ alert('Fichier introuvable.'); return; }
+        downloadDataUrl(v.data, d.fileName);
+      });
+    }).catch(function(e){ console.error(e); });
+  }
+  function renderVolMessages(msgs){
+    var wrap = document.getElementById('volMsgBox');
+    if(!wrap) return;
+    var keys = Object.keys(msgs).sort(function(a,b){ return (msgs[b].ts||0) - (msgs[a].ts||0); });
+    if(keys.length === 0){ wrap.innerHTML = '<p class="empty-note">Aucun message pour le moment.</p>'; return; }
+    wrap.innerHTML = '';
+    keys.forEach(function(key){
+      var a = msgs[key];
+      var div = document.createElement('div');
+      div.className = 'announce-item';
+      div.innerHTML = '<div class="a-title">'+escapeHtml(a.title)+'</div><div class="a-date">'+escapeHtml(a.date||'')+'</div><div class="a-msg">'+escapeHtml(a.message)+'</div>';
+      wrap.appendChild(div);
+    });
+  }
+  function renderVolCard(access){
+    var wrap = document.getElementById('volCardBox');
+    if(!wrap) return;
+    if(!access || !access.hasFile){
+      wrap.innerHTML = '<p class="empty-note">Votre carte de bénévolat n\'a pas encore été mise à disposition. Revenez bientôt.</p>';
+      return;
+    }
+    wrap.innerHTML = '<button class="btn btn-primary dl-btn" onclick="downloadVolunteerCard()">⬇ Télécharger ma carte de bénévolat</button>';
+  }
+  window.downloadVolunteerCard = function downloadVolunteerCard(){
+    var key;
+    try{ key = sessionStorage.getItem('an_vol_key'); }catch(e){}
+    if(!key) return;
+    get(ref(db, 'volunteerCardFiles/' + key)).then(function(snap){
+      var v = snap.val();
+      if(!v || !v.data){ alert('Fichier introuvable.'); return; }
+      downloadDataUrl(v.data, v.fileName || 'carte-benevolat');
+    }).catch(function(e){ console.error(e); alert('Impossible de récupérer le fichier.'); });
   }
 
-  /* ============ PANNEAU PAIEMENT ============ */
-  var WHATSAPP_NUMBER = '224622658696'; // même numéro que l'Orange Money, sans espaces ni +
-  window.openPaymentPanel = function openPaymentPanel(name){
-    var msg = 'Bonjour, voici la preuve de paiement de mon adhésion à l\'Association Nantamba' + (name ? (' (' + name + ')') : '') + '.';
-    document.getElementById('whatsappProofLink').href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
-    document.getElementById('paymentOverlay').classList.add('open');
+  /* ============ ESPACE DONATEUR ============ */
+  window.donorLogin = function donorLogin(){
+    var input = document.getElementById('donCodeInput');
+    var err = document.getElementById('donLoginError');
+    var code = input.value.trim().toUpperCase();
+    err.style.display = 'none';
+    if(!code){ err.textContent = 'Merci de saisir votre code d\'accès.'; err.style.display = 'block'; return; }
+    get(ref(db, 'donorAccess')).then(function(snap){
+      var all = snap.val() || {};
+      var foundKey = null;
+      Object.keys(all).forEach(function(k){ if(all[k].code === code && all[k].status === 'Actif'){ foundKey = k; } });
+      if(!foundKey){
+        err.textContent = 'Code invalide ou révoqué. Vérifiez votre code ou contactez l\'association.';
+        err.style.display = 'block';
+        return;
+      }
+      try{ sessionStorage.setItem('an_don_key', foundKey); }catch(e){}
+      loadDonorSpace(foundKey);
+    }).catch(function(e){
+      console.error(e);
+      err.textContent = 'Erreur de connexion. Réessayez.';
+      err.style.display = 'block';
+    });
   }
-  window.closePaymentPanel = function closePaymentPanel(){
-    document.getElementById('paymentOverlay').classList.remove('open');
+  window.donorLogout = function donorLogout(){
+    try{ sessionStorage.removeItem('an_don_key'); }catch(e){}
+    document.getElementById('donDashboard').style.display = 'none';
+    document.getElementById('donLoginCard').style.display = 'block';
+    document.getElementById('donCodeInput').value = '';
   }
-  window.copyPaymentNumber = function copyPaymentNumber(){
-    if(navigator.clipboard){ navigator.clipboard.writeText('224622658696'); }
+  function loadDonorSpace(key){
+    get(ref(db, 'donationRequests/' + key)).then(function(snap){
+      var d = snap.val();
+      if(!d){
+        var err = document.getElementById('donLoginError');
+        err.textContent = 'Votre profil est introuvable. Contactez l\'association.';
+        err.style.display = 'block';
+        return;
+      }
+      document.getElementById('donLoginCard').style.display = 'none';
+      document.getElementById('donDashboard').style.display = 'block';
+      document.getElementById('donDashName').textContent = 'Bonjour ' + d.name;
+      var amount = d.amount ? (Number(d.amount).toLocaleString('fr-FR') + ' GNF') : '—';
+      document.getElementById('donProfile').innerHTML =
+        infoRow('Nom complet', d.name) +
+        infoRow('Téléphone', d.phone) +
+        infoRow('Montant du don', amount) +
+        infoRow('Date du don', d.date);
+      document.getElementById('donDashboard').scrollIntoView({behavior:'smooth', block:'start'});
+    }).catch(function(e){ console.error(e); });
+
+    onValue(ref(db, 'donorMessages'), function(snap){ renderDonMessages(snap.val() || {}); });
+    onValue(ref(db, 'donorAccess/' + key), function(snap){ renderDonCert(snap.val()); });
   }
+  function renderDonMessages(msgs){
+    var wrap = document.getElementById('donMsgBox');
+    if(!wrap) return;
+    var keys = Object.keys(msgs).sort(function(a,b){ return (msgs[b].ts||0) - (msgs[a].ts||0); });
+    if(keys.length === 0){ wrap.innerHTML = '<p class="empty-note">Aucun message pour le moment.</p>'; return; }
+    wrap.innerHTML = '';
+    keys.forEach(function(key){
+      var a = msgs[key];
+      var div = document.createElement('div');
+      div.className = 'announce-item';
+      div.innerHTML = '<div class="a-title">'+escapeHtml(a.title)+'</div><div class="a-date">'+escapeHtml(a.date||'')+'</div><div class="a-msg">'+escapeHtml(a.message)+'</div>';
+      wrap.appendChild(div);
+    });
+  }
+  function renderDonCert(access){
+    var wrap = document.getElementById('donCertBox');
+    if(!wrap) return;
+    if(!access || !access.hasFile){
+      wrap.innerHTML = '<p class="empty-note">Votre satisfecit n\'a pas encore été mis à disposition. Revenez bientôt.</p>';
+      return;
+    }
+    wrap.innerHTML = '<button class="btn btn-primary dl-btn" onclick="downloadDonorCertificate()">⬇ Télécharger mon satisfecit</button>';
+  }
+  window.downloadDonorCertificate = function downloadDonorCertificate(){
+    var key;
+    try{ key = sessionStorage.getItem('an_don_key'); }catch(e){}
+    if(!key) return;
+    get(ref(db, 'donorCertFiles/' + key)).then(function(snap){
+      var v = snap.val();
+      if(!v || !v.data){ alert('Fichier introuvable.'); return; }
+      downloadDataUrl(v.data, v.fileName || 'satisfecit');
+    }).catch(function(e){ console.error(e); alert('Impossible de récupérer le fichier.'); });
+  }
+
+  /* Reprise de session (si déjà connecté dans cet onglet) */
+  (function(){
+    var vk, dk;
+    try{ vk = sessionStorage.getItem('an_vol_key'); dk = sessionStorage.getItem('an_don_key'); }catch(e){}
+    if(vk){ loadVolunteerSpace(vk); }
+    if(dk){ loadDonorSpace(dk); }
+  })();
 </script>
+
 </body>
 </html>
