@@ -1061,7 +1061,11 @@
     var ok = document.getElementById('newDonSuccess');
     err.style.display = 'none';
     ok.style.display = 'none';
-    if(!currentDonor || !donRootKey){ return; }
+    if(!currentDonor || !donRootKey){
+      err.textContent = 'Votre session donateur n\'est pas chargée. Déconnectez-vous puis reconnectez-vous avec votre code.';
+      err.style.display = 'block';
+      return;
+    }
     var amount = Math.round(Number(String(amountInput.value||'').replace(/[\s\u202f\u00a0]/g, '').replace(',', '.')));
     if(!isFinite(amount) || amount <= 0){
       err.textContent = 'Merci de saisir un montant supérieur à 0.';
@@ -1086,7 +1090,7 @@
       ok.style.display = 'block';
     }).catch(function(e){
       console.error(e);
-      err.textContent = 'Une erreur est survenue. Réessayez.';
+      err.textContent = 'Une erreur est survenue (' + ((e && (e.code || e.message)) || 'inconnue') + '). Réessayez.';
       err.style.display = 'block';
     });
   }
