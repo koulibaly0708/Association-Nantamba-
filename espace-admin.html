@@ -576,7 +576,7 @@
       <div class="tab-panel" id="tab-dons">
         <div class="panel-card" style="margin-bottom:22px;">
           <h3>Demandes de don</h3>
-          <p class="sub">Demandes envoyées depuis le bouton « Faire un don » du site. « Activer l'espace » génère un code d'accès à transmettre au donateur pour son espace personnel (profil, satisfecit, messages).</p>
+          <p class="sub">Demandes envoyées depuis le bouton « Faire un don » du site, ou par un donateur déjà connecté depuis son espace personnel (repérables avec le badge « Depuis son espace »). Un donateur = un seul espace et un seul code : ses dons successifs sont regroupés sous la même ligne (les dons faits depuis son espace s'y rattachent automatiquement ; pour un don arrivé par le bouton « Faire un don », utilisez « Rattacher… »). « Activer l'espace » génère le code d'accès, à transmettre une seule fois au donateur. Chaque don marqué « traité » s'ajoute à son cumul : il peut télécharger un satisfecit global et un satisfecit par don, avec les montants validés. Rien à envoyer.</p>
           <div class="table-wrap">
             <table class="data-table">
               <thead><tr><th>Nom complet</th><th>Numéro</th><th>Montant</th><th>Date</th><th>Statut</th><th>Espace donateur</th><th></th></tr></thead>
@@ -993,7 +993,7 @@
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
-  onValue(ref(db, 'donationRequests'), function(snap){ donsCache = snap.val() || {}; renderDons(); });
+  onValue(ref(db, 'donationRequests'), function(snap){ donsCache = snap.val() || {}; normalizeDonorLinks(); renderDons(); });
   onValue(ref(db, 'volunteerRequests'), function(snap){ benevolesCache = snap.val() || {}; renderBenevoles(); });
   onValue(ref(db, 'siteVisits'), function(snap){ visitsCache = snap.val() || {}; renderStats(); });
   onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNewsAdmin(); });
@@ -1532,51 +1532,184 @@
     var digits = String(Math.floor(Math.random()*100)).padStart(2, '0');
     return prefix + '-' + letters + digits;
   }
-  function accessCellHtml(access, kind, key, uploadLabel, uploadFn){
+  function accessCellHtml(access, kind, key, uploadLabel, uploadFn){  /* uploadFn absent : pas de dépôt de fichier (ex. satisfecit donateur généré automatiquement) */
     if(access && access.status !== 'Révoqué'){
       return '<span class="code-display">'+escapeHtml(access.code)+'</span> ' +
         '<button class="row-btn copy" onclick="copyCode(\''+access.code+'\')">Copier</button> ' +
-        '<label class="row-btn copy" style="cursor:pointer;">'+uploadLabel+(access.hasFile ? ' ✓' : '')+
-        '<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="'+uploadFn+'(\''+key+'\', this)"></label> ' +
+        (uploadFn ? '<label class="row-btn copy" style="cursor:pointer;">'+uploadLabel+(access.hasFile ? ' ✓' : '')+
+        '<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="'+uploadFn+'(\''+key+'\', this)"></label> ' : '') +
         '<button class="row-btn delete" onclick="revoke'+kind+'Access(\''+key+'\')">Révoquer</button>';
     }
     return '<button class="row-btn accept" onclick="activate'+kind+'(\''+key+'\')">Activer l\'espace</button>';
   }
 
   /* ============ ONGLET : DEMANDES DE DON / ESPACE DONATEUR ============ */
+  /* --- Regroupement des dons par donateur : un donateur = un espace = un code ---
+     Un don peut pointer vers le don « racine » du donateur via donorKey (ou, pour les dons faits
+     depuis l'espace donateur, originDonorKey). La racine porte le profil et le code d'accès. */
+  function normPhone(p){ return String(p || '').replace(/\D/g, ''); }
+  function donorRootKey(key){
+    var seen = {}, k = key;
+    while(donsCache[k]){
+      var parent = donsCache[k].donorKey || donsCache[k].originDonorKey;
+      if(!parent || parent === k || !donsCache[parent] || seen[parent]) break;
+      seen[k] = true;
+      k = parent;
+    }
+    return k;
+  }
+  function donorGroups(){
+    var groups = {};
+    Object.keys(donsCache).forEach(function(key){
+      var root = donorRootKey(key);
+      (groups[root] = groups[root] || []).push(key);
+    });
+    return groups;
+  }
+  /* Réécrit une seule fois par session un donorKey explicite = racine, pour que l'espace donateur retrouve tous les dons */
+  var donorLinksChecked = false;
+  function normalizeDonorLinks(){
+    if(donorLinksChecked) return;
+    donorLinksChecked = true;
+    Object.keys(donsCache).forEach(function(k){
+      var root = donorRootKey(k);
+      if(root !== k && donsCache[k].donorKey !== root){
+        update(ref(db, 'donationRequests/' + k), {donorKey: root}).catch(function(e){ console.error(e); });
+      }
+    });
+  }
+  function donAmountOf(d){ return Number(d.status === 'traité' && d.amountTraite ? d.amountTraite : d.amount) || 0; }
+
   function renderDons(){
     var body = document.getElementById('donsBody');
     if(!body) return;
     body.innerHTML = '';
-    var keys = Object.keys(donsCache).sort(function(a,b){ return (donsCache[b].ts||0) - (donsCache[a].ts||0); });
-    if(keys.length === 0){
+    var keysAll = Object.keys(donsCache);
+    if(keysAll.length === 0){
       body.innerHTML = '<tr class="empty-row"><td colspan="7">Aucune demande de don pour le moment.</td></tr>';
       return;
     }
-    keys.forEach(function(key){
-      var d = donsCache[key];
-      var badge = d.status === 'traité' ? '<span class="badge badge-accepte">Traité</span>' : '<span class="badge badge-attente">Nouveau</span>';
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>'+escapeHtml(d.name)+'</td>' +
-        '<td>'+escapeHtml(d.phone||'—')+'</td>' +
-        '<td>'+formatMontant(d.amount)+' GNF</td>' +
-        '<td>'+escapeHtml(d.date||'—')+'</td>' +
-        '<td>'+badge+'</td>' +
-        '<td>'+accessCellHtml(donorAccessCache[key], 'Donor', key, 'Satisfecit', 'uploadDonorCertificate')+'</td>' +
-        '<td><div class="row-actions">' +
-          (d.status === 'traité' ? '' : '<button class="row-btn accept" onclick="traiterDon(\''+key+'\')">Marquer traité</button>') +
-          '<button class="row-btn refuse" onclick="supprimerDon(\''+key+'\')">Supprimer</button>' +
-        '</div></td>';
-      body.appendChild(tr);
+    var groups = donorGroups();
+    var roots = Object.keys(groups);
+    var lastTs = function(root){ return Math.max.apply(null, groups[root].map(function(k){ return donsCache[k].ts || 0; })); };
+    roots.sort(function(a,b){ return lastTs(b) - lastTs(a); });
+    var phoneOwners = {};
+    roots.forEach(function(r){
+      var np = normPhone(donsCache[r].phone);
+      if(np){ (phoneOwners[np] = phoneOwners[np] || []).push(r); }
+    });
+
+    roots.forEach(function(root){
+      var members = groups[root].slice().sort(function(a,b){
+        if(a === root) return -1;
+        if(b === root) return 1;
+        return (donsCache[b].ts || 0) - (donsCache[a].ts || 0);
+      });
+      var total = 0, validated = 0;
+      members.forEach(function(k){ if(donsCache[k].status === 'traité'){ total += donAmountOf(donsCache[k]); validated++; } });
+
+      members.forEach(function(key){
+        var d = donsCache[key];
+        var isRoot = (key === root);
+        var badge = d.status === 'traité' ? '<span class="badge badge-accepte">Traité</span>' : '<span class="badge badge-attente">Nouveau</span>';
+        var origin = d.fromDonorSpace ? '<br><span class="badge" style="margin-top:4px; background:#EAF2FF; color:#2158B0;">Depuis son espace</span>' : '';
+        var nameCell = (isRoot ? '' : '<span style="color:var(--ink-soft);">↳ </span>') + escapeHtml(d.name) +
+          (d.note ? '<br><span style="font-size:12px;color:var(--ink-soft);">'+escapeHtml(d.note)+'</span>' : '');
+        var accessCell, actions;
+        if(isRoot){
+          if(members.length > 1){
+            nameCell += '<br><span style="font-size:12px;font-weight:600;color:#2f7d4f;">Cumul validé : '+formatMontant(total)+' GNF — '+members.length+' dons ('+validated+' validé'+(validated > 1 ? 's' : '')+')</span>';
+          }
+          var np = normPhone(d.phone);
+          var same = np ? (phoneOwners[np] || []).filter(function(r){ return r !== root; }) : [];
+          if(same.length){
+            nameCell += '<br><span class="badge" style="margin-top:4px; background:#FFF4DC; color:#8A5A00;">Même numéro que '+escapeHtml(donsCache[same[0]].name)+'</span>';
+          }
+          accessCell = accessCellHtml(donorAccessCache[key], 'Donor', key);
+          actions = (d.status === 'traité' ? '' : '<button class="row-btn accept" onclick="traiterDon(\''+key+'\')">Marquer traité</button>') +
+            (roots.length > 1 ? '<button class="row-btn copy" onclick="rattacherDon(\''+key+'\')">Rattacher…</button>' : '') +
+            '<button class="row-btn refuse" onclick="supprimerDon(\''+key+'\')">Supprimer</button>';
+        } else {
+          var old = donorAccessCache[key];
+          accessCell = '<span style="font-size:12px;color:var(--ink-soft);">Dans l\'espace de '+escapeHtml(donsCache[root].name)+'</span>' +
+            (old && old.status !== 'Révoqué' ? '<br><span style="font-size:12px;">Ancien code encore actif : <span class="code-display">'+escapeHtml(old.code)+'</span></span> <button class="row-btn delete" onclick="revokeDonorAccess(\''+key+'\')">Révoquer</button>' : '');
+          actions = (d.status === 'traité' ? '' : '<button class="row-btn accept" onclick="traiterDon(\''+key+'\')">Marquer traité</button>') +
+            '<button class="row-btn copy" onclick="detacherDon(\''+key+'\')">Détacher</button>' +
+            '<button class="row-btn refuse" onclick="supprimerDon(\''+key+'\')">Supprimer</button>';
+        }
+        var tr = document.createElement('tr');
+        if(!isRoot){ tr.style.background = '#FAFAF7'; }
+        tr.innerHTML =
+          '<td>'+nameCell+'</td>' +
+          '<td>'+escapeHtml(d.phone||'—')+'</td>' +
+          '<td>'+formatMontant(donAmountOf(d) || d.amount)+' GNF</td>' +
+          '<td>'+escapeHtml(d.date||'—')+'</td>' +
+          '<td>'+badge+origin+'</td>' +
+          '<td>'+accessCell+'</td>' +
+          '<td><div class="row-actions">'+actions+'</div></td>';
+        body.appendChild(tr);
+      });
     });
   }
+  /* Rattache un donateur (et ses dons) à l'espace d'un autre donateur : un seul code pour tous ses dons */
+  window.rattacherDon = function rattacherDon(key){
+    var d = donsCache[key];
+    if(!d || donorRootKey(key) !== key) return;
+    var groups = donorGroups();
+    var others = Object.keys(groups).filter(function(r){ return r !== key; })
+      .sort(function(a,b){ return String(donsCache[a].name||'').localeCompare(String(donsCache[b].name||''), 'fr'); });
+    if(others.length === 0){ alert('Aucun autre donateur auquel rattacher ce don.'); return; }
+    var phone = normPhone(d.phone), def = '';
+    var lines = others.map(function(r, i){
+      var o = donsCache[r];
+      if(!def && phone && normPhone(o.phone) === phone){ def = String(i + 1); }
+      return (i + 1) + '. ' + (o.name || '—') + ' — ' + (o.phone || '—') + ' (' + groups[r].length + ' don' + (groups[r].length > 1 ? 's' : '') + ')';
+    });
+    var input = prompt('Rattacher le don de « ' + (d.name || '—') + ' » à l\'espace de quel donateur ? Saisissez son numéro :\n\n' + lines.join('\n'), def);
+    if(input === null) return;
+    var idx = parseInt(input, 10) - 1;
+    if(!(idx >= 0 && idx < others.length)){ alert('Numéro invalide.'); return; }
+    var target = others[idx];
+    groups[key].forEach(function(k){
+      update(ref(db, 'donationRequests/' + k), {donorKey: target}).catch(function(e){ console.error(e); });
+    });
+  }
+  window.detacherDon = function detacherDon(key){
+    var d = donsCache[key];
+    if(!d || donorRootKey(key) === key) return;
+    if(!confirm('Détacher ce don de l\'espace du donateur ? Il redeviendra un donateur à part, avec son propre espace à activer.')) return;
+    update(ref(db, 'donationRequests/' + key), {donorKey: null, originDonorKey: null});
+  }
   window.traiterDon = function traiterDon(key){
-    if(!donsCache[key]) return;
-    update(ref(db, 'donationRequests/' + key), {status:'traité'});
+    var d = donsCache[key];
+    if(!d) return;
+    var input = prompt('Montant reçu et validé pour ce don (GNF). Ce montant figurera sur le satisfecit du donateur :', d.amount || '');
+    if(input === null) return;
+    var amount = Math.round(Number(String(input).replace(/[\s\u202f\u00a0]/g, '').replace(',', '.')));
+    if(!isFinite(amount) || amount <= 0){ alert('Saisissez un montant supérieur à 0.'); return; }
+    update(ref(db, 'donationRequests/' + key), {status:'traité', amountTraite: amount, dateTraite: todayStr()});
   }
   window.supprimerDon = function supprimerDon(key){
     if(!donsCache[key]) return;
+    var root = donorRootKey(key);
+    var members = donorGroups()[root] || [key];
+    if(root === key && members.length > 1){
+      if(!confirm('Ce don porte l\'espace du donateur. Ses ' + (members.length - 1) + ' autre(s) don(s) seront conservés et l\'espace (avec son code d\'accès) sera transféré au plus ancien. Continuer ?')) return;
+      var others = members.filter(function(k){ return k !== key; })
+        .sort(function(a,b){ return (donsCache[a].ts || 0) - (donsCache[b].ts || 0); });
+      var newRoot = others[0];
+      var ops = [];
+      if(donorAccessCache[key]){ ops.push(set(ref(db, 'donorAccess/' + newRoot), donorAccessCache[key])); }
+      others.forEach(function(k){
+        ops.push(update(ref(db, 'donationRequests/' + k), k === newRoot ? {donorKey: null, originDonorKey: null} : {donorKey: newRoot}));
+      });
+      Promise.all(ops).then(function(){
+        remove(ref(db, 'donationRequests/' + key));
+        remove(ref(db, 'donorAccess/' + key));
+        remove(ref(db, 'donorCertFiles/' + key));
+      }).catch(function(e){ console.error(e); alert('Suppression impossible. Réessayez.'); });
+      return;
+    }
     remove(ref(db, 'donationRequests/' + key));
     remove(ref(db, 'donorAccess/' + key));
     remove(ref(db, 'donorCertFiles/' + key));
@@ -1585,25 +1718,11 @@
     var d = donsCache[key];
     if(!d) return;
     var code = buildCode(d.name, 'AND');
-    set(ref(db, 'donorAccess/' + key), {code: code, date: todayStr(), status: 'Actif', hasFile:false, ts: Date.now()});
+    set(ref(db, 'donorAccess/' + key), {code: code, date: todayStr(), status: 'Actif', ts: Date.now()});
   }
   window.revokeDonorAccess = function revokeDonorAccess(key){
     if(!donorAccessCache[key]) return;
     update(ref(db, 'donorAccess/' + key), {status:'Révoqué'});
-  }
-  window.uploadDonorCertificate = function uploadDonorCertificate(key, inputEl){
-    var file = inputEl.files && inputEl.files[0];
-    if(!file) return;
-    if(file.size > DOC_MAX_BYTES){ alert('Fichier trop volumineux (maximum 1,5 Mo).'); inputEl.value=''; return; }
-    var reader = new FileReader();
-    reader.onerror = function(){ alert('Impossible de lire le fichier.'); };
-    reader.onload = function(){
-      set(ref(db, 'donorCertFiles/' + key), {data: reader.result, fileName: file.name, ts: Date.now()}).then(function(){
-        update(ref(db, 'donorAccess/' + key), {hasFile:true});
-        inputEl.value = '';
-      }).catch(function(e){ console.error(e); alert('Une erreur est survenue lors de l\'envoi.'); });
-    };
-    reader.readAsDataURL(file);
   }
   window.publishDonorMessage = function publishDonorMessage(){
     var title = document.getElementById('donMsgTitle').value.trim();
