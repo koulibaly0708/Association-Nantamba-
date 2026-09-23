@@ -779,13 +779,13 @@
 
       /* en-tête : logo + nom de l'association juste à côté */
       var LW = 170, LH = logo ? LW * logo.height / logo.width : 120;
-      var orgF = font(700, 46, SERIF), tagF = font(600, 16, SANS), tag = "L'UNION POUR LE DÉVELOPPEMENT", org = 'Association Nantamba';
-      var textW = Math.max(width(org, orgF), width(tag, tagF, 2)), gap = 26;
+      var orgF = font(700, 40, 'Arial, Helvetica, sans-serif'), tagF = font(600, 16, SANS), tag = "L'UNION POUR LE DÉVELOPPEMENT", org = 'ASSOCIATION NANTAMBA';
+      var textW = Math.max(width(org, orgF, 1), width(tag, tagF, 2)), gap = 26;
       var totalW = (logo ? LW + gap : 0) + textW;
       var x0 = 600 - totalW / 2, top = 72, yc = top + LH / 2;
       if(logo){ c.drawImage(logo, x0, top, LW, LH); }
       var tx = x0 + (logo ? LW + gap : 0);
-      text(org, tx, yc + 2, orgF, DEEP, 'left');
+      text(org, tx, yc, orgF, DEEP, 'left', 1);
       text(tag, tx, yc + 30, tagF, GREEN, 'left', 2);
 
       /* séparateur */
@@ -795,10 +795,10 @@
       c.save(); c.translate(600, dy); c.rotate(Math.PI / 4); c.fillStyle = GREEN; c.fillRect(-6, -6, 12, 12); c.restore();
 
       /* pied : signature + sceau */
-      c.fillStyle = DEEP; c.fillRect(100, 735, 290, 2);
-      text('Association Nantamba (AN)', 100, 758, font(700, 15, SANS), DEEP, 'left');
-      text("L'union pour le développement", 100, 776, font(600, 12.5, SANS), GREEN, 'left');
-      var sx = 1044, sy = 720;
+      c.fillStyle = DEEP; c.fillRect(150, 735, 290, 2);
+      text('Association Nantamba (AN)', 150, 758, font(700, 15, SANS), DEEP, 'left');
+      text("L'union pour le développement", 150, 776, font(600, 12.5, SANS), GREEN, 'left');
+      var sx = 1010, sy = 720;
       c.beginPath(); c.arc(sx, sy, 54.5, 0, Math.PI * 2); c.fillStyle = '#FFFFFF'; c.fill(); c.lineWidth = 3; c.strokeStyle = GREEN; c.stroke();
       var sg = c.createLinearGradient(sx - 44, sy - 44, sx + 44, sy + 44); sg.addColorStop(0, DEEP); sg.addColorStop(1, BLUE);
       c.beginPath(); c.arc(sx, sy, 44, 0, Math.PI * 2); c.fillStyle = sg; c.fill();
