@@ -1757,10 +1757,7 @@
         .sort(function(a,b){ return (donsCache[a].ts || 0) - (donsCache[b].ts || 0); });
       var newRoot = others[0];
       var ops = [];
-      if(donorAccessCache[key]){
-        ops.push(set(ref(db, 'donorAccess/' + newRoot), donorAccessCache[key]));
-        if(donorAccessCache[key].code){ ops.push(set(ref(db, 'donorCodeIndex/' + donorAccessCache[key].code), newRoot)); }
-      }
+      if(donorAccessCache[key]){ ops.push(set(ref(db, 'donorAccess/' + newRoot), donorAccessCache[key])); }
       others.forEach(function(k){
         ops.push(update(ref(db, 'donationRequests/' + k), k === newRoot ? {donorKey: null, originDonorKey: null} : {donorKey: newRoot}));
       });
@@ -1771,7 +1768,6 @@
       }).catch(function(e){ console.error(e); alert('Suppression impossible. Réessayez.'); });
       return;
     }
-    if(donorAccessCache[key] && donorAccessCache[key].code){ remove(ref(db, 'donorCodeIndex/' + donorAccessCache[key].code)); }
     remove(ref(db, 'donationRequests/' + key));
     remove(ref(db, 'donorAccess/' + key));
     remove(ref(db, 'donorCertFiles/' + key));
@@ -1780,14 +1776,10 @@
     var d = donsCache[key];
     if(!d) return;
     var code = buildCode(d.name, 'AND');
-    /* Index séparé code -> clé de la fiche donateur : la clé donorAccess/donationRequests reste inchangée
-       (elle peut être fusionnée entre plusieurs dons), seul l'index de correspondance est nouveau. */
     set(ref(db, 'donorAccess/' + key), {code: code, date: todayStr(), status: 'Actif', ts: Date.now()});
-    set(ref(db, 'donorCodeIndex/' + code), key);
   }
   window.revokeDonorAccess = function revokeDonorAccess(key){
     if(!donorAccessCache[key]) return;
-    if(donorAccessCache[key].code){ remove(ref(db, 'donorCodeIndex/' + donorAccessCache[key].code)); }
     update(ref(db, 'donorAccess/' + key), {status:'Révoqué'});
   }
   window.publishDonorMessage = function publishDonorMessage(){
@@ -1856,7 +1848,6 @@
   }
   window.supprimerBenevole = function supprimerBenevole(key){
     if(!benevolesCache[key]) return;
-    if(volunteerAccessCache[key] && volunteerAccessCache[key].code){ remove(ref(db, 'volunteerCodeIndex/' + volunteerAccessCache[key].code)); }
     remove(ref(db, 'volunteerRequests/' + key));
     remove(ref(db, 'volunteerAccess/' + key));
     remove(ref(db, 'volunteerCardFiles/' + key));
@@ -1865,13 +1856,10 @@
     var v = benevolesCache[key];
     if(!v) return;
     var code = buildCode(v.name, 'ANB');
-    /* Index séparé code -> clé de la candidature : la clé volunteerAccess/volunteerRequests reste inchangée. */
     set(ref(db, 'volunteerAccess/' + key), {code: code, date: todayStr(), status: 'Actif', hasFile:false, ts: Date.now()});
-    set(ref(db, 'volunteerCodeIndex/' + code), key);
   }
   window.revokeVolunteerAccess = function revokeVolunteerAccess(key){
     if(!volunteerAccessCache[key]) return;
-    if(volunteerAccessCache[key].code){ remove(ref(db, 'volunteerCodeIndex/' + volunteerAccessCache[key].code)); }
     update(ref(db, 'volunteerAccess/' + key), {status:'Révoqué'});
   }
   window.uploadVolunteerCard = function uploadVolunteerCard(key, inputEl){
@@ -2222,9 +2210,8 @@
     if(!memberId){ sel.focus(); return; }
     var forWhom = membersCache[memberId] ? membersCache[memberId].name : '—';
     var code = buildAccessCode(forWhom);
-    /* La clé Firebase est le code lui-même (et non un identifiant généré) : ainsi, l'espace membre
-       peut vérifier un code par lecture directe de sa clé, sans jamais avoir à lister toute la table. */
-    set(ref(db, 'accessCodes/' + code), {code:code, forWhom:forWhom, memberId:memberId, date:todayStr(), status:'Actif', ts:Date.now()});
+    var newRef = push(ref(db, 'accessCodes'));
+    set(newRef, {code:code, forWhom:forWhom, memberId:memberId, date:todayStr(), status:'Actif', ts:Date.now()});
     sel.value = '';
   }
   /* Saisie au format Prénom Nom. Format du code : AN-[2 lettres du nom][2 lettres du prénom][2 chiffres aléatoires]
