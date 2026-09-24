@@ -420,6 +420,12 @@
           <div id="memberAnnounceList"></div>
         </div>
         <div class="member-card">
+          <div class="tag">Distinctions</div>
+          <h3>Satisfecits et certificats</h3>
+          <p>Retrouvez ici les satisfecits et certificats qui vous ont été attribués par l'association.</p>
+          <div id="memberCertList"></div>
+        </div>
+        <div class="member-card">
           <div class="tag">Profil</div>
           <h3 id="profilNameTxt">Mes informations</h3>
           <p id="profilDetailTxt">La gestion de votre profil membre sera prochainement disponible.</p>
@@ -623,6 +629,7 @@
 
   var memberProfileUnsub = null;
   var currentMemberCode = '';
+  var currentMemberId = '';
   var currentReceiptData = null;
 
   function todayStr(){
@@ -704,6 +711,143 @@
       setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
     }).catch(function(e){ console.error(e); alert('Impossible de récupérer ce document pour le moment.'); });
   }
+  /* ============ SATISFECITS & CERTIFICATS (publiés depuis l'espace administrateur) ============ */
+  var certsCache = {};
+  var certsUnsub = null;
+  function renderMemberCerts(message){
+    var wrap = document.getElementById('memberCertList');
+    if(!wrap) return;
+    var keys = Object.keys(certsCache).sort(function(a,b){ return (certsCache[b].ts||0) - (certsCache[a].ts||0); });
+    if(message){
+      wrap.innerHTML = '<p style="font-size:13.5px;color:var(--ink-soft);">'+escapeHtml(message)+'</p>';
+      return;
+    }
+    if(keys.length === 0){
+      wrap.innerHTML = '<p style="font-size:13.5px;color:var(--ink-soft);">Aucun satisfecit ni certificat pour le moment.</p>';
+      return;
+    }
+    wrap.innerHTML = keys.map(function(key){
+      var c = certsCache[key];
+      return '<div style="border-top:1px solid var(--line);padding-top:10px;margin-top:10px;">' +
+        '<div style="font-weight:600;font-size:14px;">'+escapeHtml(c.title)+'</div>' +
+        '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">'+escapeHtml(c.date||'')+'</div>' +
+        '<button class="btn btn-outline" style="padding:6px 14px;font-size:13px;" onclick="downloadCertificate(\''+key+'\')">Télécharger</button></div>';
+    }).join('');
+  }
+  function startCertsListener(memberId){
+    if(certsUnsub){ certsUnsub(); certsUnsub = null; }
+    certsCache = {};
+    if(!memberId){ renderMemberCerts(); return; }
+    certsUnsub = onValue(ref(db, 'certificates'), function(snap){
+      var all = snap.val() || {};
+      certsCache = {};
+      Object.keys(all).forEach(function(key){
+        if(all[key] && all[key].memberId === memberId){ certsCache[key] = all[key]; }
+      });
+      renderMemberCerts();
+    }, function(e){
+      console.error(e);
+      renderMemberCerts('Les documents ne peuvent pas être affichés pour le moment.');
+    });
+  }
+  /* Satisfecit / certificat en image PNG (A5 paysage, 2100 x 1480 px), dessiné directement sur un canvas */
+  window.downloadCertificate = function downloadCertificate(key){
+    var c = certsCache[key];
+    if(!c) return;
+    var logoEl = document.getElementById('recLogoSrc');
+    var img = new Image();
+    img.onload = function(){ drawCertificate(img); };
+    img.onerror = function(){ drawCertificate(null); };
+    img.src = logoEl ? logoEl.src : '';
+
+    function drawCertificate(logo){
+      var K = 10, CX = 105; /* 1 mm = 10 px, largeur A5 paysage = 210mm */
+      var cv = document.createElement('canvas');
+      cv.width = 210 * K; cv.height = 148 * K;
+      var c2 = cv.getContext('2d');
+      var BLUE = '#2E8FCB', DEEP = '#1B5A85', GREEN = '#2E9E4F', GOLD = '#D98E2E', INK = '#1B2430';
+      var FAM = 'Arial, Helvetica, sans-serif';
+      var ratio = logo ? logo.height / logo.width : 0.94;
+      function font(pt, style){ return (style ? style + ' ' : '') + (pt * 0.3528 * K) + 'px ' + FAM; }
+      function width(t, pt, style, cs){
+        c2.font = font(pt, style);
+        if(!cs){ return c2.measureText(t).width / K; }
+        var w = 0; for(var i = 0; i < t.length; i++){ w += c2.measureText(t.charAt(i)).width / K; }
+        return w + cs * (t.length - 1);
+      }
+      function txt(t, x, y, pt, style, col, align, cs){
+        t = String(t);
+        var w = width(t, pt, style, cs);
+        var sx = align === 'center' ? x - w / 2 : (align === 'right' ? x - w : x);
+        c2.font = font(pt, style); c2.fillStyle = col; c2.textAlign = 'left'; c2.textBaseline = 'alphabetic';
+        if(!cs){ c2.fillText(t, sx * K, y * K); return; }
+        for(var i = 0; i < t.length; i++){ var ch = t.charAt(i); c2.fillText(ch, sx * K, y * K); sx += c2.measureText(ch).width / K + cs; }
+      }
+      function hgrad(x0, x1){ var g = c2.createLinearGradient(x0 * K, 0, x1 * K, 0); g.addColorStop(0, BLUE); g.addColorStop(1, GREEN); return g; }
+      function vgrad(y0, y1, c0, c1){ var g = c2.createLinearGradient(0, y0 * K, 0, y1 * K); g.addColorStop(0, c0); g.addColorStop(1, c1); return g; }
+
+      /* fond dégradé léger */
+      c2.fillStyle = '#FFFFFF'; c2.fillRect(0, 0, 210 * K, 148 * K);
+      c2.fillStyle = vgrad(0, 148, '#F5FAFD', '#F3FAF5'); c2.fillRect(0, 0, 210 * K, 148 * K);
+
+      /* filigrane */
+      if(logo){
+        c2.globalAlpha = 0.06; c2.drawImage(logo, (CX - 55) * K, (74 - 55 * ratio) * K, 110 * K, 110 * ratio * K); c2.globalAlpha = 1;
+      }
+
+      /* cadre décoratif */
+      c2.strokeStyle = GOLD; c2.lineWidth = 1.4 * K; c2.strokeRect(6 * K, 6 * K, 198 * K, 136 * K);
+      c2.strokeStyle = DEEP; c2.lineWidth = 0.5 * K; c2.strokeRect(9.5 * K, 9.5 * K, 191 * K, 129 * K);
+      c2.fillStyle = hgrad(9.5, 200.5); c2.fillRect(9.5 * K, 9.5 * K, 191 * K, 2.2 * K); c2.fillRect(9.5 * K, 136.3 * K, 191 * K, 2.2 * K);
+
+      /* en-tête : logo + nom de l'association */
+      var LW = 24, LH = logo ? LW * ratio : 22;
+      var orgW = width('ASSOCIATION NANTAMBA', 12, 'bold');
+      var totalW = (logo ? LW + 5 : 0) + orgW;
+      var x0 = CX - totalW / 2, top = 18;
+      if(logo){ c2.drawImage(logo, x0 * K, top * K, LW * K, LH * K); }
+      var tx = x0 + (logo ? LW + 5 : 0), yc = top + LH / 2;
+      txt('ASSOCIATION NANTAMBA', tx, yc, 12, 'bold', DEEP, 'left');
+      txt("L'UNION POUR LE DÉVELOPPEMENT", tx, yc + 5, 6, 'bold', GREEN, 'left', 0.4);
+
+      /* titre du document */
+      txt(String(c.title).toUpperCase(), CX, 56, 19, 'bold', DEEP, 'center', 0.6);
+      c2.fillStyle = GOLD; c2.fillRect((CX - 34) * K, 60 * K, 68 * K, 0.5 * K);
+
+      /* mention */
+      txt('Ce document est décerné avec reconnaissance à', CX, 72, 10, 'italic', INK, 'center');
+
+      /* nom du membre */
+      txt(c.memberName || '—', CX, 90, 24, 'bold', GREEN, 'center');
+      c2.fillStyle = hgrad(CX - 50, CX + 50); c2.fillRect((CX - 50) * K, 93.5 * K, 100 * K, 0.4 * K);
+
+      /* motif */
+      if(c.motif){
+        var motifSize = 10.5;
+        while(motifSize > 7.5 && width(c.motif, motifSize) > 160){ motifSize -= 0.5; }
+        txt(c.motif, CX, 104, motifSize, null, INK, 'center');
+      }
+
+      /* date + signature + sceau */
+      txt("Fait à Koumana, le " + (c.date || todayStr()), 20, 128, 8.5, null, INK, 'left');
+      txt('Association Nantamba (AN)', 20, 136, 8.5, 'bold', DEEP, 'left');
+
+      c2.beginPath(); c2.arc(184 * K, 122 * K, 11 * K, 0, Math.PI * 2); c2.fillStyle = '#FFFFFF'; c2.fill();
+      c2.lineWidth = 0.7 * K; c2.strokeStyle = GOLD; c2.stroke();
+      c2.beginPath(); c2.arc(184 * K, 122 * K, 8.8 * K, 0, Math.PI * 2); c2.fillStyle = DEEP; c2.fill();
+      txt('AN', 184, 125, 15, 'bold', '#FFFFFF', 'center');
+
+      var safeTitle = String(c.title).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      cv.toBlob(function(blob){
+        if(!blob){ alert('Impossible de générer le document. Réessayez.'); return; }
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = (safeTitle || 'certificat') + '-' + (currentMemberCode || 'AN') + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      }, 'image/png');
+    }
+  };
   function formatMontant(n){
     return (Number(n) || 0).toLocaleString('fr-FR');
   }
@@ -1315,7 +1459,9 @@ var TRESO_EDIT = false;
     var sf = document.querySelector('.support-footer'); if(sf){ sf.style.display = 'flex'; }
     document.getElementById('memberDashboard').scrollIntoView({behavior:'smooth', block:'start'});
     if(memberProfileUnsub){ memberProfileUnsub(); memberProfileUnsub = null; }
+    currentMemberId = memberId || '';
     startDocumentsListener();
+    startCertsListener(currentMemberId);
     startTresoListener();
     if(memberId){
       memberProfileUnsub = onValue(ref(db, 'members/' + memberId), function(snap){
@@ -1328,10 +1474,13 @@ var TRESO_EDIT = false;
   window.memberLogout = function memberLogout(){
     try{ sessionStorage.removeItem('an_member_code'); }catch(e){}
     currentMemberCode = '';
+    currentMemberId = '';
     currentReceiptData = null;
     if(memberProfileUnsub){ memberProfileUnsub(); memberProfileUnsub = null; }
     if(documentsUnsub){ documentsUnsub(); documentsUnsub = null; }
     documentsCache = {};
+    if(certsUnsub){ certsUnsub(); certsUnsub = null; }
+    certsCache = {};
     stopTresoListener();
     document.getElementById('memberDashboard').style.display = 'none';
     document.getElementById('memberAccessCard').style.display = 'block';

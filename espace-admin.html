@@ -497,6 +497,7 @@
         <button class="tab-btn" data-tab="tab-codes" onclick="switchTab('tab-codes')">Création de code d'accès</button>
         <button class="tab-btn" data-tab="tab-annonces" onclick="switchTab('tab-annonces')">Annonces aux membres</button>
         <button class="tab-btn" data-tab="tab-documents" onclick="switchTab('tab-documents')">Documents</button>
+        <button class="tab-btn" data-tab="tab-satisfecits" onclick="switchTab('tab-satisfecits')">Satisfecits &amp; Certificats</button>
         <button class="tab-btn" data-tab="tab-fonctions" onclick="switchTab('tab-fonctions')">Liste et fonction des membres</button>
         <button class="tab-btn" data-tab="tab-stats" onclick="switchTab('tab-stats')">Statistiques de visite</button>
         <button class="tab-btn" data-tab="tab-news" onclick="switchTab('tab-news')">Actualités</button>
@@ -788,6 +789,50 @@
         </div>
       </div>
 
+      <!-- Onglet : Satisfecits & Certificats (téléchargeables dans l'espace membre) -->
+      <div class="tab-panel" id="tab-satisfecits">
+        <div class="panel-card" style="margin-bottom:22px;">
+          <h3>Attribuer un satisfecit ou un certificat</h3>
+          <p class="sub">Choisissez un membre dans la liste générale et un titre : le document apparaîtra, prêt à être téléchargé, dans l'espace du membre concerné.</p>
+          <div class="field">
+            <label>Membre</label>
+            <select id="certMember" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:7px; font-size:16px; color:var(--ink);">
+              <option value="">— Sélectionner un membre —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Titre du document</label>
+            <select id="certTitle" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:7px; font-size:16px; color:var(--ink);">
+              <option>Satisfecit Appréciation</option>
+              <option>Satisfecit Remerciement</option>
+              <option>Certificat de mérite</option>
+              <option>Certificat d'excellence</option>
+              <option>Certificat de l'esprit d'équipe</option>
+              <option>Certificat de fidélité</option>
+              <option>Certificat d'honneur</option>
+              <option>Certificat d'accomplissement</option>
+              <option>Certificat de dévouement continu</option>
+              <option>Certificat de formation</option>
+            </select>
+          </div>
+          <div class="field"><label>Motif (optionnel)</label><input type="text" id="certMotif" placeholder="Ex. Pour son engagement lors de l'assemblée générale 2026"></div>
+          <div id="certError" style="display:none; margin-bottom:14px; font-size:13.5px; background:#FCEAEA; color:#B23A3A; padding:10px 12px; border-radius:7px;"></div>
+          <button class="btn btn-primary" id="certIssueBtn" onclick="issueCertificate()">Attribuer le document</button>
+          <div class="login-note" id="certIssuedNote">Document attribué : il est maintenant téléchargeable dans l'espace du membre.</div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Satisfecits et certificats attribués</h3>
+          <p class="sub">Du plus récent au plus ancien. Retirer un document le supprime aussi de l'espace membre.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Titre</th><th>Membre</th><th>Date</th><th></th></tr></thead>
+              <tbody id="certsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Onglet 5 : Liste et fonction des membres -->
       <div class="tab-panel" id="tab-fonctions">
         <div class="panel-card" style="margin-bottom:22px;">
@@ -949,6 +994,7 @@
   var volunteerMsgCache = {};
   var donorMsgCache = {};
   var volunteerMissionsCache = {};
+  var certsCache = {};
 
   /* Catalogue des missions bénévoles, regroupées par secteur (fiche de bénévolat) */
   var MISSION_CATALOG = [
@@ -989,7 +1035,8 @@
     ]}
   ];
 
-  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderListeGenerale(); renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); });
+  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderListeGenerale(); renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); populateCertMemberSelect(); });
+  onValue(ref(db, 'certificates'), function(snap){ certsCache = snap.val() || {}; renderCertsAdmin(); });
   onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
   onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
   onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
@@ -1086,7 +1133,7 @@
     document.getElementById('adminAccessCard').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
     var sf = document.querySelector('.support-footer'); if(sf){ sf.style.display = 'flex'; }
-    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderMissionsTab(); renderStats(); renderNewsAdmin(); renderListeGenerale();
+    renderMembers(); renderRequests(); renderCodes(); renderAnnouncements(); renderFonctions(); renderDons(); renderBenevoles(); renderMissionsTab(); renderStats(); renderNewsAdmin(); renderListeGenerale(); renderCertsAdmin(); populateCertMemberSelect();
     startTresoListener(); tresoInitForms();
     if(scroll){ document.getElementById('adminDashboard').scrollIntoView({behavior:'smooth', block:'start'}); }
   }
@@ -1305,6 +1352,17 @@
   }
   function populateCodeMemberSelect(){
     var sel = document.getElementById('codeForMember');
+    if(!sel) return;
+    var current = sel.value;
+    var keys = Object.keys(membersCache);
+    sel.innerHTML = '<option value="">— Sélectionner un membre —</option>' +
+      keys.map(function(key){
+        return '<option value="'+key+'">'+escapeHtml(membersCache[key].name)+'</option>';
+      }).join('');
+    if(keys.indexOf(current) !== -1){ sel.value = current; }
+  }
+  function populateCertMemberSelect(){
+    var sel = document.getElementById('certMember');
     if(!sel) return;
     var current = sel.value;
     var keys = Object.keys(membersCache);
@@ -2369,6 +2427,56 @@
         '<button class="row-btn delete" onclick="deleteDocument(\''+key+'\')">Supprimer</button></td>';
       body.appendChild(tr);
     });
+  }
+
+  /* ============ ONGLET : SATISFECITS & CERTIFICATS (visibles dans l'espace membre) ============ */
+  function certShowError(msg){
+    var err = document.getElementById('certError');
+    err.textContent = msg; err.style.display = 'block';
+  }
+  window.issueCertificate = function issueCertificate(){
+    var sel = document.getElementById('certMember');
+    var memberId = sel.value;
+    var title = document.getElementById('certTitle').value;
+    var motif = document.getElementById('certMotif').value.trim();
+    var note = document.getElementById('certIssuedNote');
+    document.getElementById('certError').style.display = 'none';
+    note.style.display = 'none';
+    if(!memberId){ certShowError('Sélectionnez un membre.'); sel.focus(); return; }
+    var memberName = membersCache[memberId] ? membersCache[memberId].name : '—';
+    var newRef = push(ref(db, 'certificates'));
+    set(newRef, {memberId: memberId, memberName: memberName, title: title, motif: motif, date: todayStr(), ts: Date.now()}).then(function(){
+      document.getElementById('certMotif').value = '';
+      sel.value = '';
+      note.style.display = 'block';
+    }).catch(function(e){
+      console.error(e);
+      certShowError('Une erreur est survenue. Merci de réessayer.');
+    });
+  }
+  window.deleteCertificate = function deleteCertificate(key){
+    var c = certsCache[key];
+    if(!c) return;
+    if(!confirm('Retirer « ' + c.title + ' » attribué à ' + c.memberName + ' ? Le membre ne pourra plus le télécharger.')) return;
+    remove(ref(db, 'certificates/' + key));
+  }
+  function renderCertsAdmin(){
+    var body = document.getElementById('certsBody');
+    if(!body) return;
+    var keys = Object.keys(certsCache).sort(function(a,b){ return (certsCache[b].ts||0) - (certsCache[a].ts||0); });
+    if(keys.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="4">Aucun satisfecit ni certificat attribué pour le moment.</td></tr>';
+      return;
+    }
+    body.innerHTML = keys.map(function(key){
+      var c = certsCache[key];
+      return '<tr>' +
+        '<td>'+escapeHtml(c.title)+'</td>' +
+        '<td>'+escapeHtml(c.memberName||'—')+'</td>' +
+        '<td>'+escapeHtml(c.date||'')+'</td>' +
+        '<td><button class="row-btn delete" onclick="deleteCertificate(\''+key+'\')">Retirer</button></td>' +
+        '</tr>';
+    }).join('');
   }
 
 var TRESO_EDIT = true;
