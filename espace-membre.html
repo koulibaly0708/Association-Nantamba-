@@ -802,10 +802,11 @@
         c2.beginPath(); c2.moveTo(x * K, y * K); c2.lineTo((x + dir * 8) * K, y * K); c2.stroke();
         diamond(x + dir * 8, y, 2.4, GOLD);
       }
-      function cornerOrnament(x, y, qx, qy){
-        c2.strokeStyle = GOLD; c2.lineWidth = 0.45 * K;
+      function cornerOrnament(x, y, qx, qy, col){
+        col = col || GOLD;
+        c2.strokeStyle = col; c2.lineWidth = 0.45 * K;
         c2.beginPath(); c2.moveTo(x * K, (y + qy * 9) * K); c2.quadraticCurveTo(x * K, y * K, (x + qx * 9) * K, y * K); c2.stroke();
-        diamond(x, y, 2.8, GOLD);
+        diamond(x, y, 2.8, col);
       }
       function leaf(x, y, ang, len, col){
         c2.save(); c2.translate(x * K, y * K); c2.rotate(ang);
@@ -832,22 +833,15 @@
       /* filigrane */
       if(logo){ c2.globalAlpha = 0.05; c2.drawImage(logo, (CX - 45) * K, (74 - 45 * ratio) * K, 90 * K, 90 * ratio * K); c2.globalAlpha = 1; }
 
-      /* cadres + coins ornementaux */
-      c2.strokeStyle = GOLD; c2.lineWidth = 1.5 * K; c2.strokeRect(5 * K, 5 * K, 200 * K, 138 * K);
+      /* cadres + coins ornementaux (bleu du logo) */
+      c2.strokeStyle = BLUE; c2.lineWidth = 1.5 * K; c2.strokeRect(5 * K, 5 * K, 200 * K, 138 * K);
       c2.strokeStyle = DEEP; c2.lineWidth = 0.4 * K; c2.strokeRect(8 * K, 8 * K, 194 * K, 132 * K);
-      cornerOrnament(8, 8, 1, 1); cornerOrnament(202, 8, -1, 1);
-      cornerOrnament(8, 140, 1, -1); cornerOrnament(202, 140, -1, -1);
+      cornerOrnament(8, 8, 1, 1, BLUE); cornerOrnament(202, 8, -1, 1, BLUE);
+      cornerOrnament(8, 140, 1, -1, BLUE); cornerOrnament(202, 140, -1, -1, BLUE);
 
-      /* en-tête : badge logo circulaire */
-      var bx = CX, by = 24, br = 11;
-      c2.beginPath(); c2.arc(bx * K, by * K, (br + 1.1) * K, 0, Math.PI * 2); c2.fillStyle = GOLD; c2.fill();
-      c2.beginPath(); c2.arc(bx * K, by * K, br * K, 0, Math.PI * 2); c2.fillStyle = '#FFFFFF'; c2.fill();
-      if(logo){
-        c2.save(); c2.beginPath(); c2.arc(bx * K, by * K, (br - 1) * K, 0, Math.PI * 2); c2.clip();
-        var LS = (br - 1) * 2;
-        c2.drawImage(logo, (bx - LS / 2) * K, (by - LS * ratio / 2) * K, LS * K, LS * ratio * K);
-        c2.restore();
-      }
+      /* en-tête : logo libre (sans cerclage) */
+      var logoH = 21, logoW = logo ? logoH / ratio : 21;
+      if(logo){ c2.drawImage(logo, (CX - logoW / 2) * K, 14 * K, logoW * K, logoH * K); }
       txt('ASSOCIATION NANTAMBA', CX, 41, 12, 'bold', DEEP, 'center', 0.6);
       txt("L'UNION POUR LE DÉVELOPPEMENT", CX, 45.5, 5.6, 'bold', GREEN, 'center', 0.5, true);
       ruleWithDiamond(CX, 50, 42, GOLD);
@@ -904,8 +898,8 @@
       /* signature (droite) */
       c2.strokeStyle = GOLD; c2.lineWidth = 0.3 * K;
       c2.beginPath(); c2.moveTo(150 * K, 121 * K); c2.lineTo(186 * K, 121 * K); c2.stroke();
-      txt('La Présidence', 186, 126.5, 10.5, 'italic', DEEP, 'right');
-      txt('Association Nantamba (AN)', 186, 132, 7.5, 'bold', INK, 'right', 0.1, true);
+      txt('Association Nantamba', 186, 126.5, 10.5, 'italic', DEEP, 'right');
+      txt("L'union pour le développement", 186, 132, 7.5, 'bold', INK, 'right', 0.1, true);
 
       var safeTitle = String(c.title).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       cv.toBlob(function(blob){
