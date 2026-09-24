@@ -431,6 +431,7 @@
 </footer>
 </div><!-- /.page-blur -->
 
+<script src="nantamba-offline.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, push, set, update, increment } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -447,6 +448,7 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const off = NantambaOffline.init({ db, ref, set });
 
   function todayStr(){
     var d = new Date();
@@ -462,6 +464,10 @@
     var visitRef = push(ref(db, 'siteVisits'));
     set(visitRef, { page: 'benevolat', date: todayStr(), ts: Date.now() });
   })();
+
+  off.onSent('volunteer', function(){
+    return update(ref(db, 'siteStats'), { volunteersCount: increment(1) });
+  });
 
   window.submitVolunteer = function submitVolunteer(){
     var name = document.getElementById('volName').value.trim();
@@ -481,7 +487,7 @@
     if(btn){ btn.disabled = true; }
 
     var newRef = push(ref(db, 'volunteerRequests'));
-    set(newRef, {
+    off.safeSet('volunteerRequests/' + newRef.key, {
       name: name,
       phone: phone,
       email: email,
@@ -490,11 +496,13 @@
       date: todayStr(),
       status: 'nouveau',
       ts: Date.now()
-    }).then(function(){
+    }, 'volunteer', { after: true }).then(function(res){
       if(btn){ btn.disabled = false; }
       document.getElementById('volunteerFormBlock').style.display = 'none';
-      document.getElementById('volunteerNote').style.display = 'block';
-      update(ref(db, 'siteStats'), { volunteersCount: increment(1) }).catch(function(e){ console.error(e); });
+      var vn = document.getElementById('volunteerNote');
+      if(res.queued){ vn.textContent = 'Connexion instable : votre candidature est enregistrée sur cet appareil et sera envoyée automatiquement dès le retour du réseau.'; }
+      vn.style.display = 'block';
+      if(!res.queued){ update(ref(db, 'siteStats'), { volunteersCount: increment(1) }).catch(function(e){ console.error(e); }); }
     }).catch(function(e){
       if(btn){ btn.disabled = false; }
       err.textContent = "Une erreur est survenue. Merci de réessayer.";

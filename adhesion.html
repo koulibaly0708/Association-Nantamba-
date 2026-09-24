@@ -362,6 +362,7 @@
   <div class="wrap">Association Nantamba (AN) — L'union pour le développement</div>
 </footer>
 
+<script src="nantamba-offline.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -378,6 +379,7 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const off = NantambaOffline.init({ db, ref, set });
 
   function todayStr(){
     var d = new Date();
@@ -403,7 +405,7 @@
     var note = document.getElementById('joinNote');
     if(n && a && v && agree){
       var newReqRef = push(ref(db, 'joinRequests'));
-      set(newReqRef, {
+      off.safeSet('joinRequests/' + newReqRef.key, {
         name: n,
         email: '',
         phone: p,
@@ -411,7 +413,10 @@
         city: v,
         date: todayStr(),
         status: 'attente'
-      }).then(function(){
+      }, 'join').then(function(res){
+        note.textContent = res.queued
+          ? 'Connexion instable : votre demande est enregistrée sur cet appareil et sera envoyée automatiquement dès le retour du réseau.'
+          : 'Demande envoyée — nous reviendrons vers vous rapidement.';
         note.style.display = 'block';
         openPaymentPanel(n);
         document.getElementById('joinName').value = '';

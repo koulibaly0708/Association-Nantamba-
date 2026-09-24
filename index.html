@@ -975,6 +975,7 @@
   })();
 </script>
 
+<script src="nantamba-offline.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -991,6 +992,7 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const off = NantambaOffline.init({ db, ref, set, onValue });
 
   function todayStr(){
     var d = new Date();
@@ -1016,16 +1018,16 @@
 
   /* Chiffres clés : automatiques à partir des données du site */
   document.getElementById('cleProjets').textContent = document.querySelectorAll('.ach-item').length;
-  onValue(ref(db, 'members'), function(snap){
-    document.getElementById('cleMembres').textContent = Object.keys(snap.val() || {}).length;
-  });
-  onValue(ref(db, 'siteStats'), function(snap){
+  off.onValue(ref(db, 'siteStats/membersCount'), function(snap){
+    document.getElementById('cleMembres').textContent = snap.val() || 0;
+  }, null, { pub: true });
+  off.onValue(ref(db, 'siteStats'), function(snap){
     var s = snap.val() || {};
     document.getElementById('cleBenevoles').textContent = s.volunteersCount || 0;
-  });
+  }, null, { pub: true });
 
   var newsCache = {};
-  onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNews(); });
+  off.onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNews(); }, null, { pub: true });
 
   function renderNews(){
     var container = document.getElementById('newsGrid');
@@ -1085,15 +1087,21 @@
     if(btn){ btn.disabled = true; }
 
     var newRef = push(ref(db, 'donationRequests'));
-    set(newRef, {
+    off.safeSet('donationRequests/' + newRef.key, {
       name: name,
       phone: phone,
       amount: Number(amount),
       date: todayStr(),
       status: 'nouveau',
       ts: Date.now()
-    }).then(function(){
+    }, 'don').then(function(res){
       if(btn){ btn.disabled = false; }
+      if(res.queued){
+        var qn = document.createElement('p');
+        qn.style.cssText = 'font-size:13px;margin-top:10px;';
+        qn.textContent = 'Connexion instable : votre demande est enregistrée sur cet appareil et sera transmise automatiquement dès le retour du réseau.';
+        document.getElementById('donateStepSuccess').appendChild(qn);
+      }
       document.getElementById('donateAmountDisplay').textContent = formatMontantGNF(Number(amount));
       var msg = 'Bonjour, voici la preuve de paiement de mon don de ' + formatMontantGNF(Number(amount)) + ' à l\'Association Nantamba (' + name + ').';
       document.getElementById('donateWhatsappLink').href = 'https://wa.me/' + DON_WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
