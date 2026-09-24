@@ -761,81 +761,151 @@
     img.src = logoEl ? logoEl.src : '';
 
     function drawCertificate(logo){
-      var K = 10, CX = 105; /* 1 mm = 10 px, largeur A5 paysage = 210mm */
+      var K = 12, CX = 105; /* 1 mm = 12 px, largeur A5 paysage = 210mm */
       var cv = document.createElement('canvas');
       cv.width = 210 * K; cv.height = 148 * K;
       var c2 = cv.getContext('2d');
-      var BLUE = '#2E8FCB', DEEP = '#1B5A85', GREEN = '#2E9E4F', GOLD = '#D98E2E', INK = '#1B2430';
-      var FAM = 'Arial, Helvetica, sans-serif';
+      var DEEP = '#1B5A85', BLUE = '#2E8FCB', GREEN = '#2E9E4F', GREEN2 = '#3FAE5C';
+      var GOLD = '#C9972B', INK = '#2A2A28', PAPER = '#FFFDF6';
+      var FAM = "Georgia, 'Times New Roman', serif";
+      var FAM_SANS = 'Arial, Helvetica, sans-serif';
       var ratio = logo ? logo.height / logo.width : 0.94;
-      function font(pt, style){ return (style ? style + ' ' : '') + (pt * 0.3528 * K) + 'px ' + FAM; }
-      function width(t, pt, style, cs){
-        c2.font = font(pt, style);
+
+      function font(pt, style, sans){ return (style ? style + ' ' : '') + (pt * 0.3528 * K) + 'px ' + (sans ? FAM_SANS : FAM); }
+      function width(t, pt, style, cs, sans){
+        c2.font = font(pt, style, sans);
         if(!cs){ return c2.measureText(t).width / K; }
         var w = 0; for(var i = 0; i < t.length; i++){ w += c2.measureText(t.charAt(i)).width / K; }
         return w + cs * (t.length - 1);
       }
-      function txt(t, x, y, pt, style, col, align, cs){
+      function txt(t, x, y, pt, style, col, align, cs, sans){
         t = String(t);
-        var w = width(t, pt, style, cs);
+        var w = width(t, pt, style, cs, sans);
         var sx = align === 'center' ? x - w / 2 : (align === 'right' ? x - w : x);
-        c2.font = font(pt, style); c2.fillStyle = col; c2.textAlign = 'left'; c2.textBaseline = 'alphabetic';
+        c2.font = font(pt, style, sans); c2.fillStyle = col; c2.textAlign = 'left'; c2.textBaseline = 'alphabetic';
         if(!cs){ c2.fillText(t, sx * K, y * K); return; }
         for(var i = 0; i < t.length; i++){ var ch = t.charAt(i); c2.fillText(ch, sx * K, y * K); sx += c2.measureText(ch).width / K + cs; }
       }
-      function hgrad(x0, x1){ var g = c2.createLinearGradient(x0 * K, 0, x1 * K, 0); g.addColorStop(0, BLUE); g.addColorStop(1, GREEN); return g; }
-      function vgrad(y0, y1, c0, c1){ var g = c2.createLinearGradient(0, y0 * K, 0, y1 * K); g.addColorStop(0, c0); g.addColorStop(1, c1); return g; }
-
-      /* fond dégradé léger */
-      c2.fillStyle = '#FFFFFF'; c2.fillRect(0, 0, 210 * K, 148 * K);
-      c2.fillStyle = vgrad(0, 148, '#F5FAFD', '#F3FAF5'); c2.fillRect(0, 0, 210 * K, 148 * K);
-
-      /* filigrane */
-      if(logo){
-        c2.globalAlpha = 0.06; c2.drawImage(logo, (CX - 55) * K, (74 - 55 * ratio) * K, 110 * K, 110 * ratio * K); c2.globalAlpha = 1;
+      function hgrad(x0, x1, cA, cB){ var g = c2.createLinearGradient(x0 * K, 0, x1 * K, 0); g.addColorStop(0, cA || BLUE); g.addColorStop(1, cB || GREEN); return g; }
+      function diamond(x, y, s, col){
+        c2.save(); c2.translate(x * K, y * K); c2.rotate(Math.PI / 4);
+        c2.fillStyle = col; c2.fillRect(-s * K / 2, -s * K / 2, s * K, s * K); c2.restore();
+      }
+      function ruleWithDiamond(cx, y, w, col){
+        c2.strokeStyle = col; c2.lineWidth = 0.35 * K;
+        c2.beginPath(); c2.moveTo((cx - w / 2) * K, y * K); c2.lineTo((cx - 2.2) * K, y * K); c2.stroke();
+        c2.beginPath(); c2.moveTo((cx + 2.2) * K, y * K); c2.lineTo((cx + w / 2) * K, y * K); c2.stroke();
+        diamond(cx, y, 2.6, col);
+      }
+      function flourishSide(x, y, dir){
+        c2.strokeStyle = GOLD; c2.lineWidth = 0.35 * K;
+        c2.beginPath(); c2.moveTo(x * K, y * K); c2.lineTo((x + dir * 8) * K, y * K); c2.stroke();
+        diamond(x + dir * 8, y, 2.4, GOLD);
+      }
+      function cornerOrnament(x, y, qx, qy){
+        c2.strokeStyle = GOLD; c2.lineWidth = 0.45 * K;
+        c2.beginPath(); c2.moveTo(x * K, (y + qy * 9) * K); c2.quadraticCurveTo(x * K, y * K, (x + qx * 9) * K, y * K); c2.stroke();
+        diamond(x, y, 2.8, GOLD);
+      }
+      function leaf(x, y, ang, len, col){
+        c2.save(); c2.translate(x * K, y * K); c2.rotate(ang);
+        c2.beginPath(); c2.ellipse(0, 0, len * K * 0.5, len * K * 0.22, 0, 0, Math.PI * 2);
+        c2.fillStyle = col; c2.fill(); c2.restore();
+      }
+      function leafCluster(cx, cy, side){
+        for(var i = 0; i < 6; i++){
+          var t = i / 5;
+          var ang = (18 + t * 58) * Math.PI / 180;
+          var dist = 4 + t * 7;
+          var lx = cx + side * Math.sin(ang) * dist;
+          var ly = cy - Math.cos(ang) * dist * 0.9;
+          leaf(lx, ly, side * ang * 0.85, 4.2 - t * 1.6, i % 2 === 0 ? GREEN : GREEN2);
+        }
       }
 
-      /* cadre décoratif */
-      c2.strokeStyle = GOLD; c2.lineWidth = 1.4 * K; c2.strokeRect(6 * K, 6 * K, 198 * K, 136 * K);
-      c2.strokeStyle = DEEP; c2.lineWidth = 0.5 * K; c2.strokeRect(9.5 * K, 9.5 * K, 191 * K, 129 * K);
-      c2.fillStyle = hgrad(9.5, 200.5); c2.fillRect(9.5 * K, 9.5 * K, 191 * K, 2.2 * K); c2.fillRect(9.5 * K, 136.3 * K, 191 * K, 2.2 * K);
+      /* fond */
+      c2.fillStyle = PAPER; c2.fillRect(0, 0, 210 * K, 148 * K);
+      var vg = c2.createRadialGradient(CX * K, 74 * K, 10 * K, CX * K, 74 * K, 150 * K);
+      vg.addColorStop(0, 'rgba(255,255,255,0)'); vg.addColorStop(1, 'rgba(27,90,133,0.06)');
+      c2.fillStyle = vg; c2.fillRect(0, 0, 210 * K, 148 * K);
 
-      /* en-tête : logo + nom de l'association */
-      var LW = 24, LH = logo ? LW * ratio : 22;
-      var orgW = width('ASSOCIATION NANTAMBA', 12, 'bold');
-      var totalW = (logo ? LW + 5 : 0) + orgW;
-      var x0 = CX - totalW / 2, top = 18;
-      if(logo){ c2.drawImage(logo, x0 * K, top * K, LW * K, LH * K); }
-      var tx = x0 + (logo ? LW + 5 : 0), yc = top + LH / 2;
-      txt('ASSOCIATION NANTAMBA', tx, yc, 12, 'bold', DEEP, 'left');
-      txt("L'UNION POUR LE DÉVELOPPEMENT", tx, yc + 5, 6, 'bold', GREEN, 'left', 0.4);
+      /* filigrane */
+      if(logo){ c2.globalAlpha = 0.05; c2.drawImage(logo, (CX - 45) * K, (74 - 45 * ratio) * K, 90 * K, 90 * ratio * K); c2.globalAlpha = 1; }
+
+      /* cadres + coins ornementaux */
+      c2.strokeStyle = GOLD; c2.lineWidth = 1.5 * K; c2.strokeRect(5 * K, 5 * K, 200 * K, 138 * K);
+      c2.strokeStyle = DEEP; c2.lineWidth = 0.4 * K; c2.strokeRect(8 * K, 8 * K, 194 * K, 132 * K);
+      cornerOrnament(8, 8, 1, 1); cornerOrnament(202, 8, -1, 1);
+      cornerOrnament(8, 140, 1, -1); cornerOrnament(202, 140, -1, -1);
+
+      /* en-tête : badge logo circulaire */
+      var bx = CX, by = 24, br = 11;
+      c2.beginPath(); c2.arc(bx * K, by * K, (br + 1.1) * K, 0, Math.PI * 2); c2.fillStyle = GOLD; c2.fill();
+      c2.beginPath(); c2.arc(bx * K, by * K, br * K, 0, Math.PI * 2); c2.fillStyle = '#FFFFFF'; c2.fill();
+      if(logo){
+        c2.save(); c2.beginPath(); c2.arc(bx * K, by * K, (br - 1) * K, 0, Math.PI * 2); c2.clip();
+        var LS = (br - 1) * 2;
+        c2.drawImage(logo, (bx - LS / 2) * K, (by - LS * ratio / 2) * K, LS * K, LS * ratio * K);
+        c2.restore();
+      }
+      txt('ASSOCIATION NANTAMBA', CX, 41, 12, 'bold', DEEP, 'center', 0.6);
+      txt("L'UNION POUR LE DÉVELOPPEMENT", CX, 45.5, 5.6, 'bold', GREEN, 'center', 0.5, true);
+      ruleWithDiamond(CX, 50, 42, GOLD);
 
       /* titre du document */
-      txt(String(c.title).toUpperCase(), CX, 56, 19, 'bold', DEEP, 'center', 0.6);
-      c2.fillStyle = GOLD; c2.fillRect((CX - 34) * K, 60 * K, 68 * K, 0.5 * K);
+      var title = String(c.title).toUpperCase();
+      var titleSize = 21;
+      while(titleSize > 13 && width(title, titleSize, 'bold', 0.8) > 172){ titleSize -= 0.5; }
+      txt(title, CX, 64, titleSize, 'bold', DEEP, 'center', 0.8);
+      ruleWithDiamond(CX, 69, 32, GOLD);
 
       /* mention */
-      txt('Ce document est décerné avec reconnaissance à', CX, 72, 10, 'italic', INK, 'center');
+      txt('Ce document est décerné avec reconnaissance à', CX, 78, 10.5, 'italic', INK, 'center');
 
       /* nom du membre */
-      txt(c.memberName || '—', CX, 90, 24, 'bold', GREEN, 'center');
-      c2.fillStyle = hgrad(CX - 50, CX + 50); c2.fillRect((CX - 50) * K, 93.5 * K, 100 * K, 0.4 * K);
+      var nameStr = c.memberName || '—';
+      var nameSize = 27;
+      while(nameSize > 15 && width(nameStr, nameSize, 'bold') > 158){ nameSize -= 0.5; }
+      txt(nameStr, CX, 96, nameSize, 'bold', GREEN, 'center');
+      var nw = width(nameStr, nameSize, 'bold');
+      flourishSide(CX - nw / 2 - 4, 93.5, -1);
+      flourishSide(CX + nw / 2 + 4, 93.5, 1);
+      c2.fillStyle = hgrad(CX - 34, CX + 34); c2.fillRect((CX - 34) * K, 100 * K, 68 * K, 0.35 * K);
 
       /* motif */
       if(c.motif){
         var motifSize = 10.5;
-        while(motifSize > 7.5 && width(c.motif, motifSize) > 160){ motifSize -= 0.5; }
-        txt(c.motif, CX, 104, motifSize, null, INK, 'center');
+        while(motifSize > 7.5 && width(c.motif, motifSize) > 172){ motifSize -= 0.5; }
+        txt(c.motif, CX, 110, motifSize, 'italic', INK, 'center');
       }
 
-      /* date + signature + sceau */
-      txt("Fait à Koumana, le " + (c.date || todayStr()), 20, 128, 8.5, null, INK, 'left');
-      txt('Association Nantamba (AN)', 20, 136, 8.5, 'bold', DEEP, 'left');
+      /* pied de page */
+      c2.strokeStyle = GOLD; c2.lineWidth = 0.3 * K;
+      c2.beginPath(); c2.moveTo(20 * K, 118 * K); c2.lineTo(190 * K, 118 * K); c2.stroke();
 
-      c2.beginPath(); c2.arc(184 * K, 122 * K, 11 * K, 0, Math.PI * 2); c2.fillStyle = '#FFFFFF'; c2.fill();
-      c2.lineWidth = 0.7 * K; c2.strokeStyle = GOLD; c2.stroke();
-      c2.beginPath(); c2.arc(184 * K, 122 * K, 8.8 * K, 0, Math.PI * 2); c2.fillStyle = DEEP; c2.fill();
-      txt('AN', 184, 125, 15, 'bold', '#FFFFFF', 'center');
+      /* date (gauche) — uniquement la date, sans mention de lieu */
+      txt('DATE', 24, 125, 6.5, 'bold', '#8A7550', 'left', 0.6, true);
+      txt(c.date || todayStr(), 24, 133, 11.5, 'bold', INK, 'left');
+
+      /* sceau + lauriers (centre) */
+      var sx2 = CX, sy2 = 127, sr = 7.5;
+      leafCluster(sx2, sy2, -1); leafCluster(sx2, sy2, 1);
+      c2.beginPath(); c2.arc(sx2 * K, sy2 * K, sr * K, 0, Math.PI * 2); c2.fillStyle = GOLD; c2.fill();
+      c2.beginPath(); c2.arc(sx2 * K, sy2 * K, (sr - 0.7) * K, 0, Math.PI * 2); c2.fillStyle = '#FFFFFF'; c2.fill();
+      c2.beginPath(); c2.arc(sx2 * K, sy2 * K, (sr - 2) * K, 0, Math.PI * 2); c2.fillStyle = DEEP; c2.fill();
+      txt('AN', sx2, sy2 + 3.2, 12.5, 'bold', '#FFFFFF', 'center');
+      c2.beginPath();
+      c2.moveTo((sx2 - 3.4) * K, (sy2 + sr - 1) * K); c2.lineTo((sx2 - 5.6) * K, (sy2 + sr + 6) * K); c2.lineTo((sx2 - 1.6) * K, (sy2 + sr + 3.5) * K);
+      c2.closePath(); c2.fillStyle = DEEP; c2.fill();
+      c2.beginPath();
+      c2.moveTo((sx2 + 3.4) * K, (sy2 + sr - 1) * K); c2.lineTo((sx2 + 5.6) * K, (sy2 + sr + 6) * K); c2.lineTo((sx2 + 1.6) * K, (sy2 + sr + 3.5) * K);
+      c2.closePath(); c2.fillStyle = GREEN; c2.fill();
+
+      /* signature (droite) */
+      c2.strokeStyle = GOLD; c2.lineWidth = 0.3 * K;
+      c2.beginPath(); c2.moveTo(150 * K, 121 * K); c2.lineTo(186 * K, 121 * K); c2.stroke();
+      txt('La Présidence', 186, 126.5, 10.5, 'italic', DEEP, 'right');
+      txt('Association Nantamba (AN)', 186, 132, 7.5, 'bold', INK, 'right', 0.1, true);
 
       var safeTitle = String(c.title).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       cv.toBlob(function(blob){
