@@ -532,6 +532,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, onValue, get, push, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+  import { getAuth, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA0uPMEMOseJNYUuKtCSg3R1sRKbhS6XMU",
@@ -545,6 +546,7 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
 
   /* Suivi des visites : une entrée par session pour cette page */
   (function(){
@@ -1495,21 +1497,30 @@ var TRESO_EDIT = false;
     var btn = document.querySelector('#accessOverlay .btn-primary');
     if(!code){ err.style.display = 'block'; return; }
     if(btn){ btn.disabled = true; }
-    get(ref(db, 'accessCodes')).then(function(snap){
-      var codes = snap.val() || {};
-      var match = Object.values(codes).find(function(c){
-        return (c.code || '').toUpperCase() === code && c.status !== 'Révoqué';
-      });
-      if(btn){ btn.disabled = false; }
-      if(match){
+    /* Lecture directe par clé (le code est la clé Firebase) : plus de lecture de la table entière. */
+    get(ref(db, 'accessCodes/' + code)).then(function(snap){
+      var match = snap.val();
+      if(match && match.status === 'Révoqué'){ match = null; }
+      if(!match){
+        if(btn){ btn.disabled = false; }
+        err.style.display = 'block';
+        return;
+      }
+      /* Session Firebase anonyme : nécessaire pour lire les données réservées aux membres connectés
+         (profil, cotisation, trésorerie, certificats) une fois le code validé. */
+      signInAnonymously(auth).then(function(){
+        if(btn){ btn.disabled = false; }
         err.style.display = 'none';
         try{ sessionStorage.setItem('an_member_code', code); }catch(e){}
         currentMemberCode = code;
         closeAccessModal();
         showMemberSpace(match.memberId || null);
-      } else {
+      }).catch(function(e){
+        if(btn){ btn.disabled = false; }
+        err.textContent = 'Erreur de connexion, réessayez.';
         err.style.display = 'block';
-      }
+        console.error(e);
+      });
     }).catch(function(e){
       if(btn){ btn.disabled = false; }
       err.textContent = 'Erreur de connexion, réessayez.';
@@ -1546,6 +1557,7 @@ var TRESO_EDIT = false;
     if(certsUnsub){ certsUnsub(); certsUnsub = null; }
     certsCache = {};
     stopTresoListener();
+    signOut(auth).catch(function(e){ console.error(e); });
     document.getElementById('memberDashboard').style.display = 'none';
     document.getElementById('memberAccessCard').style.display = 'block';
     var sf = document.querySelector('.support-footer'); if(sf){ sf.style.display = 'none'; }
