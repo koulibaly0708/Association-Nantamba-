@@ -961,6 +961,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="nantamba-offline.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, onValue, get, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -978,6 +979,7 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const off = NantambaOffline.init({ db, ref, onValue });
   const auth = getAuth(app);
 
   /* Caches locales alimentées en temps réel par Firebase (clé Firebase -> objet) */
@@ -1035,20 +1037,102 @@
     ]}
   ];
 
-  onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderListeGenerale(); renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); populateCertMemberSelect(); });
-  onValue(ref(db, 'certificates'), function(snap){ certsCache = snap.val() || {}; renderCertsAdmin(); });
-  onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); });
-  onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; renderCodes(); });
-  onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); });
-  onValue(ref(db, 'donationRequests'), function(snap){ donsCache = snap.val() || {}; normalizeDonorLinks(); renderDons(); });
-  onValue(ref(db, 'volunteerRequests'), function(snap){ benevolesCache = snap.val() || {}; renderBenevoles(); });
-  onValue(ref(db, 'siteVisits'), function(snap){ visitsCache = snap.val() || {}; renderStats(); });
-  onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNewsAdmin(); });
-  onValue(ref(db, 'volunteerAccess'), function(snap){ volunteerAccessCache = snap.val() || {}; renderBenevoles(); });
-  onValue(ref(db, 'donorAccess'), function(snap){ donorAccessCache = snap.val() || {}; renderDons(); });
-  onValue(ref(db, 'volunteerMessages'), function(snap){ volunteerMsgCache = snap.val() || {}; renderVolunteerMessages(); });
-  onValue(ref(db, 'donorMessages'), function(snap){ donorMsgCache = snap.val() || {}; renderDonorMessages(); });
-  onValue(ref(db, 'volunteerMissions'), function(snap){ volunteerMissionsCache = snap.val() || {}; renderMissionsTab(); });
+  function idxKey(c){ return String(c).replace(/[.$#\[\]\/]/g, '_'); }
+
+  /* ===== Codes d'accès : listes réservées à l'administrateur connecté =====
+     Les pages publiques ne lisent plus les listes de codes : elles interrogent
+     accessIndex/{espace}/{CODE}, un index recopié ici à chaque changement
+     (même principe que roleIndex). Les règles Firebase interdisent de lister l'index. */
+
+  /* ===== Écouteurs administrateur : démarrés APRÈS la connexion (les règles refusent les lectures anonymes) ===== */
+  var adminUnsubs = [];
+  function adminErr(e){ console.error(e); }
+  var membersCountLast = -1;
+  function startAdminListeners(){
+    if(adminUnsubs.length){ return; }
+    adminUnsubs.push(onValue(ref(db, 'members'), function(snap){ membersCache = snap.val() || {}; renderListeGenerale(); renderMembers(); renderFonctions(); renderTresorerie(); tresoSyncRoleIndex(); populateCertMemberSelect(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'certificates'), function(snap){ certsCache = snap.val() || {}; renderCertsAdmin(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'donationRequests'), function(snap){ donsCache = snap.val() || {}; accessLoaded.dons = true; normalizeDonorLinks(); renderDons(); scheduleAccessIndexSync(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'volunteerRequests'), function(snap){ benevolesCache = snap.val() || {}; renderBenevoles(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'siteVisits'), function(snap){ visitsCache = snap.val() || {}; renderStats(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNewsAdmin(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'volunteerMessages'), function(snap){ volunteerMsgCache = snap.val() || {}; renderVolunteerMessages(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'donorMessages'), function(snap){ donorMsgCache = snap.val() || {}; renderDonorMessages(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'volunteerMissions'), function(snap){ volunteerMissionsCache = snap.val() || {}; renderMissionsTab(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'documents'), function(snap){ docsCache = snap.val() || {}; renderDocsAdmin(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'members'), function(snap){
+      var n = Object.keys(snap.val() || {}).length;
+      if(n !== membersCountLast && auth.currentUser && !auth.currentUser.isAnonymous){
+        membersCountLast = n;
+        set(ref(db, 'siteStats/membersCount'), n).catch(adminErr);   // compteur public de la page d'accueil
+      }
+    }, adminErr));
+    startAccessListeners();
+  }
+  function stopAdminListeners(){
+    adminUnsubs.forEach(function(u){ try{ u(); }catch(e){} });
+    adminUnsubs = [];
+    membersCountLast = -1;
+    stopAccessListeners();
+  }
+  var accessUnsubs = [];
+  var accessLoaded = { codes: false, vol: false, don: false, dons: false };
+  var accessIdxLast = '', accessIdxTimer = null;
+  function startAccessListeners(){
+    if(accessUnsubs.length){ return; }
+    accessUnsubs.push(onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; accessLoaded.codes = true; renderCodes(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
+    accessUnsubs.push(onValue(ref(db, 'volunteerAccess'), function(snap){ volunteerAccessCache = snap.val() || {}; accessLoaded.vol = true; renderBenevoles(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
+    accessUnsubs.push(onValue(ref(db, 'donorAccess'), function(snap){ donorAccessCache = snap.val() || {}; accessLoaded.don = true; renderDons(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
+  }
+  function stopAccessListeners(){
+    accessUnsubs.forEach(function(u){ try{ u(); }catch(e){} });
+    accessUnsubs = [];
+    accessLoaded = { codes: false, vol: false, don: false, dons: false };
+    codesCache = {}; volunteerAccessCache = {}; donorAccessCache = {};
+    clearTimeout(accessIdxTimer);
+  }
+  /* Don « racine » d'un donateur : on remonte donorKey / originDonorKey (même logique que l'espace donateur) */
+  function donRootOf(key){
+    var k = key, hops = 0;
+    while(hops < 5){
+      var d = donsCache[k], p = d && (d.donorKey || d.originDonorKey);
+      if(d && p && p !== k){ k = p; hops++; } else { break; }
+    }
+    return k;
+  }
+  function scheduleAccessIndexSync(){
+    clearTimeout(accessIdxTimer);
+    accessIdxTimer = setTimeout(syncAccessIndex, 1500);
+  }
+  function syncAccessIndex(){
+    if(!auth.currentUser || auth.currentUser.isAnonymous || !accessLoaded.codes || !accessLoaded.vol || !accessLoaded.don || !accessLoaded.dons){ return; }
+    var idx = { membre: {}, vol: {}, don: {} };
+    function put(space, code, val, ok){
+      if(!code){ return; }
+      var k = idxKey(code), cur = idx[space][k];
+      if(cur && cur._ok && !ok){ return; }          // un code actif n'est jamais masqué par un doublon révoqué
+      val._ok = ok; idx[space][k] = val;
+    }
+    Object.keys(codesCache).forEach(function(id){
+      var c = codesCache[id] || {};
+      put('membre', String(c.code || '').toUpperCase(), { memberId: c.memberId || null, status: c.status || 'Actif' }, c.status !== 'Révoqué');
+    });
+    Object.keys(volunteerAccessCache).forEach(function(key){
+      var a = volunteerAccessCache[key] || {};
+      put('vol', a.code, { key: key, status: a.status || '' }, a.status === 'Actif');
+    });
+    Object.keys(donorAccessCache).forEach(function(key){
+      var a = donorAccessCache[key] || {};
+      put('don', a.code, { key: key, root: donRootOf(key), status: a.status || '' }, a.status === 'Actif');
+    });
+    Object.keys(idx).forEach(function(sp){ Object.keys(idx[sp]).forEach(function(k){ delete idx[sp][k]._ok; }); });
+    var json = JSON.stringify(idx);
+    if(json === accessIdxLast){ return; }
+    set(ref(db, 'accessIndex'), idx).then(function(){ accessIdxLast = json; })
+      .catch(function(e){ console.error('accessIndex sync failed', e); });
+  }
 
   /* ============ CONNEXION VIA FIREBASE AUTHENTICATION ============ */
   var currentAccessSpace = 'admin';
@@ -1143,9 +1227,11 @@
 
   /* Réagit à l'état de connexion réel (persiste entre les visites tant que non déconnecté) */
   onAuthStateChanged(auth, function(user){
-    if(user){
+    if(user && !user.isAnonymous){
+      startAdminListeners();
       showAdminSpace(authChecked);
     } else {
+      stopAdminListeners();
       stopTresoListener();
       document.getElementById('adminDashboard').style.display = 'none';
       document.getElementById('adminAccessCard').style.display = 'block';
@@ -2311,7 +2397,6 @@
   var DOC_MAX_BYTES = 1500000;                       /* 1,5 Mo par fichier */
   var DOC_EXT_OK = /\.(pdf|docx?|xlsx?|pptx?|txt|jpe?g|png)$/i;
   var docsCache = {};
-  onValue(ref(db, 'documents'), function(snap){ docsCache = snap.val() || {}; renderDocsAdmin(); });
 
   function formatTaille(octets){
     if(octets >= 1000000) return (octets / 1000000).toFixed(1).replace('.', ',') + ' Mo';
