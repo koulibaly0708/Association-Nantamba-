@@ -523,6 +523,15 @@
               <tbody id="listeGeneraleBody"></tbody>
             </table>
           </div>
+
+          <h3 style="margin-top:28px;">Import en masse (anciens membres)</h3>
+          <p class="sub">Collez un membre par ligne, en séparant les champs par un point-virgule « ; » : <code>Nom complet;Date d'adhésion (JJ/MM/AAAA);Téléphone;Ville</code>. Seul le nom est obligatoire — laissez les autres champs vides si vous ne les avez pas (ex. <code>Mamadou Diallo;;;Conakry</code> ou juste <code>Mamadou Diallo</code>). Vous pouvez aussi coller directement 4 colonnes copiées depuis Excel/Sheets.</p>
+          <textarea id="bulkImportText" rows="8" placeholder="Mamadou Diallo;12/03/2021;622000000;Conakry
+Fatoumata Camara;;620000000;Kankan
+Alpha Bah"></textarea>
+          <div class="inline-form" style="margin-top:10px;">
+            <button class="btn btn-primary" onclick="bulkImportMembers()">⬆ Importer les membres</button>
+          </div>
         </div>
       </div>
 
@@ -603,7 +612,7 @@
           <h3>Tableau de trésorerie</h3>
           <p class="sub">État financier de l'association. Solde final = solde initial + recettes − dépenses approuvées. Les membres le consultent en lecture seule dans leur espace.</p>
           <div class="inline-form" style="margin-bottom:10px;">
-            <button class="btn btn-outline" onclick="exportTresorerieToExcel()">⬇ Exporter en Excel</button>
+            <button class="btn btn-outline" onclick="exportTresorerieToExcel()">⬇ Export comptable (Bilan + Grand livre)</button>
           </div>
           <div id="trStatement" class="tr-statement"></div>
         </div>
@@ -1549,6 +1558,30 @@
     if(!m) return;
     if(!confirm('Supprimer « ' + m.name + ' » de la liste générale ? (récupérable 30 jours dans la Corbeille)')) return;
     moveToTrash('Membre', m.name, ['members/' + key]);
+  }
+  function parseBulkDate(raw){
+    raw = (raw || '').trim();
+    if(!raw) return todayStr();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return formatDateInput(raw);
+    return raw; // déjà au format JJ/MM/AAAA (ou autre texte libre laissé tel quel)
+  }
+  window.bulkImportMembers = function bulkImportMembers(){
+    var raw = document.getElementById('bulkImportText').value;
+    var lines = raw.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
+    if(lines.length === 0){ alert('Collez au moins une ligne avant d\'importer.'); return; }
+    var entries = lines.map(function(line){
+      var parts = line.indexOf('\t') !== -1 ? line.split('\t') : line.split(';');
+      parts = parts.map(function(p){ return (p || '').trim(); });
+      return { name: parts[0] || '', date: parts[1] || '', phone: parts[2] || '', ville: parts[3] || '' };
+    }).filter(function(e){ return e.name.length > 0; });
+    if(entries.length === 0){ alert('Aucun nom valide trouvé. Vérifiez le format (le nom est le premier champ de chaque ligne).'); return; }
+    if(!confirm('Importer ' + entries.length + ' membre(s) dans la liste générale ?')) return;
+    entries.forEach(function(e){
+      var newRef = push(ref(db, 'members'));
+      set(newRef, {name:e.name, phone:e.phone, ville:e.ville, status:'Actif', since:parseBulkDate(e.date), cotisationStatut:'Non renseigné', cotisationMontant:COTISATION_MONTANT_DEFAUT, cotisationPaye:0});
+    });
+    document.getElementById('bulkImportText').value = '';
+    alert(entries.length + ' membre(s) importé(s).');
   }
 
   /* ============ ONGLET 5 : FONCTION DES MEMBRES ============ */
@@ -2904,7 +2937,33 @@ var TRESO_EDIT = true;
   }
   window.renderTresorerie = renderTresorerie;
 
-  /* ---------- Export Excel : état financier, recettes, dépenses ---------- */
+  /* ---------- Export comptable : Bilan, Grand livre, Recettes, Dépenses ---------- */
+  /* Grand livre = journal chronologique de tous les mouvements réels (solde initial,
+     recettes, dépenses APPROUVÉES uniquement — une dépense en attente ou rejetée n'est
+     pas un mouvement réel), avec un solde cumulé après chaque ligne. */
+  function buildGrandLivre(T){
+    var rows = [];
+    var op = treasuryCache.opening;
+    if(op){
+      rows.push({ date: op.date || '', label: 'Solde initial', type: 'Ouverture', credit: Number(op.amount) || 0, debit: 0, by: op.by || '', ts: -1 });
+    }
+    T.incomes.forEach(function(r){
+      rows.push({ date: tresoFmtDate(r.date), label: r.label || '', type: TRESO_CATEGORIES[r.category] || 'Autre recette', credit: Number(r.amount) || 0, debit: 0, by: r.by || '', ts: r.ts || 0, sortDate: r.date || '' });
+    });
+    T.expenses.filter(function(x){ return x.status === 'approved'; }).forEach(function(x){
+      rows.push({ date: tresoFmtDate(x.date), label: x.label || '', type: 'Dépense approuvée', credit: 0, debit: Number(x.amount) || 0, by: x.by || '', ts: x.ts || 0, sortDate: x.date || '' });
+    });
+    rows.sort(function(a, b){
+      var da = a.sortDate || '0000-00-00', db = b.sortDate || '0000-00-00';
+      if(da !== db){ return da < db ? -1 : 1; }
+      return (a.ts || 0) - (b.ts || 0);
+    });
+    var solde = 0;
+    return rows.map(function(r){
+      solde += r.credit - r.debit;
+      return [r.date, r.label, r.type, r.debit || '', r.credit || '', solde, r.by];
+    });
+  }
   window.exportTresorerieToExcel = function exportTresorerieToExcel(){
     if(!window.XLSX){
       alert("L'export Excel n'est pas disponible pour le moment. Vérifiez votre connexion Internet et rechargez la page.");
@@ -2914,7 +2973,7 @@ var TRESO_EDIT = true;
     var wb = XLSX.utils.book_new();
 
     var etat = [
-      ['État financier — Association Nantamba', ''],
+      ['Bilan — Association Nantamba', ''],
       ['Édité le', todayStr()],
       [],
       ['Poste', 'Montant (GNF)'],
@@ -2931,7 +2990,18 @@ var TRESO_EDIT = true;
     wsEtat['B10'] = { t: 'n', v: T.final, f: 'B5+B6+B7+B8-B9' };
     ['B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B12'].forEach(function(c){ if(wsEtat[c]){ wsEtat[c].z = '#,##0'; } });
     wsEtat['!cols'] = [{ wch: 50 }, { wch: 18 }];
-    XLSX.utils.book_append_sheet(wb, wsEtat, 'État financier');
+    XLSX.utils.book_append_sheet(wb, wsEtat, 'Bilan');
+
+    var livre = buildGrandLivre(T);
+    var wsLivre = XLSX.utils.aoa_to_sheet(
+      [['Grand livre — Association Nantamba', '', '', '', '', '', ''],
+       ['Édité le', todayStr(), '', '', '', '', ''],
+       [],
+       ['Date', 'Libellé', 'Type', 'Débit (GNF)', 'Crédit (GNF)', 'Solde cumulé (GNF)', 'Saisi par']]
+        .concat(livre)
+    );
+    wsLivre['!cols'] = [{ wch: 12 }, { wch: 42 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 26 }];
+    XLSX.utils.book_append_sheet(wb, wsLivre, 'Grand livre');
 
     var recettes = T.incomes.slice().reverse().map(function(r){
       return [tresoFmtDate(r.date), r.label || '', TRESO_CATEGORIES[r.category] || 'Autre recette', Number(r.amount) || 0, r.by || '', r.enteredDate || ''];
