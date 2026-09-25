@@ -1055,7 +1055,7 @@
     adminUnsubs.push(onValue(ref(db, 'joinRequests'), function(snap){ requestsCache = snap.val() || {}; renderRequests(); }, adminErr));
     adminUnsubs.push(onValue(ref(db, 'announcements'), function(snap){ announcementsCache = snap.val() || {}; renderAnnouncements(); }, adminErr));
     adminUnsubs.push(onValue(ref(db, 'donationRequests'), function(snap){ donsCache = snap.val() || {}; accessLoaded.dons = true; normalizeDonorLinks(); renderDons(); scheduleAccessIndexSync(); }, adminErr));
-    adminUnsubs.push(onValue(ref(db, 'volunteerRequests'), function(snap){ benevolesCache = snap.val() || {}; renderBenevoles(); }, adminErr));
+    adminUnsubs.push(onValue(ref(db, 'volunteerRequests'), function(snap){ benevolesCache = snap.val() || {}; renderBenevoles(); renderMissionsTab(); }, adminErr));
     adminUnsubs.push(onValue(ref(db, 'siteVisits'), function(snap){ visitsCache = snap.val() || {}; renderStats(); }, adminErr));
     adminUnsubs.push(onValue(ref(db, 'newsPosts'), function(snap){ newsCache = snap.val() || {}; renderNewsAdmin(); }, adminErr));
     adminUnsubs.push(onValue(ref(db, 'volunteerMessages'), function(snap){ volunteerMsgCache = snap.val() || {}; renderVolunteerMessages(); }, adminErr));
@@ -1083,7 +1083,7 @@
   function startAccessListeners(){
     if(accessUnsubs.length){ return; }
     accessUnsubs.push(onValue(ref(db, 'accessCodes'), function(snap){ codesCache = snap.val() || {}; accessLoaded.codes = true; renderCodes(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
-    accessUnsubs.push(onValue(ref(db, 'volunteerAccess'), function(snap){ volunteerAccessCache = snap.val() || {}; accessLoaded.vol = true; renderBenevoles(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
+    accessUnsubs.push(onValue(ref(db, 'volunteerAccess'), function(snap){ volunteerAccessCache = snap.val() || {}; accessLoaded.vol = true; renderBenevoles(); renderMissionsTab(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
     accessUnsubs.push(onValue(ref(db, 'donorAccess'), function(snap){ donorAccessCache = snap.val() || {}; accessLoaded.don = true; renderDons(); scheduleAccessIndexSync(); }, function(e){ console.error(e); }));
   }
   function stopAccessListeners(){
