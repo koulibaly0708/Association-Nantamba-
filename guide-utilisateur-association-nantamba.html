@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Association Nantamba (AN) — Association Nantamba (AN)</title>
+<title>Guide utilisateur — Association Nantamba (AN)</title>
 <style>
 :root{--blue:#1B5A85;--gold:#E0A526;--green:#2E8B57;--red:#C0392B;--bg:#f4f7fa;--card:#fff;--text:#1f2c38;--muted:#5d6b78;--line:#dbe3ea}
 @media (prefers-color-scheme:dark){:root:not([data-print]){--bg:#0f1720;--card:#16212c;--text:#e6edf3;--muted:#9fb0bf;--line:#2a3947}}
@@ -66,137 +66,142 @@ a{color:var(--blue)}
  body{background:#fff} .cover{-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:50px 18px}
  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
  section{break-inside:auto;page-break-inside:auto}
- h2,h3,.lead{break-after:avoid;page-break-after:avoid} .lead+*{break-before:avoid}
+ h2,h3{break-after:avoid;page-break-after:avoid}
  .diagram,.callout,.acol,.card,tr{break-inside:avoid;page-break-inside:avoid}
  nav.toc{box-shadow:none;margin-top:20px}
  .diagram svg{min-width:0}
 }
-
-.actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:22px}
-.actions a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;padding:10px 22px;border-radius:30px}
-.actions .url{margin-top:0}
-.actions .dl{background:#E0A526;color:#1f2c38}
-.actions .dl:hover{filter:brightness(1.06)}
-.backlink{position:absolute;top:16px;left:18px;color:#fff;text-decoration:none;font-size:14px;opacity:.9}
-.cover{position:relative}
-.dl-end{text-align:center;margin:28px 0 6px}
-.dl-end a{display:inline-block;background:#1B5A85;color:#fff;text-decoration:none;font-weight:700;padding:11px 26px;border-radius:30px}
-@media print{.actions,.backlink,.dl-end{display:none!important}}
 </style>
 </head>
 <body>
 <header class="cover">
-<span class="tag">Guide de l'utilisateur</span>
-<h1>Association Nantamba (AN)<br>Guide de l'utilisateur</h1>
-<p>Visiteurs, membres, bénévoles et donateurs : adhérer, donner, postuler et utiliser son espace personnel, pas à pas.</p>
-<a class="backlink" href="index.html">← Retour au site</a>
-<div class="actions"><a class="url" href="https://associationnantamba.org">associationnantamba.org</a><a class="dl" href="guide-utilisateur-association-nantamba.pdf" download="guide-utilisateur-association-nantamba.pdf">⬇ Télécharger le PDF</a></div>
+<span class="tag">Guide utilisateur</span>
+<h1>Association Nantamba (AN)<br>Guide d'utilisation du site</h1>
+<p>L'union pour le développement. Adhésion, dons, bénévolat, espaces personnels et administration : tout le fonctionnement du site, pas à pas.</p>
+<a class="url" href="https://associationnantamba.org">associationnantamba.org</a>
 <div class="meta">Version du 30 septembre 2026</div>
 </header>
 <div class="wrap">
-<nav class="toc"><h2>Sommaire</h2><ol><li><a href="#presentation">Présentation du site</a></li><li><a href="#demarrage">Démarrage rapide</a></li><li><a href="#accueil">La page d'accueil</a></li><li><a href="#adhesion">Devenir membre (adhésion)</a></li><li><a href="#don">Faire un don</a></li><li><a href="#benevole">Devenir bénévole</a></li><li><a href="#membre">L'espace membre</a></li><li><a href="#espaces">Espace bénévole &amp; donateur</a></li><li><a href="#depannage">Dépannage et questions fréquentes</a></li><li><a href="#glossaire">Glossaire et aide-mémoire</a></li></ol></nav>
+<nav class="toc"><h2>Sommaire</h2><ol><li><a href="#presentation">Présentation du site</a></li><li><a href="#demarrage">Démarrage rapide</a></li><li><a href="#accueil">La page d'accueil</a></li><li><a href="#adhesion">Devenir membre</a></li><li><a href="#don">Faire un don</a></li><li><a href="#benevole">Devenir bénévole</a></li><li><a href="#membre">L'espace membre</a></li><li><a href="#espaces">Espace bénévole &amp; donateur</a></li><li><a href="#admin">L'espace administrateur</a></li><li><a href="#depannage">Dépannage et FAQ</a></li><li><a href="#glossaire">Glossaire</a></li></ol></nav>
 <section id="presentation"><h2><span class="n">1</span>Présentation du site</h2><p class="lead">Ce que propose le site officiel de l'Association Nantamba (AN) et comment il est organisé.</p>
-<p>Le site <strong>associationnantamba.org</strong> est la vitrine de l'Association Nantamba, « l'union pour le développement », basée en République de Guinée (sous-préfecture de Koumana, préfecture de Kouroussa). Il permet de :</p>
-<div class="chips"><span class="chip">Découvrir les réalisations</span><span class="chip">Adhérer</span><span class="chip">Faire un don</span><span class="chip">Devenir bénévole</span><span class="chip">Suivre sa cotisation</span><span class="chip">Télécharger ses certificats</span></div>
+<p>Le site <strong>associationnantamba.org</strong> est la vitrine et l'outil de gestion de l'Association Nantamba, « l'union pour le développement », basée en République de Guinée (sous-préfecture de Koumana, préfecture de Kouroussa). Il permet de :</p>
+<div class="chips"><span class="chip">Découvrir les réalisations</span><span class="chip">Adhérer</span><span class="chip">Faire un don</span><span class="chip">Devenir bénévole</span><span class="chip">Suivre sa cotisation</span><span class="chip">Télécharger ses certificats</span><span class="chip">Administrer l'association</span></div>
 <div class="diagram"><svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" role="img">
 <rect x="320.0" y="10" width="320" height="56" rx="14" fill="#1B5A85"/>
 <text x="480.0" y="34" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">associationnantamba.org</text>
 <text x="480.0" y="54" text-anchor="middle" font-size="12" fill="#dbe9f3">Association Nantamba — L'union pour le développement</text>
 <line x1="480.0" y1="66" x2="480.0" y2="95" stroke="#6b7a88" stroke-width="2"/>
-<line x1="148.0" y1="95" x2="812.0" y2="95" stroke="#6b7a88" stroke-width="2"/>
-<line x1="148.0" y1="95" x2="148.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
-<rect x="73.0" y="115" width="150" height="50" rx="10" fill="#1B5A85"/>
-<text x="148.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Accueil</text>
-<rect x="79.0" y="190" width="138" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
-<text x="148.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Réalisations</text>
-<rect x="79.0" y="224" width="138" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
-<text x="148.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">À propos</text>
-<rect x="79.0" y="258" width="138" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
-<text x="148.0" y="275" text-anchor="middle" font-size="11" fill="#33414e">Actualités</text>
-<rect x="79.0" y="292" width="138" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
-<text x="148.0" y="309" text-anchor="middle" font-size="11" fill="#33414e">FAQ</text>
-<rect x="79.0" y="326" width="138" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
-<text x="148.0" y="343" text-anchor="middle" font-size="11" fill="#33414e">Contact</text>
-<rect x="79.0" y="360" width="138" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
-<text x="148.0" y="377" text-anchor="middle" font-size="11" fill="#33414e">Faire un don</text>
-<line x1="314.0" y1="95" x2="314.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
-<rect x="239.0" y="115" width="150" height="50" rx="10" fill="#2E8B57"/>
-<text x="314.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Adhésion</text>
-<rect x="245.0" y="190" width="138" height="26" rx="6" fill="#fff" stroke="#2E8B57" stroke-width="1.3"/>
-<text x="314.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Conditions</text>
-<rect x="245.0" y="224" width="138" height="26" rx="6" fill="#fff" stroke="#2E8B57" stroke-width="1.3"/>
-<text x="314.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">Formulaire</text>
-<rect x="245.0" y="258" width="138" height="26" rx="6" fill="#fff" stroke="#2E8B57" stroke-width="1.3"/>
-<text x="314.0" y="275" text-anchor="middle" font-size="11" fill="#33414e">Paiement 30 000 GNF</text>
-<line x1="480.0" y1="95" x2="480.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
-<rect x="405.0" y="115" width="150" height="50" rx="10" fill="#E0A526"/>
-<text x="480.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Devenir bénévole</text>
-<rect x="411.0" y="190" width="138" height="26" rx="6" fill="#fff" stroke="#E0A526" stroke-width="1.3"/>
-<text x="480.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Formulaire de</text>
-<rect x="411.0" y="224" width="138" height="26" rx="6" fill="#fff" stroke="#E0A526" stroke-width="1.3"/>
-<text x="480.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">candidature</text>
-<line x1="646.0" y1="95" x2="646.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
-<rect x="571.0" y="115" width="150" height="50" rx="10" fill="#6C4AB6"/>
-<text x="646.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Espace membre</text>
-<rect x="577.0" y="190" width="138" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
-<text x="646.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Cotisation</text>
-<rect x="577.0" y="224" width="138" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
-<text x="646.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">Documents</text>
-<rect x="577.0" y="258" width="138" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
-<text x="646.0" y="275" text-anchor="middle" font-size="11" fill="#33414e">Trésorerie</text>
-<rect x="577.0" y="292" width="138" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
-<text x="646.0" y="309" text-anchor="middle" font-size="11" fill="#33414e">Certificats</text>
-<line x1="812.0" y1="95" x2="812.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
-<rect x="737.0" y="115" width="150" height="50" rx="10" fill="#D0643A"/>
-<text x="812.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Bénévole &amp; donateur</text>
-<rect x="743.0" y="190" width="138" height="26" rx="6" fill="#fff" stroke="#D0643A" stroke-width="1.3"/>
-<text x="812.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Espace bénévole</text>
-<rect x="743.0" y="224" width="138" height="26" rx="6" fill="#fff" stroke="#D0643A" stroke-width="1.3"/>
-<text x="812.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">Espace donateur</text>
-</svg><div class="cap">Figure 1 — Plan du site : les grandes zones accessibles aux utilisateurs</div></div><h3>Qui utilise quoi ?</h3><div class="diagram"><svg viewBox="0 0 960 230" xmlns="http://www.w3.org/2000/svg" role="img">
-<rect x="10" y="10" width="222" height="210" rx="14" fill="#fff" stroke="#1B5A85" stroke-width="2"/>
-<circle cx="121.0" cy="52" r="24" fill="#1B5A85"/>
-<circle cx="121.0" cy="46" r="8" fill="#fff"/>
-<path d="M107.0,68 Q121.0,50 135.0,68 Z" fill="#fff"/>
-<text x="121.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#1B5A85">Visiteur</text>
-<rect x="45" y="110" width="152" height="24" rx="12" fill="#1B5A85" opacity="0.12"/>
-<text x="121.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#1B5A85">Aucun code</text>
-<text x="121.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Consulte le site,</text>
-<text x="121.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">contacte, donne,</text>
-<text x="121.0" y="194" text-anchor="middle" font-size="12" fill="#33414e">postule</text>
-<rect x="245" y="10" width="222" height="210" rx="14" fill="#fff" stroke="#2E8B57" stroke-width="2"/>
-<circle cx="356.0" cy="52" r="24" fill="#2E8B57"/>
-<circle cx="356.0" cy="46" r="8" fill="#fff"/>
-<path d="M342.0,68 Q356.0,50 370.0,68 Z" fill="#fff"/>
-<text x="356.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#2E8B57">Membre</text>
-<rect x="280" y="110" width="152" height="24" rx="12" fill="#2E8B57" opacity="0.12"/>
-<text x="356.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#2E8B57">Code d'accès</text>
-<text x="356.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Cotisation, documents,</text>
-<text x="356.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">trésorerie, certificats</text>
-<rect x="480" y="10" width="222" height="210" rx="14" fill="#fff" stroke="#E0A526" stroke-width="2"/>
-<circle cx="591.0" cy="52" r="24" fill="#E0A526"/>
-<circle cx="591.0" cy="46" r="8" fill="#fff"/>
-<path d="M577.0,68 Q591.0,50 605.0,68 Z" fill="#fff"/>
-<text x="591.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#E0A526">Bénévole</text>
-<rect x="515" y="110" width="152" height="24" rx="12" fill="#E0A526" opacity="0.12"/>
-<text x="591.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#E0A526">Code ANB-…</text>
-<text x="591.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Profil, carte,</text>
-<text x="591.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">missions, messages</text>
-<rect x="715" y="10" width="222" height="210" rx="14" fill="#fff" stroke="#D0643A" stroke-width="2"/>
-<circle cx="826.0" cy="52" r="24" fill="#D0643A"/>
-<circle cx="826.0" cy="46" r="8" fill="#fff"/>
-<path d="M812.0,68 Q826.0,50 840.0,68 Z" fill="#fff"/>
-<text x="826.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#D0643A">Donateur</text>
-<rect x="750" y="110" width="152" height="24" rx="12" fill="#D0643A" opacity="0.12"/>
-<text x="826.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#D0643A">Code AND-…</text>
-<text x="826.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Dons, satisfecits,</text>
-<text x="826.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">messages</text>
-</svg><div class="cap">Figure 2 — Les 4 profils d'utilisateurs et leur mode d'accès</div></div><div class="tw"><table><tr><th>Profil</th><th>Page d'entrée</th><th>Accès</th></tr>
+<line x1="95.0" y1="95" x2="865.0" y2="95" stroke="#6b7a88" stroke-width="2"/>
+<line x1="95.0" y1="95" x2="95.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
+<rect x="25.0" y="115" width="140" height="50" rx="10" fill="#1B5A85"/>
+<text x="95.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Accueil</text>
+<rect x="31.0" y="190" width="128" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
+<text x="95.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Réalisations</text>
+<rect x="31.0" y="224" width="128" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
+<text x="95.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">À propos</text>
+<rect x="31.0" y="258" width="128" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
+<text x="95.0" y="275" text-anchor="middle" font-size="11" fill="#33414e">Actualités</text>
+<rect x="31.0" y="292" width="128" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
+<text x="95.0" y="309" text-anchor="middle" font-size="11" fill="#33414e">FAQ</text>
+<rect x="31.0" y="326" width="128" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
+<text x="95.0" y="343" text-anchor="middle" font-size="11" fill="#33414e">Contact</text>
+<rect x="31.0" y="360" width="128" height="26" rx="6" fill="#fff" stroke="#1B5A85" stroke-width="1.3"/>
+<text x="95.0" y="377" text-anchor="middle" font-size="11" fill="#33414e">Faire un don</text>
+<line x1="249.0" y1="95" x2="249.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
+<rect x="179.0" y="115" width="140" height="50" rx="10" fill="#2E8B57"/>
+<text x="249.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Adhésion</text>
+<rect x="185.0" y="190" width="128" height="26" rx="6" fill="#fff" stroke="#2E8B57" stroke-width="1.3"/>
+<text x="249.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Conditions</text>
+<rect x="185.0" y="224" width="128" height="26" rx="6" fill="#fff" stroke="#2E8B57" stroke-width="1.3"/>
+<text x="249.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">Formulaire</text>
+<rect x="185.0" y="258" width="128" height="26" rx="6" fill="#fff" stroke="#2E8B57" stroke-width="1.3"/>
+<text x="249.0" y="275" text-anchor="middle" font-size="11" fill="#33414e">Paiement 30 000 GNF</text>
+<line x1="403.0" y1="95" x2="403.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
+<rect x="333.0" y="115" width="140" height="50" rx="10" fill="#E0A526"/>
+<text x="403.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Devenir bénévole</text>
+<rect x="339.0" y="190" width="128" height="26" rx="6" fill="#fff" stroke="#E0A526" stroke-width="1.3"/>
+<text x="403.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Formulaire de</text>
+<rect x="339.0" y="224" width="128" height="26" rx="6" fill="#fff" stroke="#E0A526" stroke-width="1.3"/>
+<text x="403.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">candidature</text>
+<line x1="557.0" y1="95" x2="557.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
+<rect x="487.0" y="115" width="140" height="50" rx="10" fill="#6C4AB6"/>
+<text x="557.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Espace membre</text>
+<rect x="493.0" y="190" width="128" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
+<text x="557.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Cotisation</text>
+<rect x="493.0" y="224" width="128" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
+<text x="557.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">Documents</text>
+<rect x="493.0" y="258" width="128" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
+<text x="557.0" y="275" text-anchor="middle" font-size="11" fill="#33414e">Trésorerie</text>
+<rect x="493.0" y="292" width="128" height="26" rx="6" fill="#fff" stroke="#6C4AB6" stroke-width="1.3"/>
+<text x="557.0" y="309" text-anchor="middle" font-size="11" fill="#33414e">Certificats</text>
+<line x1="711.0" y1="95" x2="711.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
+<rect x="641.0" y="115" width="140" height="50" rx="10" fill="#D0643A"/>
+<text x="711.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Bénévole &amp; donateur</text>
+<rect x="647.0" y="190" width="128" height="26" rx="6" fill="#fff" stroke="#D0643A" stroke-width="1.3"/>
+<text x="711.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">Espace bénévole</text>
+<rect x="647.0" y="224" width="128" height="26" rx="6" fill="#fff" stroke="#D0643A" stroke-width="1.3"/>
+<text x="711.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">Espace donateur</text>
+<line x1="865.0" y1="95" x2="865.0" y2="115" stroke="#6b7a88" stroke-width="2"/>
+<rect x="795.0" y="115" width="140" height="50" rx="10" fill="#C0392B"/>
+<text x="865.0" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Espace admin</text>
+<rect x="801.0" y="190" width="128" height="26" rx="6" fill="#fff" stroke="#C0392B" stroke-width="1.3"/>
+<text x="865.0" y="207" text-anchor="middle" font-size="11" fill="#33414e">15 onglets de</text>
+<rect x="801.0" y="224" width="128" height="26" rx="6" fill="#fff" stroke="#C0392B" stroke-width="1.3"/>
+<text x="865.0" y="241" text-anchor="middle" font-size="11" fill="#33414e">gestion</text>
+</svg><div class="cap">Figure 1 — Plan du site : les 6 grandes zones et leurs contenus</div></div><h3>Qui utilise quoi ?</h3><div class="diagram"><svg viewBox="0 0 960 230" xmlns="http://www.w3.org/2000/svg" role="img">
+<rect x="10" y="10" width="170" height="210" rx="14" fill="#fff" stroke="#1B5A85" stroke-width="2"/>
+<circle cx="95.0" cy="52" r="24" fill="#1B5A85"/>
+<circle cx="95.0" cy="46" r="8" fill="#fff"/>
+<path d="M81.0,68 Q95.0,50 109.0,68 Z" fill="#fff"/>
+<text x="95.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#1B5A85">Visiteur</text>
+<rect x="30" y="110" width="130" height="24" rx="12" fill="#1B5A85" opacity="0.12"/>
+<text x="95.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#1B5A85">Aucun code</text>
+<text x="95.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Consulte le site,</text>
+<text x="95.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">contacte, donne,</text>
+<text x="95.0" y="194" text-anchor="middle" font-size="12" fill="#33414e">postule</text>
+<rect x="193" y="10" width="170" height="210" rx="14" fill="#fff" stroke="#2E8B57" stroke-width="2"/>
+<circle cx="278.0" cy="52" r="24" fill="#2E8B57"/>
+<circle cx="278.0" cy="46" r="8" fill="#fff"/>
+<path d="M264.0,68 Q278.0,50 292.0,68 Z" fill="#fff"/>
+<text x="278.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#2E8B57">Membre</text>
+<rect x="213" y="110" width="130" height="24" rx="12" fill="#2E8B57" opacity="0.12"/>
+<text x="278.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#2E8B57">Code d'accès</text>
+<text x="278.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Cotisation, documents,</text>
+<text x="278.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">trésorerie, certificats</text>
+<rect x="376" y="10" width="170" height="210" rx="14" fill="#fff" stroke="#E0A526" stroke-width="2"/>
+<circle cx="461.0" cy="52" r="24" fill="#E0A526"/>
+<circle cx="461.0" cy="46" r="8" fill="#fff"/>
+<path d="M447.0,68 Q461.0,50 475.0,68 Z" fill="#fff"/>
+<text x="461.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#E0A526">Bénévole</text>
+<rect x="396" y="110" width="130" height="24" rx="12" fill="#E0A526" opacity="0.12"/>
+<text x="461.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#E0A526">Code ANB-…</text>
+<text x="461.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Profil, carte,</text>
+<text x="461.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">missions, messages</text>
+<rect x="559" y="10" width="170" height="210" rx="14" fill="#fff" stroke="#D0643A" stroke-width="2"/>
+<circle cx="644.0" cy="52" r="24" fill="#D0643A"/>
+<circle cx="644.0" cy="46" r="8" fill="#fff"/>
+<path d="M630.0,68 Q644.0,50 658.0,68 Z" fill="#fff"/>
+<text x="644.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#D0643A">Donateur</text>
+<rect x="579" y="110" width="130" height="24" rx="12" fill="#D0643A" opacity="0.12"/>
+<text x="644.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#D0643A">Code AND-…</text>
+<text x="644.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Dons, satisfecits,</text>
+<text x="644.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">messages</text>
+<rect x="742" y="10" width="170" height="210" rx="14" fill="#fff" stroke="#C0392B" stroke-width="2"/>
+<circle cx="827.0" cy="52" r="24" fill="#C0392B"/>
+<circle cx="827.0" cy="46" r="8" fill="#fff"/>
+<path d="M813.0,68 Q827.0,50 841.0,68 Z" fill="#fff"/>
+<text x="827.0" y="100" text-anchor="middle" font-size="15" font-weight="700" fill="#C0392B">Administrateur</text>
+<rect x="762" y="110" width="130" height="24" rx="12" fill="#C0392B" opacity="0.12"/>
+<text x="827.0" y="127" text-anchor="middle" font-size="12" font-weight="600" fill="#C0392B">Identifiants</text>
+<text x="827.0" y="158" text-anchor="middle" font-size="12" fill="#33414e">Gère tout le site</text>
+<text x="827.0" y="176" text-anchor="middle" font-size="12" fill="#33414e">et les demandes</text>
+</svg><div class="cap">Figure 2 — Les 5 profils d'utilisateurs et leur mode d'accès</div></div><div class="tw"><table><tr><th>Profil</th><th>Page d'entrée</th><th>Accès</th></tr>
 <tr><td>Visiteur</td><td>Accueil, Adhésion, Devenir bénévole</td><td>Libre, sans code</td></tr>
 <tr><td>Membre</td><td>Espace membre</td><td>Code d'accès délivré après validation de l'adhésion</td></tr>
 <tr><td>Bénévole</td><td>Bénévoles &amp; donateurs</td><td>Code de type <code>ANB-XXXXXX</code></td></tr>
-<tr><td>Donateur</td><td>Bénévoles &amp; donateurs</td><td>Code de type <code>AND-XXXXXX</code></td></tr></table></div>
-<div class="callout tip"><div class="ct">Vous êtes administrateur ?</div><div>La gestion du site (membres, dons, trésorerie, publications) fait l'objet d'un guide séparé : « Guide de l'administrateur ».</div></div></section><section id="demarrage"><h2><span class="n">2</span>Démarrage rapide</h2><p class="lead">Les gestes de base pour naviguer, sur téléphone comme sur ordinateur.</p>
+<tr><td>Donateur</td><td>Bénévoles &amp; donateurs</td><td>Code de type <code>AND-XXXXXX</code></td></tr>
+<tr><td>Administrateur</td><td>Espace Administrateur</td><td>Identifiants (avec « Mot de passe oublié ? »)</td></tr></table></div>
+</section><section id="demarrage"><h2><span class="n">2</span>Démarrage rapide</h2><p class="lead">Les gestes de base pour naviguer, sur téléphone comme sur ordinateur.</p>
 <ol class="steps"><li>Ouvrez <strong>https://associationnantamba.org</strong> dans votre navigateur (Chrome, Safari, Firefox…). Le site est conçu pour téléphone : il peut aussi être ajouté à l'écran d'accueil (application web « Nantamba »).</li><li>Utilisez le bouton <strong>☰</strong> en haut à droite pour ouvrir le menu. Il contient : Accueil, Nos réalisations, À propos, Adhésion, Espace membre, Espace Administrateur, Bénévoles &amp; donateurs, Devenir bénévole, Contact, FAQ, Actualités.</li><li>Sur les pages secondaires, le lien <strong>← Retour au site</strong> ramène à l'accueil.</li><li>Au premier passage, un bandeau de cookies apparaît : choisissez <strong>Accepter</strong> ou <strong>Refuser</strong>. Refuser peut limiter l'accès à l'espace membre.</li></ol><div class="callout tip"><div class="ct">Astuce</div><div>Gardez à portée de main votre numéro de téléphone et, pour un paiement, l'application Orange Money : plusieurs démarches (adhésion, don) se terminent par un paiement suivi d'une preuve envoyée sur WhatsApp.</div></div></section><section id="accueil"><h2><span class="n">3</span>La page d'accueil</h2><p class="lead">Toutes les informations publiques de l'association, sur une seule page défilante.</p>
 <div class="tw"><table><tr><th>Section</th><th>Contenu</th><th>Que faire ?</th></tr>
 <tr><td><strong>En-tête</strong></td><td>Logo, titre, bouton <span class="badge">Faire un don</span>, menu ☰</td><td>Donner ou naviguer</td></tr>
@@ -362,35 +367,156 @@ a{color:var(--blue)}
 <div class="card"><b>Espace donateur</b><br>Code de type <code>AND-KOSO57</code><br><br><strong>Contenu :</strong> profil, satisfecit global ou par don, liste « Mes dons », nouveau don, messages et informations.</div></div>
 <h3>Bénévole : missions et satisfecits</h3>
 <p>Quand l'association coche une mission accomplie, le satisfecit correspondant se débloque automatiquement dans « Mes missions &amp; satisfecits », téléchargeable avec votre nom, la mission et la date.</p>
-<h3>Donateur : refaire un don depuis son espace</h3><ol class="steps"><li>Connectez-vous avec votre code <code>AND-…</code>.</li><li>Descendez jusqu'à <strong>Faire un nouveau don</strong>.</li><li>Indiquez le <strong>montant (GNF)</strong> et, si vous le souhaitez, un <strong>message</strong>.</li><li>Cliquez sur <strong>Envoyer ma demande de don</strong>. Une fois validé par l'association, le don s'ajoute à « Mes dons » et au cumul de votre satisfecit.</li></ol><div class="callout tip"><div class="ct">Pas encore de code ?</div><div>Bénévole : postulez depuis « Devenir bénévole ». Donateur : le code vous est transmis par l'association après votre don.</div></div></section><section id="depannage"><h2><span class="n">9</span>Dépannage et questions fréquentes</h2><p class="lead">Les problèmes les plus courants et leur solution.</p><div class="tw"><table><tr><th>Problème</th><th>Solution</th></tr>
+<h3>Donateur : refaire un don depuis son espace</h3><ol class="steps"><li>Connectez-vous avec votre code <code>AND-…</code>.</li><li>Descendez jusqu'à <strong>Faire un nouveau don</strong>.</li><li>Indiquez le <strong>montant (GNF)</strong> et, si vous le souhaitez, un <strong>message</strong>.</li><li>Cliquez sur <strong>Envoyer ma demande de don</strong>. Une fois validé par l'association, le don s'ajoute à « Mes dons » et au cumul de votre satisfecit.</li></ol><div class="callout tip"><div class="ct">Pas encore de code ?</div><div>Bénévole : postulez depuis « Devenir bénévole ». Donateur : le code vous est transmis par l'association après votre don.</div></div></section><section id="admin"><h2><span class="n">9</span>L'espace administrateur</h2><p class="lead">Réservé aux administrateurs : gérer les membres, les finances, le bénévolat et les contenus du site.</p><h3>Connexion</h3><ol class="steps"><li>Menu ☰ → <strong>Espace Administrateur</strong> → <strong>Se connecter</strong>.</li><li>Saisissez vos identifiants. En cas d'oubli, utilisez <strong>Mot de passe oublié ?</strong>.</li><li>Le <strong>Tableau de bord</strong> s'ouvre avec 15 onglets. Utilisez <strong>Se déconnecter</strong> en fin de session.</li></ol><div class="callout danger"><div class="ct">Sécurité</div><div>Ne communiquez jamais vos identifiants. Déconnectez-vous après usage, surtout sur un appareil partagé. Un code d'accès n'est à transmettre qu'une seule fois à la personne concernée.</div></div><h3>Les 15 onglets, regroupés par thème</h3><div class="agrid">
+<div class="acol" style="--c:#1B5A85"><div class="ahead">Membres</div>
+<div class="atab"><strong>Liste générale</strong><span>Liste de référence : ajouter, retirer, exporter Excel, import en masse.</span></div>
+<div class="atab"><strong>Suivi cotisation</strong><span>Filtres par année d'échéance et par statut (à jour, en retard, à renouveler…).</span></div>
+<div class="atab"><strong>Demandes d'adhésion</strong><span>Demandes reçues depuis le formulaire public, avec statut.</span></div>
+<div class="atab"><strong>Liste et fonction des membres</strong><span>Fonction, e-mail et case « Bureau exécutif ».</span></div>
+<div class="atab"><strong>Création de code d'accès</strong><span>Génère un code pour un membre choisi dans la liste.</span></div>
+</div>
+<div class="acol" style="--c:#2E8B57"><div class="ahead">Finances</div>
+<div class="atab"><strong>Demandes de don</strong><span>Regroupe les dons par donateur, active l'espace, traite les dons.</span></div>
+<div class="atab"><strong>Tableau de trésorerie</strong><span>Solde initial, recettes, dépenses, graphiques, export comptable.</span></div>
+</div>
+<div class="acol" style="--c:#E0A526"><div class="ahead">Bénévolat</div>
+<div class="atab"><strong>Bénévoles</strong><span>Candidatures, activation de l'espace, message aux bénévoles.</span></div>
+<div class="atab"><strong>Missions bénévoles</strong><span>Cocher une mission débloque le satisfecit du bénévole.</span></div>
+</div>
+<div class="acol" style="--c:#6C4AB6"><div class="ahead">Communication</div>
+<div class="atab"><strong>Annonces aux membres</strong><span>Message visible par tous les membres.</span></div>
+<div class="atab"><strong>Documents</strong><span>Publier comptes-rendus, statuts, bilans (fichier ≤ 1,5 Mo ou lien).</span></div>
+<div class="atab"><strong>Satisfecits &amp; Certificats</strong><span>Attribuer un titre à un membre, avec motif facultatif.</span></div>
+<div class="atab"><strong>Actualités</strong><span>Publier, modifier, retirer : affichage direct sur l'accueil.</span></div>
+</div>
+<div class="acol" style="--c:#C0392B"><div class="ahead">Suivi</div>
+<div class="atab"><strong>Statistiques de visite</strong><span>Visites totales, du jour, sur 7 jours, sur 14 jours, par page.</span></div>
+<div class="atab"><strong>Corbeille</strong><span>Tout ce qui est supprimé reste restaurable 30 jours.</span></div>
+</div>
+</div><h3>Gérer les membres</h3><ol class="steps"><li><strong>Liste générale</strong> : saisissez Nom complet, Date d'adhésion, Téléphone, Ville, puis <em>+ Ajouter</em>. Cette liste alimente tous les autres onglets.</li><li>Pour reprendre d'anciens membres, utilisez l'<strong>Import en masse</strong> : un membre par ligne, champs séparés par « ; » au format <code>Nom complet;Date (JJ/MM/AAAA);Téléphone;Ville</code>. Seul le nom est obligatoire (ex. <code>Mamadou Diallo;;;Conakry</code>). Cliquez sur <em>Importer les membres</em>.</li><li><strong>Suivi cotisation</strong> : filtrez par année d'échéance ou par statut (En retard, À jour, À renouveler, Non renseigné) et exportez en Excel.</li><li><strong>Liste et fonction des membres</strong> : renseignez fonction et e-mail ; cochez « Bureau exécutif » pour suivre les mandats de 2 ans (début, mandats exécutés, jours restants calculés automatiquement).</li><li><strong>Demandes d'adhésion</strong> : consultez les demandes reçues et mettez à jour leur statut une fois le paiement vérifié.</li></ol><h3>Délivrer un code d'accès</h3><div class="diagram"><svg viewBox="0 0 960 150" xmlns="http://www.w3.org/2000/svg" role="img">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6b7a88"/></marker></defs>
+<rect x="10.0" y="15" width="160.8" height="120" rx="12" fill="#fff" stroke="#1B5A85" stroke-width="2"/>
+<circle cx="32.0" cy="15" r="15" fill="#1B5A85"/>
+<text x="32.0" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">1</text>
+<text x="90.4" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#1B5A85">Demande</text>
+<text x="90.4" y="72" text-anchor="middle" font-size="12" fill="#33414e">Adhésion, don ou</text>
+<text x="90.4" y="89" text-anchor="middle" font-size="12" fill="#33414e">candidature reçue</text>
+<line x1="174.8" y1="75.0" x2="200.8" y2="75.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="204.8" y="15" width="160.8" height="120" rx="12" fill="#fff" stroke="#E0A526" stroke-width="2"/>
+<circle cx="226.8" cy="15" r="15" fill="#E0A526"/>
+<text x="226.8" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">2</text>
+<text x="285.2" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#E0A526">Vérification</text>
+<text x="285.2" y="72" text-anchor="middle" font-size="12" fill="#33414e">L'admin contrôle</text>
+<text x="285.2" y="89" text-anchor="middle" font-size="12" fill="#33414e">la preuve de paiement</text>
+<line x1="369.6" y1="75.0" x2="395.6" y2="75.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="399.6" y="15" width="160.8" height="120" rx="12" fill="#fff" stroke="#D0643A" stroke-width="2"/>
+<circle cx="421.6" cy="15" r="15" fill="#D0643A"/>
+<text x="421.6" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">3</text>
+<text x="480.0" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#D0643A">Génération</text>
+<text x="480.0" y="72" text-anchor="middle" font-size="12" fill="#33414e">Membre : Création de code</text>
+<text x="480.0" y="89" text-anchor="middle" font-size="12" fill="#33414e">Autres : Activer l'espace</text>
+<line x1="564.4" y1="75.0" x2="590.4" y2="75.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="594.4" y="15" width="160.8" height="120" rx="12" fill="#fff" stroke="#C0392B" stroke-width="2"/>
+<circle cx="616.4" cy="15" r="15" fill="#C0392B"/>
+<text x="616.4" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">4</text>
+<text x="674.8" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#C0392B">Transmission</text>
+<text x="674.8" y="72" text-anchor="middle" font-size="12" fill="#33414e">Code donné une</text>
+<text x="674.8" y="89" text-anchor="middle" font-size="12" fill="#33414e">seule fois</text>
+<line x1="759.2" y1="75.0" x2="785.2" y2="75.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="789.2" y="15" width="160.8" height="120" rx="12" fill="#fff" stroke="#2E8B57" stroke-width="2"/>
+<circle cx="811.2" cy="15" r="15" fill="#2E8B57"/>
+<text x="811.2" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">5</text>
+<text x="869.6" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#2E8B57">Connexion</text>
+<text x="869.6" y="72" text-anchor="middle" font-size="12" fill="#33414e">La personne saisit</text>
+<text x="869.6" y="89" text-anchor="middle" font-size="12" fill="#33414e">son code</text>
+</svg><div class="cap">Figure 7 — Cycle de vie d'un code d'accès</div></div><ol class="steps"><li><strong>Membre</strong> : onglet « Création de code d'accès » → choisir le membre → <em>Générer un code</em>. Le tableau affiche le code, à qui il est attribué, la date et le statut.</li><li><strong>Bénévole ou donateur</strong> : onglets « Bénévoles » ou « Demandes de don » → <em>Activer l'espace</em>.</li><li>Transmettez le code à la personne (par exemple via WhatsApp), une seule fois.</li></ol><h3>Gérer les dons et les bénévoles</h3>
+<ul>
+<li><strong>Demandes de don</strong> : les dons d'un même donateur sont regroupés sur une ligne. Les dons faits depuis son espace portent le badge « Depuis son espace ». Un don arrivé par le bouton public se rattache avec <em>Rattacher…</em>. Marquer un don « traité » l'ajoute au cumul du satisfecit.</li>
+<li><strong>Message aux donateurs / aux bénévoles</strong> : saisissez un titre et un texte, puis <em>Publier le message</em>.</li>
+<li><strong>Bénévoles</strong> : consultez compétences et disponibilités, activez l'espace.</li>
+<li><strong>Missions bénévoles</strong> : cochez une mission accomplie pour débloquer le satisfecit ; décocher le retire.</li></ul>
+<h3>Gérer la trésorerie</h3><div class="diagram"><svg viewBox="0 0 960 130" xmlns="http://www.w3.org/2000/svg" role="img">
+<rect x="10" y="25" width="190" height="80" rx="12" fill="#1B5A85"/>
+<text x="105.0" y="60" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">Solde initial</text>
+<text x="105.0" y="82" text-anchor="middle" font-size="11" fill="#fff" opacity="0.9">saisi par l'admin</text>
+<text x="216" y="72" text-anchor="middle" font-size="34" font-weight="700" fill="#6b7a88">+</text>
+<rect x="232" y="25" width="150" height="80" rx="12" fill="#2E8B57"/>
+<text x="307.0" y="60" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">Recettes</text>
+<text x="307.0" y="82" text-anchor="middle" font-size="11" fill="#fff" opacity="0.9">cotisations, dons, autres</text>
+<text x="398" y="72" text-anchor="middle" font-size="34" font-weight="700" fill="#6b7a88">−</text>
+<rect x="414" y="25" width="190" height="80" rx="12" fill="#C0392B"/>
+<text x="509.0" y="60" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">Dépenses approuvées</text>
+<text x="509.0" y="82" text-anchor="middle" font-size="11" fill="#fff" opacity="0.9">validées par le président</text>
+<text x="620" y="72" text-anchor="middle" font-size="34" font-weight="700" fill="#6b7a88">=</text>
+<rect x="636" y="25" width="150" height="80" rx="12" fill="#6C4AB6"/>
+<text x="711.0" y="60" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">Solde final</text>
+<text x="711.0" y="82" text-anchor="middle" font-size="11" fill="#fff" opacity="0.9">calculé automatiquement</text>
+</svg><div class="cap">Figure 8 — Formule du solde final</div></div><ol class="steps"><li><strong>Solde initial</strong> : saisissez le montant de départ et cliquez sur <em>Enregistrer le solde initial</em> (daté et signé de votre nom).</li><li><strong>Recettes</strong> : libellé, type (Cotisation, Don, Autre recette), date, montant (GNF), puis <em>Ajouter la recette</em>.</li><li><strong>Dépenses</strong> : libellé, date, montant, puis <em>Ajouter la dépense</em>. Elle reste « en attente ».</li><li>Le <strong>président</strong> approuve ou refuse la dépense (colonne Décision). Seules les dépenses approuvées diminuent le solde.</li><li>Consultez les graphiques, puis utilisez <em>Export comptable (Bilan + Grand livre)</em> si besoin.</li></ol><div class="diagram"><svg viewBox="0 0 960 140" xmlns="http://www.w3.org/2000/svg" role="img">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6b7a88"/></marker></defs>
+<rect x="10.0" y="15" width="209.5" height="110" rx="12" fill="#fff" stroke="#1B5A85" stroke-width="2"/>
+<circle cx="32.0" cy="15" r="15" fill="#1B5A85"/>
+<text x="32.0" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">1</text>
+<text x="114.8" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#1B5A85">Saisie</text>
+<text x="114.8" y="72" text-anchor="middle" font-size="12" fill="#33414e">Un administrateur</text>
+<text x="114.8" y="89" text-anchor="middle" font-size="12" fill="#33414e">ajoute la dépense</text>
+<line x1="223.5" y1="70.0" x2="249.5" y2="70.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="253.5" y="15" width="209.5" height="110" rx="12" fill="#fff" stroke="#E0A526" stroke-width="2"/>
+<circle cx="275.5" cy="15" r="15" fill="#E0A526"/>
+<text x="275.5" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">2</text>
+<text x="358.2" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#E0A526">En attente</text>
+<text x="358.2" y="72" text-anchor="middle" font-size="12" fill="#33414e">Ne change pas</text>
+<text x="358.2" y="89" text-anchor="middle" font-size="12" fill="#33414e">encore le solde</text>
+<line x1="467.0" y1="70.0" x2="493.0" y2="70.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="497.0" y="15" width="209.5" height="110" rx="12" fill="#fff" stroke="#6C4AB6" stroke-width="2"/>
+<circle cx="519.0" cy="15" r="15" fill="#6C4AB6"/>
+<text x="519.0" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">3</text>
+<text x="601.8" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#6C4AB6">Décision</text>
+<text x="601.8" y="72" text-anchor="middle" font-size="12" fill="#33414e">Le président</text>
+<text x="601.8" y="89" text-anchor="middle" font-size="12" fill="#33414e">approuve ou refuse</text>
+<line x1="710.5" y1="70.0" x2="736.5" y2="70.0" stroke="#6b7a88" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="740.5" y="15" width="209.5" height="110" rx="12" fill="#fff" stroke="#2E8B57" stroke-width="2"/>
+<circle cx="762.5" cy="15" r="15" fill="#2E8B57"/>
+<text x="762.5" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">4</text>
+<text x="845.2" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#2E8B57">Approuvée</text>
+<text x="845.2" y="72" text-anchor="middle" font-size="12" fill="#33414e">Le solde final</text>
+<text x="845.2" y="89" text-anchor="middle" font-size="12" fill="#33414e">diminue</text>
+</svg><div class="cap">Figure 9 — Validation d'une dépense</div></div><h3>Publier du contenu</h3>
+<div class="tw"><table><tr><th>Onglet</th><th>Comment faire</th><th>Résultat</th></tr>
+<tr><td>Annonces aux membres</td><td>Titre + texte → <em>Publier l'annonce</em></td><td>Visible par tous les membres</td></tr>
+<tr><td>Documents</td><td>Titre, catégorie (Compte-rendu, Statuts et règlement, Finances, Autre), fichier PDF/Word/Excel/PowerPoint/image de 1,5 Mo maximum, ou lien Drive/Dropbox pour un fichier plus lourd → <em>Publier le document</em></td><td>Carte « Documents » de l'espace membre</td></tr>
+<tr><td>Satisfecits &amp; Certificats</td><td>Choisir le membre, le titre (Satisfecit d'Appréciation ou de Remerciement ; Certificat de mérite, d'excellence, de l'esprit d'équipe, de fidélité, d'honneur, d'accomplissement, de dévouement continu, de formation), un motif facultatif → <em>Attribuer le document</em></td><td>Téléchargeable dans l'espace du membre</td></tr>
+<tr><td>Actualités</td><td>Titre, date, résumé, détails (facultatif), photo (facultatif) → <em>Publier l'actualité</em>. Possibilité de modifier ou d'annuler une modification.</td><td>Section « Actualités » de l'accueil, du plus récent au plus ancien</td></tr></table></div>
+<p>Les deux actualités d'origine du site (inauguration des carrefours, fête de la Mare) peuvent être importées une fois avec <em>Importer les actualités d'origine</em> pour devenir modifiables.</p>
+<h3>Statistiques et corbeille</h3>
+<ul><li><strong>Statistiques de visite</strong> : visites totales, du jour, sur 7 jours, courbe des 14 derniers jours, visites par page (Accueil, Devenir bénévole).</li>
+<li><strong>Corbeille</strong> : tout élément supprimé (membre, bénévole, donateur, document, certificat, annonce, message, actualité) y est conservé <strong>30 jours</strong> et peut être restauré, puis il est effacé automatiquement.</li></ul><div class="callout warn"><div class="ct">Avant de supprimer</div><div>Supprimer un document ou un certificat le retire aussi de l'espace membre. Vous pouvez le restaurer depuis la Corbeille pendant 30 jours.</div></div></section><section id="depannage"><h2><span class="n">10</span>Dépannage et questions fréquentes</h2><p class="lead">Les problèmes les plus courants et leur solution.</p><div class="tw"><table><tr><th>Problème</th><th>Solution</th></tr>
 <tr><td>« Code d'accès invalide »</td><td>Vérifiez la saisie (majuscules, tiret, sans espace). Vérifiez aussi que vous utilisez le bon bloc (bénévole <code>ANB-</code>, donateur <code>AND-</code>). Sinon, demandez un nouveau code.</td></tr>
 <tr><td>Je n'ai pas reçu mon code</td><td>Vérifiez que votre preuve de paiement a bien été envoyée par WhatsApp, puis relancez l'association.</td></tr>
 <tr><td>Les graphiques ne s'affichent pas</td><td>Vérifiez votre connexion Internet et rechargez la page.</td></tr>
 <tr><td>Je ne reste pas connecté(e)</td><td>Acceptez les cookies : ils servent à mémoriser votre connexion.</td></tr>
 <tr><td>Le bouton « Copier » ne fonctionne pas</td><td>Notez le numéro Orange Money : 224 622 65 86 96.</td></tr>
-
+<tr><td>Le fichier à publier est refusé</td><td>Il dépasse 1,5 Mo : utilisez un lien Google Drive ou Dropbox.</td></tr>
 <tr><td>Comment accéder à l'espace membre ?</td><td>Chaque membre reçoit un identifiant de connexion après son adhésion.</td></tr>
 <tr><td>L'association organise-t-elle des événements ?</td><td>Oui : consultez « Nos réalisations » et « Actualités ».</td></tr></table></div>
 <h3>Support technique</h3>
 <div class="cards"><div class="card"><b>Téléphone / WhatsApp</b><br>621 10 98 47</div><div class="card"><b>E-mail</b><br>skoulibaly124@gmail.com</div></div>
 <h3>Données personnelles</h3>
 <p>Les données collectées (formulaire de contact, identifiants de l'espace membre) servent uniquement à répondre aux demandes et à gérer l'accès. Vous disposez d'un droit d'accès, de rectification et de suppression, conformément à la loi guinéenne L/2016/037/AN sur la cybersécurité et la protection des données personnelles. Le site n'utilise aucun cookie publicitaire.</p>
-</section><section id="glossaire"><h2><span class="n">10</span>Glossaire et aide-mémoire</h2><p class="lead">Les termes utilisés sur le site et les informations à retenir.</p><div class="tw"><table><tr><th>Terme</th><th>Signification</th></tr>
+</section><section id="glossaire"><h2><span class="n">11</span>Glossaire et aide-mémoire</h2><p class="lead">Les termes utilisés sur le site et les informations à retenir.</p><div class="tw"><table><tr><th>Terme</th><th>Signification</th></tr>
 <tr><td>AN</td><td>Association Nantamba</td></tr>
 <tr><td>GNF</td><td>Franc guinéen</td></tr>
 <tr><td>Satisfecit</td><td>Document de reconnaissance remis à un membre, bénévole ou donateur</td></tr>
 <tr><td>Bureau exécutif</td><td>Membres porteurs d'une fonction, avec des mandats de 2 ans</td></tr>
 <tr><td>Code d'accès</td><td>Code personnel pour ouvrir un espace réservé</td></tr>
-</table></div>
+<tr><td>Corbeille</td><td>Zone de stockage 30 jours avant effacement définitif</td></tr></table></div>
 <h3>Aide-mémoire</h3>
 <div class="cards">
 <div class="card"><b>Adhésion</b><br>30 000 GNF<br>Orange Money 224 622 65 86 96</div>
 <div class="card"><b>Preuve de paiement</b><br>Capture d'écran → WhatsApp</div>
 <div class="card"><b>Codes</b><br>Bénévole : ANB-…<br>Donateur : AND-…</div>
-</div>
+<div class="card"><b>Corbeille</b><br>Restauration sous 30 jours</div></div>
 </section>
-<div class="dl-end"><a href="guide-utilisateur-association-nantamba.pdf" download="guide-utilisateur-association-nantamba.pdf">⬇ Télécharger ce guide en PDF</a></div>
-<footer>Guide de l'utilisateur — associationnantamba.org — Support technique : 621 10 98 47</footer>
+<footer>Guide utilisateur du site associationnantamba.org — Association Nantamba (AN) — Support technique : 621 10 98 47</footer>
 </div>
 </body>
 </html>
