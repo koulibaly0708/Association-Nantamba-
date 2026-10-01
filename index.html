@@ -861,6 +861,96 @@
     #apropos{ padding-bottom:130px; }
     #faq{ padding-top:104px; padding-bottom:130px; }
   }
+
+  /* =====================================================================
+     ÉTIQUETTES DE SECTION : majuscules, grandes, espacées
+     (Nos réalisations, À propos, Actualités, FAQ, Contact)
+     ===================================================================== */
+  #realisations .section-head .eyebrow,
+  #apropos .section-head .eyebrow,
+  #actualites .section-head .eyebrow,
+  #faq .section-head .eyebrow,
+  #contact .section-head .eyebrow{
+    text-transform:uppercase;
+    font-size:clamp(17px, 4.6vw, 22px);
+    letter-spacing:.14em; line-height:1.2; font-weight:700;
+    padding:clamp(14px, 3.6vw, 18px) clamp(28px, 7vw, 40px);
+    margin-bottom:26px; max-width:100%;
+    border-radius:999px;
+  }
+  @media (min-width:1024px) and (min-height:480px){
+    #realisations .section-head .eyebrow,
+  #apropos .section-head .eyebrow,
+  #actualites .section-head .eyebrow,
+  #faq .section-head .eyebrow,
+  #contact .section-head .eyebrow{ font-size:24px; padding:18px 46px; margin-bottom:30px; }
+  }
+
+  /* =====================================================================
+     1) Première réalisation : image entière (le haut n'est plus coupé)
+     ===================================================================== */
+  #realisations .ach-photo .ach-gallery img{ transform:none; object-position:center top; }
+  #realisations .ach-photo .ach-gallery:hover img{ transform:scale(1.025); }
+  #realisations .ach-item.ach-photo:first-child .ach-gallery{ aspect-ratio:1 / 1; }
+  @media (max-width:900px){
+    #realisations .ach-item.ach-photo:first-child .ach-gallery{ aspect-ratio:1 / 1; }
+  }
+
+  /* =====================================================================
+     2) ACTUALITÉS : plus de cartes blanches, image arrondie + texte lisible
+     ===================================================================== */
+  #actualites .news-grid{ display:block; }
+  #actualites .news-item{
+    background:transparent; border:none; border-radius:0; box-shadow:none; overflow:visible;
+    display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+    gap:52px; align-items:center;
+  }
+  #actualites .news-item + .news-item{
+    margin-top:64px; padding-top:64px; border-top:1px solid rgba(27,90,133,.16);
+  }
+  #actualites .news-item:nth-child(even){ grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); }
+  #actualites .news-item:nth-child(even) .news-thumb{ order:2; }
+  #actualites .news-item.no-thumb,
+  #actualites .news-item.no-thumb:nth-child(even){ grid-template-columns:1fr; }
+
+  #actualites .news-item .news-thumb{
+    width:100%; height:auto; min-height:0; max-height:560px; object-fit:cover;
+    border-radius:20px; background:transparent;
+    box-shadow:0 22px 46px rgba(27,90,133,.24), 0 0 0 1px rgba(27,90,133,.10);
+  }
+  #actualites .news-item .news-body{ padding:0; }
+  #actualites .news-item .date{
+    display:inline-block; font-size:14px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--green);
+    background:rgba(46,158,79,.10); border:1px solid rgba(46,158,79,.28);
+    padding:6px 14px; border-radius:999px; margin-bottom:16px;
+  }
+  #actualites .news-item h3{
+    font-size:2rem; line-height:1.25; font-weight:700; color:var(--blue-deep); margin-bottom:16px;
+  }
+  #actualites .news-item p,
+  #actualites .news-item .news-full{
+    font-size:18px; line-height:1.75; color:#34424F; margin-bottom:12px; max-width:62ch;
+  }
+  #actualites .news-item .news-toggle{
+    display:inline-flex; align-items:center; margin-top:14px;
+    padding:11px 24px; border-radius:999px; font-size:16px; font-weight:700;
+    color:#fff; background:var(--blue-deep);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  #actualites .news-item .news-toggle:hover{
+    text-decoration:none; transform:translateY(-2px); box-shadow:0 10px 22px rgba(27,90,133,.30);
+  }
+
+  @media (max-width:900px){
+    #actualites .news-item,
+    #actualites .news-item:nth-child(even){ grid-template-columns:1fr; gap:24px; }
+    #actualites .news-item:nth-child(even) .news-thumb{ order:0; }
+    #actualites .news-item + .news-item{ margin-top:52px; padding-top:52px; }
+    #actualites .news-item h3{ font-size:1.6rem; }
+    #actualites .news-item p, #actualites .news-item .news-full{ font-size:17px; max-width:none; }
+    #actualites .news-item .news-thumb{ border-radius:16px; max-height:440px; }
+  }
 </style>
 </head>
 <body>
